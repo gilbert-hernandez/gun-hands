@@ -98,3 +98,7 @@ Work is tracked in the Vikunja project **Gun Hands** (identifier `GH`) at tasks.
 4. **Archive:** `/opsx:archive <change>` merges the spec deltas into `openspec/specs/`. Validate again, then move the ticket to **Done**.
 
 Art tickets (GH-15 to GH-22) don't use OpenSpec. david attaches the files to the ticket and moves it to Review.
+
+## License
+
+The code is under the [MIT License](LICENSE). The artwork in `src/assets/img/` and `art/` is not: it is copyright its artist, david, all rights reserved. See [LICENSE](LICENSE) for details.

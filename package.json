@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Gun Hands: a top-down arena-survivor shooter demo (Phaser 4 + Vite).",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
