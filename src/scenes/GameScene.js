@@ -61,7 +61,10 @@ export default class GameScene extends Phaser.Scene {
     this.add.tileSprite(0, 0, width, height, FLOOR_KEY).setOrigin(0, 0).setDepth(-10);
     // Stroke is centered on the outline, so inset it to keep the whole wall inside the world.
     const wall = 6;
-    this.add.rectangle(wall / 2, wall / 2, width - wall, height - wall).setOrigin(0, 0)
-      .setStrokeStyle(wall, 0x8b5a2b, 1).setDepth(-9);
+    this.add
+      .rectangle(wall / 2, wall / 2, width - wall, height - wall)
+      .setOrigin(0, 0)
+      .setStrokeStyle(wall, 0x8b5a2b, 1)
+      .setDepth(-9);
   }
 }

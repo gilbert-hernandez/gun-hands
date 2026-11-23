@@ -25,7 +25,14 @@ const sheet = (file, size, frames, category, ticket) => {
 };
 
 const image = (file, width, height, category, ticket) => ({
-  key: keyFor(file), file, type: 'image', frameWidth: width, frameHeight: height, frames: 1, category, ticket,
+  key: keyFor(file),
+  file,
+  type: 'image',
+  frameWidth: width,
+  frameHeight: height,
+  frames: 1,
+  category,
+  ticket,
 });
 
 /** 'gh_player_body_idle.png' -> 'player_body_idle' */
@@ -60,8 +67,15 @@ export const MANIFEST = [
 
   // GH-19 Arena tileset: 8x8 grid of 32x32 tiles, no spacing/margin
   {
-    key: keyFor('gh_tiles_arena.png'), file: 'gh_tiles_arena.png', type: 'tileset',
-    frameWidth: 32, frameHeight: 32, frames: 64, columns: 8, category: 'tiles', ticket: 'GH-19',
+    key: keyFor('gh_tiles_arena.png'),
+    file: 'gh_tiles_arena.png',
+    type: 'tileset',
+    frameWidth: 32,
+    frameHeight: 32,
+    frames: 64,
+    columns: 8,
+    category: 'tiles',
+    ticket: 'GH-19',
   },
 
   // GH-20 Pickups
@@ -127,13 +141,16 @@ export function validate(entries = MANIFEST) {
     else if (seenKeys.has(e.key)) errors.push(`duplicate key "${e.key}" (entries ${seenKeys.get(e.key)} and ${i})`);
     else seenKeys.set(e.key, i);
 
-    if (!FILE_PATTERN.test(e.file ?? '')) errors.push(`${where}: file "${e.file}" does not match gh_<category>_<name>[_<anim>].png`);
-    else if (seenFiles.has(e.file)) errors.push(`duplicate file "${e.file}" (entries ${seenFiles.get(e.file)} and ${i})`);
+    if (!FILE_PATTERN.test(e.file ?? ''))
+      errors.push(`${where}: file "${e.file}" does not match gh_<category>_<name>[_<anim>].png`);
+    else if (seenFiles.has(e.file))
+      errors.push(`duplicate file "${e.file}" (entries ${seenFiles.get(e.file)} and ${i})`);
     else seenFiles.set(e.file, i);
 
     if (!TYPES.includes(e.type)) errors.push(`${where}: unknown type "${e.type}"`);
     if (!CATEGORIES.includes(e.category)) errors.push(`${where}: unknown category "${e.category}"`);
-    if (!isPosInt(e.frameWidth) || !isPosInt(e.frameHeight)) errors.push(`${where}: frame size must be positive integers`);
+    if (!isPosInt(e.frameWidth) || !isPosInt(e.frameHeight))
+      errors.push(`${where}: frame size must be positive integers`);
     if (!isPosInt(e.frames)) errors.push(`${where}: frames must be an integer >= 1`);
     if (e.type === 'image' && e.frames !== 1) errors.push(`${where}: images have exactly 1 frame`);
     if (e.type === 'tileset' && (!isPosInt(e.columns) || e.frames % e.columns !== 0)) {

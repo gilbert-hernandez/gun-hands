@@ -12,7 +12,9 @@ const fakeDoc = {
       calls,
       getContext: () => ({
         fillStyle: '',
-        fillRect(x, y, w, h) { calls.push({ x, y, w, h, color: this.fillStyle }); },
+        fillRect(x, y, w, h) {
+          calls.push({ x, y, w, h, color: this.fillStyle });
+        },
       }),
     };
   },

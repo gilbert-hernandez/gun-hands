@@ -32,7 +32,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.play(ANIM_IDLE);
 
     // Aim facing only kicks in after the mouse has actually moved over the game.
-    const onPointerMove = () => { this.pointerUsed = true; };
+    const onPointerMove = () => {
+      this.pointerUsed = true;
+    };
     scene.input.on('pointermove', onPointerMove);
 
     // Sync the guns after physics has moved the body this frame (no one-frame lag).
@@ -48,10 +50,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
   /** Read input, set velocity, facing and animation. Call once per frame from the scene. */
   update() {
     const k = this.keys;
-    const v = velocityFrom(
-      { up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown },
-      PLAYER.speed,
-    );
+    const v = velocityFrom({ up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown }, PLAYER.speed);
     this.setVelocity(v.x, v.y);
 
     let aimX;

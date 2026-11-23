@@ -33,13 +33,18 @@ export default class PreloadScene extends Phaser.Scene {
     const x = (width - barW) / 2;
     const y = height / 2;
 
-    this.add.text(width / 2, y - 24, 'Loading...', { fontFamily: 'monospace', fontSize: '16px', color: '#ffffff' }).setOrigin(0.5);
+    this.add
+      .text(width / 2, y - 24, 'Loading...', { fontFamily: 'monospace', fontSize: '16px', color: '#ffffff' })
+      .setOrigin(0.5);
     const frame = this.add.graphics();
     frame.lineStyle(2, 0xffffff, 1).strokeRect(x - 2, y - 2, barW + 4, barH + 4);
     const fill = this.add.graphics();
 
     this.load.on('progress', (p) => {
-      fill.clear().fillStyle(0x22d3ee, 1).fillRect(x, y, barW * p, barH);
+      fill
+        .clear()
+        .fillStyle(0x22d3ee, 1)
+        .fillRect(x, y, barW * p, barH);
     });
   }
 
@@ -53,7 +58,9 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     if (import.meta.env.DEV && placeholders.length > 0) {
-      console.warn(`[assets] ${placeholders.length} placeholder(s) in use (art not delivered yet): ${placeholders.join(', ')}`);
+      console.warn(
+        `[assets] ${placeholders.length} placeholder(s) in use (art not delivered yet): ${placeholders.join(', ')}`,
+      );
     }
 
     this.scene.start('Title');

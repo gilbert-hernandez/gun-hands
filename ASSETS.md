@@ -32,93 +32,93 @@ Sizes are **per frame** (W×H). "Frames" is the number of frames in the strip.
 
 ### GH-16: Player
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-16 | `gh_player_body_idle.png` | 32×32 | 4 | Body only, faces right; arms off or tucked |
-| GH-16 | `gh_player_body_run.png` | 32×32 | 6 | Faces right |
-| GH-16 | `gh_player_body_hurt.png` | 32×32 | 2 | Faces right |
-| GH-16 | `gh_player_body_death.png` | 32×32 | 6 | Faces right; last frame is held |
-| GH-16 | `gh_player_guns_idle.png` | 32×32 | 1 | Gun hands only, point right; pivot = frame center (where guns meet body) |
-| GH-16 | `gh_player_guns_recoil.png` | 32×32 | 3 | Same pivot as guns idle |
+| Ticket | File                        | Size  | Frames | Notes                                                                    |
+| ------ | --------------------------- | ----- | ------ | ------------------------------------------------------------------------ |
+| GH-16  | `gh_player_body_idle.png`   | 32×32 | 4      | Body only, faces right; arms off or tucked                               |
+| GH-16  | `gh_player_body_run.png`    | 32×32 | 6      | Faces right                                                              |
+| GH-16  | `gh_player_body_hurt.png`   | 32×32 | 2      | Faces right                                                              |
+| GH-16  | `gh_player_body_death.png`  | 32×32 | 6      | Faces right; last frame is held                                          |
+| GH-16  | `gh_player_guns_idle.png`   | 32×32 | 1      | Gun hands only, point right; pivot = frame center (where guns meet body) |
+| GH-16  | `gh_player_guns_recoil.png` | 32×32 | 3      | Same pivot as guns idle                                                  |
 
 ### GH-17: Enemies
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-17 | `gh_enemy_grunt_walk.png` | 32×32 | 6 | Baseline chaser; faces right |
-| GH-17 | `gh_enemy_grunt_death.png` | 32×32 | 6 | Faces right |
-| GH-17 | `gh_enemy_runner_walk.png` | 32×32 | 6 | Fast, small, fragile; faces right; noticeably smaller silhouette |
-| GH-17 | `gh_enemy_runner_death.png` | 32×32 | 6 | Faces right |
-| GH-17 | `gh_enemy_brute_walk.png` | 64×64 | 6 | Big, slow, tanky; faces right |
-| GH-17 | `gh_enemy_brute_death.png` | 64×64 | 6 | Faces right |
+| Ticket | File                        | Size  | Frames | Notes                                                            |
+| ------ | --------------------------- | ----- | ------ | ---------------------------------------------------------------- |
+| GH-17  | `gh_enemy_grunt_walk.png`   | 32×32 | 6      | Baseline chaser; faces right                                     |
+| GH-17  | `gh_enemy_grunt_death.png`  | 32×32 | 6      | Faces right                                                      |
+| GH-17  | `gh_enemy_runner_walk.png`  | 32×32 | 6      | Fast, small, fragile; faces right; noticeably smaller silhouette |
+| GH-17  | `gh_enemy_runner_death.png` | 32×32 | 6      | Faces right                                                      |
+| GH-17  | `gh_enemy_brute_walk.png`   | 64×64 | 6      | Big, slow, tanky; faces right                                    |
+| GH-17  | `gh_enemy_brute_death.png`  | 64×64 | 6      | Faces right                                                      |
 
 ### GH-18: Projectiles & combat FX
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-18 | `gh_fx_bullet.png` | 8×8 | 2 | Player bullet, points right; pivot = center |
-| GH-18 | `gh_fx_muzzle.png` | 16×16 | 3 | Muzzle flash, points right; pivot = left-center (attaches to gun tip) |
-| GH-18 | `gh_fx_impact.png` | 16×16 | 4 | Spark on wall/enemy hit |
-| GH-18 | `gh_fx_enemy_puff.png` | 32×32 | 6 | Enemy death poof |
-| GH-18 | `gh_fx_bomb_blast.png` | 64×64 | 6 | Bomb powerup burst; gets scaled up, keep shapes chunky |
-| GH-18 | `gh_fx_levelup.png` | 48×48 | 6 | Burst centered on the player |
+| Ticket | File                   | Size  | Frames | Notes                                                                 |
+| ------ | ---------------------- | ----- | ------ | --------------------------------------------------------------------- |
+| GH-18  | `gh_fx_bullet.png`     | 8×8   | 2      | Player bullet, points right; pivot = center                           |
+| GH-18  | `gh_fx_muzzle.png`     | 16×16 | 3      | Muzzle flash, points right; pivot = left-center (attaches to gun tip) |
+| GH-18  | `gh_fx_impact.png`     | 16×16 | 4      | Spark on wall/enemy hit                                               |
+| GH-18  | `gh_fx_enemy_puff.png` | 32×32 | 6      | Enemy death poof                                                      |
+| GH-18  | `gh_fx_bomb_blast.png` | 64×64 | 6      | Bomb powerup burst; gets scaled up, keep shapes chunky                |
+| GH-18  | `gh_fx_levelup.png`    | 48×48 | 6      | Burst centered on the player                                          |
 
 ### GH-19: Arena tileset
 
 One image on a 32×32 grid, **8 columns × 8 rows = 256×256 px**, with no spacing or margin (Tiled-ready). Leave unused cells transparent. Suggested layout: rows 1–2 floors and floor details, rows 3–4 walls and corners, row 5 obstacles (a 2×2 obstacle uses a 2×2 block of cells), row 6 walk-over props.
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-19 | `gh_tiles_arena.png` | 32×32 | 64 | 8×8 grid of tiles (256×256 image); floors low-contrast |
+| Ticket | File                 | Size  | Frames | Notes                                                  |
+| ------ | -------------------- | ----- | ------ | ------------------------------------------------------ |
+| GH-19  | `gh_tiles_arena.png` | 32×32 | 64     | 8×8 grid of tiles (256×256 image); floors low-contrast |
 
 ### GH-20: Pickups
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-20 | `gh_pickup_xp_small.png` | 16×16 | 4 | Shimmer; common tier, own color |
-| GH-20 | `gh_pickup_xp_medium.png` | 16×16 | 4 | Shimmer; own color |
-| GH-20 | `gh_pickup_xp_large.png` | 16×16 | 4 | Shimmer; own color |
-| GH-20 | `gh_pickup_rapidfire.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_pickup_spread.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_pickup_shield.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_pickup_health.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_pickup_bomb.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_pickup_magnet.png` | 24×24 | 4 | Bob/glow; bright outline |
-| GH-20 | `gh_fx_shield.png` | 48×48 | 4 | Shield bubble around the player; semi-transparent; pivot = center |
+| Ticket | File                      | Size  | Frames | Notes                                                             |
+| ------ | ------------------------- | ----- | ------ | ----------------------------------------------------------------- |
+| GH-20  | `gh_pickup_xp_small.png`  | 16×16 | 4      | Shimmer; common tier, own color                                   |
+| GH-20  | `gh_pickup_xp_medium.png` | 16×16 | 4      | Shimmer; own color                                                |
+| GH-20  | `gh_pickup_xp_large.png`  | 16×16 | 4      | Shimmer; own color                                                |
+| GH-20  | `gh_pickup_rapidfire.png` | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_pickup_spread.png`    | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_pickup_shield.png`    | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_pickup_health.png`    | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_pickup_bomb.png`      | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_pickup_magnet.png`    | 24×24 | 4      | Bob/glow; bright outline                                          |
+| GH-20  | `gh_fx_shield.png`        | 48×48 | 4      | Shield bubble around the player; semi-transparent; pivot = center |
 
 ### GH-21: UI kit
 
 UI images are single images (1 frame) unless noted. The game runs at 960×540.
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-21 | `gh_ui_bar_frame.png` | 200×16 | 1 | Frame for the HP and XP bars |
-| GH-21 | `gh_ui_bar_fill_hp.png` | 196×12 | 1 | Sits 2 px inside the frame; stretched horizontally |
-| GH-21 | `gh_ui_bar_fill_xp.png` | 196×12 | 1 | Sits 2 px inside the frame; stretched horizontally |
-| GH-21 | `gh_ui_icon_rapidfire.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_icon_spread.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_icon_shield.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_icon_health.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_icon_bomb.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_icon_magnet.png` | 16×16 | 1 | HUD powerup icon |
-| GH-21 | `gh_ui_card.png` | 160×220 | 1 | Upgrade card frame; game draws the icon and text on top |
-| GH-21 | `gh_ui_up_damage.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_firerate.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_multishot.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_pierce.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_movespeed.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_maxhp.png` | 32×32 | 1 | Upgrade icon |
-| GH-21 | `gh_ui_up_pickup.png` | 32×32 | 1 | Upgrade icon (pickup radius) |
-| GH-21 | `gh_ui_button.png` | 160×48 | 3 | Frames: normal, hover, pressed (sheet is 480×48) |
+| Ticket | File                       | Size    | Frames | Notes                                                   |
+| ------ | -------------------------- | ------- | ------ | ------------------------------------------------------- |
+| GH-21  | `gh_ui_bar_frame.png`      | 200×16  | 1      | Frame for the HP and XP bars                            |
+| GH-21  | `gh_ui_bar_fill_hp.png`    | 196×12  | 1      | Sits 2 px inside the frame; stretched horizontally      |
+| GH-21  | `gh_ui_bar_fill_xp.png`    | 196×12  | 1      | Sits 2 px inside the frame; stretched horizontally      |
+| GH-21  | `gh_ui_icon_rapidfire.png` | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_icon_spread.png`    | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_icon_shield.png`    | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_icon_health.png`    | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_icon_bomb.png`      | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_icon_magnet.png`    | 16×16   | 1      | HUD powerup icon                                        |
+| GH-21  | `gh_ui_card.png`           | 160×220 | 1      | Upgrade card frame; game draws the icon and text on top |
+| GH-21  | `gh_ui_up_damage.png`      | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_firerate.png`    | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_multishot.png`   | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_pierce.png`      | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_movespeed.png`   | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_maxhp.png`       | 32×32   | 1      | Upgrade icon                                            |
+| GH-21  | `gh_ui_up_pickup.png`      | 32×32   | 1      | Upgrade icon (pickup radius)                            |
+| GH-21  | `gh_ui_button.png`         | 160×48  | 3      | Frames: normal, hover, pressed (sheet is 480×48)        |
 
 Font: recommend a free pixel font in a comment on GH-21.
 
 ### GH-22: Title & game over
 
-| Ticket | File | Size | Frames | Notes |
-|---|---|---|---|---|
-| GH-22 | `gh_ui_logo.png` | 480×160 | 1 | "Gun Hands" logo |
-| GH-22 | `gh_ui_title_bg.png` | 960×540 | 1 | Opaque; leave the center clear for the logo and Start button |
-| GH-22 | `gh_ui_gameover_panel.png` | 400×300 | 1 | Panel behind the run stats and Restart button |
+| Ticket | File                       | Size    | Frames | Notes                                                        |
+| ------ | -------------------------- | ------- | ------ | ------------------------------------------------------------ |
+| GH-22  | `gh_ui_logo.png`           | 480×160 | 1      | "Gun Hands" logo                                             |
+| GH-22  | `gh_ui_title_bg.png`       | 960×540 | 1      | Opaque; leave the center clear for the logo and Start button |
+| GH-22  | `gh_ui_gameover_panel.png` | 400×300 | 1      | Panel behind the run stats and Restart button                |
 
 Optional (not loaded by the game): a 1200×630 social-preview image, attached to GH-22.

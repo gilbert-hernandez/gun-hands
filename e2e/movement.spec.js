@@ -31,8 +31,22 @@ function state(page) {
     const b = p.body;
     const cam = scene.cameras.main;
     return {
-      x: p.x, y: p.y, vx: b.velocity.x, vy: b.velocity.y, flipX: p.flipX, anim: p.anims.currentAnim?.key,
-      body: { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height, offsetX: b.offset.x, offsetY: b.offset.y },
+      x: p.x,
+      y: p.y,
+      vx: b.velocity.x,
+      vy: b.velocity.y,
+      flipX: p.flipX,
+      anim: p.anims.currentAnim?.key,
+      body: {
+        left: b.left,
+        top: b.top,
+        right: b.right,
+        bottom: b.bottom,
+        width: b.width,
+        height: b.height,
+        offsetX: b.offset.x,
+        offsetY: b.offset.y,
+      },
       cam: { scrollX: cam.scrollX, scrollY: cam.scrollY, width: cam.width, height: cam.height },
     };
   });
@@ -107,8 +121,11 @@ test('A + D cancel out horizontally', async ({ page }) => {
 
 test("can't leave the left/top bounds and the camera clamps at the corner", async ({ page }) => {
   await teleport(page, 100, 100);
-  const s = await holdUntil(page, ['KeyW', 'KeyA'],
-    (t) => t.body.left === 0 && t.body.top === 0 && t.cam.scrollX === 0 && t.cam.scrollY === 0);
+  const s = await holdUntil(
+    page,
+    ['KeyW', 'KeyA'],
+    (t) => t.body.left === 0 && t.body.top === 0 && t.cam.scrollX === 0 && t.cam.scrollY === 0,
+  );
   expect(s.body.left).toBe(0);
   expect(s.body.top).toBe(0);
   expect(s.cam.scrollX).toBe(0);
@@ -123,10 +140,15 @@ test('camera follows and clamps at the bottom-right corner', async ({ page }) =>
   expect(followed.cam.scrollX).toBeGreaterThan(start.cam.scrollX);
 
   await teleport(page, WORLD.width - 100, WORLD.height - 100);
-  const s = await holdUntil(page, ['KeyS', 'KeyD'], (t) => t.body.right === WORLD.width
-    && t.body.bottom === WORLD.height
-    && t.cam.scrollX === WORLD.width - DISPLAY.width
-    && t.cam.scrollY === WORLD.height - DISPLAY.height);
+  const s = await holdUntil(
+    page,
+    ['KeyS', 'KeyD'],
+    (t) =>
+      t.body.right === WORLD.width &&
+      t.body.bottom === WORLD.height &&
+      t.cam.scrollX === WORLD.width - DISPLAY.width &&
+      t.cam.scrollY === WORLD.height - DISPLAY.height,
+  );
   expect(s.body.right).toBe(WORLD.width);
   expect(s.body.bottom).toBe(WORLD.height);
   expect(s.cam.scrollX).toBe(WORLD.width - DISPLAY.width);

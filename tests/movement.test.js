@@ -16,7 +16,12 @@ describe('velocityFrom', () => {
   });
 
   it('normalizes diagonals to the configured speed', () => {
-    for (const keys of [{ up: true, right: true }, { up: true, left: true }, { down: true, right: true }, { down: true, left: true }]) {
+    for (const keys of [
+      { up: true, right: true },
+      { up: true, left: true },
+      { down: true, right: true },
+      { down: true, left: true },
+    ]) {
       const v = velocityFrom(keys, speed);
       expect(Math.hypot(v.x, v.y)).toBeCloseTo(speed, 6);
       expect(Math.abs(v.x)).toBeCloseTo(Math.abs(v.y), 6);

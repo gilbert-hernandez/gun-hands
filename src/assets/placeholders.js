@@ -55,7 +55,7 @@ export function drawPlaceholderCanvas(entry, doc = document) {
     for (let i = 0; i < frames; i++) {
       const cx = (i % cols) * fw;
       const cy = Math.floor(i / cols) * fh;
-      const odd = (i % cols + Math.floor(i / cols)) % 2 === 1;
+      const odd = ((i % cols) + Math.floor(i / cols)) % 2 === 1;
       drawCell(ctx, cx, cy, fw, fh, odd ? shade(color, 0.2) : color, 0);
     }
   } else {

@@ -22,8 +22,14 @@ await page.waitForFunction(() => window.__GAME__?.scene.isActive('Game'));
 // Scripted route (GH-2 movement). Each step: keys to hold, duration in ms.
 const route = [
   [[], 1000], // idle
-  [['KeyD'], 900], [['KeyS'], 900], [['KeyA'], 900], [['KeyW'], 900], // four directions
-  [['KeyW', 'KeyD'], 700], [['KeyS', 'KeyD'], 700], [['KeyS', 'KeyA'], 700], [['KeyW', 'KeyA'], 700], // diagonals
+  [['KeyD'], 900],
+  [['KeyS'], 900],
+  [['KeyA'], 900],
+  [['KeyW'], 900], // four directions
+  [['KeyW', 'KeyD'], 700],
+  [['KeyS', 'KeyD'], 700],
+  [['KeyS', 'KeyA'], 700],
+  [['KeyW', 'KeyA'], 700], // diagonals
   [[], 500],
   [['KeyW', 'KeyA'], 9000], // into the top-left corner: camera clamps, player off-center
   [[], 800],
@@ -50,7 +56,7 @@ const px = box.x + player.x * scale;
 const py = box.y + player.y * scale;
 for (let i = 0; Date.now() < end; i++) {
   const dx = i % 2 === 0 ? -200 : 200;
-  await page.mouse.move(px + dx, py + (i % 3 - 1) * 80, { steps: 20 });
+  await page.mouse.move(px + dx, py + ((i % 3) - 1) * 80, { steps: 20 });
   await page.waitForTimeout(500);
 }
 
@@ -64,4 +70,6 @@ try {
   const mp4 = out.replace(/\.webm$/, '.mp4');
   execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', out, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', mp4]);
   console.log(`video: ${mp4}`);
-} catch { /* ffmpeg not available; webm only */ }
+} catch {
+  /* ffmpeg not available; webm only */
+}
