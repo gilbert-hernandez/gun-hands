@@ -1,0 +1,38 @@
+schema: spec-driven
+
+context: |
+  Project: "Gun Hands" — a top-down roguelike / arena-survivor shooter. Goal right now is a playable browser DEMO.
+  Team: Gilbert (all code) and david (all graphics, made in Adobe tools). Tracked in Vikunja project "Gun Hands" (identifier GH)
+  at https://tasks.hernandez.solutions. Every code change maps to exactly one GH ticket; proposal.md must link it
+  (e.g. "Vikunja: GH-2") and the ticket must name the change.
+
+  Gameplay:
+  - Player runs around a bounded arena; enemies spawn just off-screen from all directions and chase the player.
+  - Controls: WASD to move (diagonals normalized). Guns auto-fire toward the mouse cursor; the gun-hands sprite rotates
+    independently of the body. Esc pauses.
+  - Enemies: Grunt (baseline), Runner (fast, fragile), Brute (slow, tanky, 64px). Difficulty ramps with survival time.
+  - Enemies drop XP gems (3 tiers); collecting XP levels the player up, pausing for a pick-1-of-3 upgrade
+    (damage, fire rate, multishot, pierce, move speed, max HP, pickup radius).
+  - Enemies occasionally drop loot powerups: timed Rapid Fire, Spread Shot, Shield; instant Health Pack, Bomb (clear screen), Magnet (pull all XP).
+  - Demo target: a run lasts ~5–8 minutes; title -> play -> level-ups -> death -> game over stats -> restart.
+
+  Tech stack: Phaser 4 (pinned exact version) + Vite, plain modern JavaScript (ES modules), Arcade Physics, Tiled JSON maps.
+  Static build only (no backend); will be deployed to gunhands.hernandez.solutions.
+  Scenes: Boot, Preload, Title, Game, UI (HUD overlay, runs parallel to Game), LevelUp, GameOver.
+  Tunable numbers (speeds, HP, spawn rates, drop tables, XP curve) live in data/config modules, not inline in scene code.
+  Use object pools for bullets, enemies, and pickups.
+
+  Art pipeline (placeholder-first): development never waits on art. Every asset is referenced by key through a single
+  asset manifest; if a real file is missing, a generated colored-shape placeholder of the correct size is used.
+  Art conventions: top-down 3/4 pixel art on a 32px grid; transparent PNG; sprite sheets as single-row horizontal strips,
+  uniform frame size, no padding/spacing; nearest-neighbor (pixelArt: true, no smoothing);
+  filenames gh_<category>_<name>_<anim>.png (e.g. gh_player_body_run.png). Sizes: player/grunt/runner 32x32, brute 64x64,
+  bullet 8x8, XP gem 16x16, powerup pickup 24x24, tiles 32x32. ASSETS.md in the repo is the source of truth for the spec.
+
+rules:
+  proposal:
+    - Link the Vikunja ticket (GH-<n>) in the Why section.
+    - Include a Non-goals section.
+  tasks:
+    - Each task should be completable in under 2 hours.
+    - End with a manual verification task (run the dev server and describe what to check in the browser).
