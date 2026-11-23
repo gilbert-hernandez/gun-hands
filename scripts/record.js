@@ -19,14 +19,39 @@ await page.waitForTimeout(1000);
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.__GAME__?.scene.isActive('Game'));
 
-// Scripted input: walk in a square. Replace with real gameplay as it lands.
-const keys = ['KeyD', 'KeyS', 'KeyA', 'KeyW'];
+// Scripted route (GH-2 movement). Each step: keys to hold, duration in ms.
+const route = [
+  [[], 1000], // idle
+  [['KeyD'], 900], [['KeyS'], 900], [['KeyA'], 900], [['KeyW'], 900], // four directions
+  [['KeyW', 'KeyD'], 700], [['KeyS', 'KeyD'], 700], [['KeyS', 'KeyA'], 700], [['KeyW', 'KeyA'], 700], // diagonals
+  [[], 500],
+  [['KeyW', 'KeyA'], 9000], // into the top-left corner: camera clamps, player off-center
+  [[], 800],
+  [['KeyS', 'KeyD'], 1500], // back out of the corner
+  [[], 500],
+];
 const end = Date.now() + seconds * 1000;
+for (const [keys, ms] of route) {
+  if (Date.now() >= end) break;
+  for (const k of keys) await page.keyboard.down(k);
+  await page.waitForTimeout(ms);
+  for (const k of keys) await page.keyboard.up(k);
+}
+
+// Aim facing: sweep the mouse back and forth across the player.
+const box = await page.locator('#game canvas').boundingBox();
+const player = await page.evaluate(() => {
+  const scene = window.__GAME__.scene.getScene('Game');
+  const cam = scene.cameras.main;
+  return { x: scene.player.x - cam.scrollX, y: scene.player.y - cam.scrollY };
+});
+const scale = box.width / size.width;
+const px = box.x + player.x * scale;
+const py = box.y + player.y * scale;
 for (let i = 0; Date.now() < end; i++) {
-  const k = keys[i % keys.length];
-  await page.keyboard.down(k);
-  await page.waitForTimeout(600);
-  await page.keyboard.up(k);
+  const dx = i % 2 === 0 ? -200 : 200;
+  await page.mouse.move(px + dx, py + (i % 3 - 1) * 80, { steps: 20 });
+  await page.waitForTimeout(500);
 }
 
 const video = page.video();

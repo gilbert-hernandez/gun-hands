@@ -1,24 +1,31 @@
 import Phaser from 'phaser';
-import { DISPLAY, DEBUG } from '../config/index.js';
+import { DEBUG, WORLD } from '../config/index.js';
+import Player from '../player/Player.js';
 import { addSceneLabel } from './sceneLabel.js';
 
-// The play session. For now it only shows the player and a brute to prove the asset keys work;
-// movement, shooting, enemies, etc. arrive in GH-2+.
+const FLOOR_KEY = 'stand_in_floor';
+const TILE = 32;
+
+// The play session: a bounded arena, the player, and a camera that follows it.
+// Shooting, enemies, etc. arrive in later GH tickets.
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
   }
 
   create() {
-    const { width, height } = DISPLAY;
+    const { width, height, cameraLerp } = WORLD;
     addSceneLabel(this);
 
-    this.ensureAnim('player_body_idle', 6);
-    this.ensureAnim('enemy_brute_walk', 8);
+    this.physics.world.setBounds(0, 0, width, height);
+    this.createStandInFloor(width, height);
 
-    this.add.sprite(width / 2, height / 2, 'player_body_idle').play('player_body_idle');
-    this.add.sprite(width / 2, height / 2, 'player_guns_idle');
-    this.add.sprite(width / 2 + 160, height / 2, 'enemy_brute_walk').play('enemy_brute_walk').setFlipX(true);
+    this.player = new Player(this, width / 2, height / 2);
+
+    const cam = this.cameras.main;
+    cam.setBounds(0, 0, width, height);
+    cam.setRoundPixels(true);
+    cam.startFollow(this.player, true, cameraLerp, cameraLerp);
 
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
@@ -35,9 +42,26 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  /** Create a looping animation over all frames of a sprite sheet key (once per game). */
-  ensureAnim(key, frameRate) {
-    if (this.anims.exists(key)) return;
-    this.anims.create({ key, frames: this.anims.generateFrameNumbers(key), frameRate, repeat: -1 });
+  update() {
+    this.player.update();
+  }
+
+  /**
+   * Grid floor + border so movement and camera scrolling are visible before the Tiled map
+   * lands. Generated at runtime (not an art asset); remove when the real arena arrives.
+   */
+  createStandInFloor(width, height) {
+    if (!this.textures.exists(FLOOR_KEY)) {
+      const g = this.make.graphics({ x: 0, y: 0 }, false);
+      g.fillStyle(0x1f2430, 1).fillRect(0, 0, TILE, TILE);
+      g.fillStyle(0x2c3344, 1).fillRect(0, 0, TILE, 1).fillRect(0, 0, 1, TILE);
+      g.generateTexture(FLOOR_KEY, TILE, TILE);
+      g.destroy();
+    }
+    this.add.tileSprite(0, 0, width, height, FLOOR_KEY).setOrigin(0, 0).setDepth(-10);
+    // Stroke is centered on the outline, so inset it to keep the whole wall inside the world.
+    const wall = 6;
+    this.add.rectangle(wall / 2, wall / 2, width - wall, height - wall).setOrigin(0, 0)
+      .setStrokeStyle(wall, 0x8b5a2b, 1).setDepth(-9);
   }
 }

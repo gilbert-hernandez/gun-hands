@@ -1,0 +1,177 @@
+import { test, expect } from '@playwright/test';
+import { PLAYER } from '../src/config/player.js';
+import { WORLD } from '../src/config/world.js';
+import { DISPLAY } from '../src/config/display.js';
+
+// Player movement, facing, bounds, camera and hurtbox (GH-2).
+// Frame timing in headless swiftshader is uneven, so these assert on velocity, direction and
+// bounds rather than on exact distance travelled.
+
+let errors;
+
+test.beforeEach(async ({ page }) => {
+  errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto('/');
+  await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player?.body);
+  await page.waitForTimeout(200);
+});
+
+test.afterEach(() => {
+  expect(errors).toEqual([]);
+});
+
+/** Snapshot of the player and camera from the running Game scene. */
+function state(page) {
+  return page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const p = scene.player;
+    const b = p.body;
+    const cam = scene.cameras.main;
+    return {
+      x: p.x, y: p.y, vx: b.velocity.x, vy: b.velocity.y, flipX: p.flipX, anim: p.anims.currentAnim?.key,
+      body: { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height, offsetX: b.offset.x, offsetY: b.offset.y },
+      cam: { scrollX: cam.scrollX, scrollY: cam.scrollY, width: cam.width, height: cam.height },
+    };
+  });
+}
+
+/** Teleport the player (test setup only). */
+function teleport(page, x, y) {
+  return page.evaluate(([px, py]) => window.__GAME__.scene.getScene('Game').player.body.reset(px, py), [x, y]);
+}
+
+async function hold(page, keys, ms) {
+  for (const k of keys) await page.keyboard.down(k);
+  await page.waitForTimeout(ms);
+}
+
+async function release(page, keys) {
+  for (const k of keys) await page.keyboard.up(k);
+}
+
+/**
+ * Hold keys until `done(state)` is true (game time runs slower than wall time when the machine
+ * is busy, so fixed durations are flaky), then keep holding a bit longer to check it sticks.
+ */
+async function holdUntil(page, keys, done, timeout = 15000) {
+  for (const k of keys) await page.keyboard.down(k);
+  await expect.poll(async () => done(await state(page)), { timeout, intervals: [100] }).toBe(true);
+  await page.waitForTimeout(300);
+  const s = await state(page);
+  await release(page, keys);
+  return s;
+}
+
+test('moves right at the configured speed, then stops on release', async ({ page }) => {
+  const start = await state(page);
+  expect(start.anim).toBe('player_body_idle');
+
+  await hold(page, ['KeyD'], 400);
+  const moving = await state(page);
+  expect(moving.vx).toBeCloseTo(PLAYER.speed, 5);
+  expect(moving.vy).toBe(0);
+  expect(moving.x).toBeGreaterThan(start.x);
+  expect(moving.anim).toBe('player_body_run');
+
+  await release(page, ['KeyD']);
+  await page.waitForTimeout(100);
+  const stopped = await state(page);
+  expect(stopped.vx).toBe(0);
+  expect(stopped.vy).toBe(0);
+  expect(stopped.anim).toBe('player_body_idle');
+});
+
+test('diagonal speed equals the configured speed (±1%)', async ({ page }) => {
+  await hold(page, ['KeyW', 'KeyD'], 300);
+  const s = await state(page);
+  await release(page, ['KeyW', 'KeyD']);
+  expect(s.vx).toBeGreaterThan(0);
+  expect(s.vy).toBeLessThan(0);
+  const speed = Math.hypot(s.vx, s.vy);
+  expect(Math.abs(speed - PLAYER.speed) / PLAYER.speed).toBeLessThanOrEqual(0.01);
+});
+
+test('A + D cancel out horizontally', async ({ page }) => {
+  // Keys go down one at a time, so a frame may run with only A held. Measure after both are down.
+  await hold(page, ['KeyA', 'KeyD'], 100);
+  const start = await state(page);
+  await page.waitForTimeout(300);
+  const s = await state(page);
+  await release(page, ['KeyA', 'KeyD']);
+  expect(s.vx).toBe(0);
+  expect(s.x).toBe(start.x);
+});
+
+test("can't leave the left/top bounds and the camera clamps at the corner", async ({ page }) => {
+  await teleport(page, 100, 100);
+  const s = await holdUntil(page, ['KeyW', 'KeyA'],
+    (t) => t.body.left === 0 && t.body.top === 0 && t.cam.scrollX === 0 && t.cam.scrollY === 0);
+  expect(s.body.left).toBe(0);
+  expect(s.body.top).toBe(0);
+  expect(s.cam.scrollX).toBe(0);
+  expect(s.cam.scrollY).toBe(0);
+});
+
+test('camera follows and clamps at the bottom-right corner', async ({ page }) => {
+  const start = await state(page);
+  await hold(page, ['KeyD'], 800);
+  const followed = await state(page);
+  await release(page, ['KeyD']);
+  expect(followed.cam.scrollX).toBeGreaterThan(start.cam.scrollX);
+
+  await teleport(page, WORLD.width - 100, WORLD.height - 100);
+  const s = await holdUntil(page, ['KeyS', 'KeyD'], (t) => t.body.right === WORLD.width
+    && t.body.bottom === WORLD.height
+    && t.cam.scrollX === WORLD.width - DISPLAY.width
+    && t.cam.scrollY === WORLD.height - DISPLAY.height);
+  expect(s.body.right).toBe(WORLD.width);
+  expect(s.body.bottom).toBe(WORLD.height);
+  expect(s.cam.scrollX).toBe(WORLD.width - DISPLAY.width);
+  expect(s.cam.scrollY).toBe(WORLD.height - DISPLAY.height);
+  // Off-center: the player is in the right half / bottom half of the screen.
+  expect(s.x - s.cam.scrollX).toBeGreaterThan(DISPLAY.width / 2);
+  expect(s.y - s.cam.scrollY).toBeGreaterThan(DISPLAY.height / 2);
+});
+
+test('hurtbox is smaller than 32 px and matches the config', async ({ page }) => {
+  const { body } = await state(page);
+  const hb = PLAYER.hurtbox;
+  expect(body.width).toBeLessThan(32);
+  expect(body.height).toBeLessThan(32);
+  expect([body.width, body.height, body.offsetX, body.offsetY]).toEqual([hb.width, hb.height, hb.offsetX, hb.offsetY]);
+});
+
+test('facing flips with movement, then follows the pointer once it is used', async ({ page }) => {
+  await hold(page, ['KeyA'], 200);
+  expect((await state(page)).flipX).toBe(true);
+  await release(page, ['KeyA']);
+
+  await hold(page, ['KeyD'], 200);
+  expect((await state(page)).flipX).toBe(false);
+
+  // Moving only vertically keeps the current facing.
+  await release(page, ['KeyD']);
+  await hold(page, ['KeyW'], 200);
+  expect((await state(page)).flipX).toBe(false);
+  await release(page, ['KeyW']);
+
+  // Pointer to the left of the player while moving right -> faces left.
+  const box = await page.locator('#game canvas').boundingBox();
+  const scale = box.width / DISPLAY.width;
+  await page.keyboard.down('KeyD');
+  const s = await state(page);
+  const screenX = (s.x - s.cam.scrollX) * scale + box.x;
+  const screenY = (s.y - s.cam.scrollY) * scale + box.y;
+  await page.mouse.move(screenX - 150, screenY);
+  await page.waitForTimeout(200);
+  expect((await state(page)).flipX).toBe(true);
+
+  // Pointer to the right -> faces right.
+  await page.mouse.move(screenX + 300, screenY);
+  await page.waitForTimeout(200);
+  expect((await state(page)).flipX).toBe(false);
+  await page.keyboard.up('KeyD');
+});
