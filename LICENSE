@@ -19,15 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
---------------------------------------------------------------------------------
-
-ARTWORK IS NOT COVERED BY THIS LICENSE
-
-The MIT License above applies to the source code only. Artwork (the image files
-in src/assets/img/ and in art/, and any other graphics made for Gun Hands by
-its artist, david) is copyright its creator, all rights reserved. It may not be
-reused, redistributed or modified without the artist's written permission.
-
-Placeholder graphics generated at runtime by the source code are covered by the
-MIT License like the rest of the code.

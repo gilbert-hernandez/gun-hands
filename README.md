@@ -101,4 +101,4 @@ Art tickets (GH-15 to GH-22) don't use OpenSpec. david attaches the files to the
 
 ## License
 
-The code is under the [MIT License](LICENSE). The artwork in `src/assets/img/` and `art/` is not: it is copyright its artist, david, all rights reserved. See [LICENSE](LICENSE) for details.
+The code is under the [MIT License](LICENSE). The artwork in `src/assets/img/` and `art/` is not: it is copyright its artist, david, all rights reserved. See [ART-LICENSE.md](ART-LICENSE.md) for details.
