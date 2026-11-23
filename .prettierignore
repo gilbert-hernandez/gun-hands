@@ -1,0 +1,10 @@
+.claude/
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+videos/
+art/
+openspec/
+package-lock.json

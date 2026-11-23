@@ -10,13 +10,22 @@
     "preview": "vite preview",
     "test": "vitest run",
     "e2e": "playwright test",
-    "record": "node scripts/record.js"
+    "record": "node scripts/record.js",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "phaser": "4.2.1"
   },
   "devDependencies": {
+    "@eslint/js": "10.0.1",
     "@playwright/test": "^1.65.1",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.15.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "17.14.0",
+    "prettier": "3.10.1",
+    "typescript": "7.0.2",
     "vite": "8.3.8",
     "vitest": "5.1.0"
   }
