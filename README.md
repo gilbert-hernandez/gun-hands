@@ -19,6 +19,19 @@ npm run preview    # serve dist/ locally to check the build
 
 `dist/` runs from any static web server with no backend (`base: './'`, so it works from any path).
 
+### Browser tests and videos (Playwright)
+
+```bash
+npx playwright install chromium               # once: download the browser
+sudo apt-get install -y libnss3 libnspr4      # once, on WSL/Ubuntu if Chromium won't launch
+npm run e2e                                   # browser tests in e2e/ (starts the dev server itself)
+npm run record -- [out.webm] [seconds]        # record gameplay; needs `npm run dev` running
+```
+
+- Every e2e test records a video: `test-results/<test>/video.webm`. Failures also keep a trace (`npx playwright show-trace <path>`), and `npx playwright show-report` opens the HTML report.
+- `npm run record` writes `videos/<timestamp>.webm` plus an `.mp4` when ffmpeg is installed. Its scripted input is in `scripts/record.js`.
+- Tests read scene state through `window.__GAME__`, which only exists in dev builds.
+
 ### Dev shortcuts
 
 In `npm run dev`, debug mode is on (`DEBUG.enabled` in `src/config/display.js`). Each scene shows its name in the corner, and in the Game scene:
