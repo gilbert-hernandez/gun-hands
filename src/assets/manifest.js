@@ -128,6 +128,8 @@ const isPosInt = (n) => Number.isInteger(n) && n > 0;
 /**
  * Check a manifest for mistakes. Returns a list of human-readable errors
  * (empty when valid).
+ * @param {Array<Record<string, any>>} [entries] entries to check; may be malformed (that's what this finds)
+ * @returns {string[]}
  */
 export function validate(entries = MANIFEST) {
   const errors = [];

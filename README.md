@@ -19,6 +19,25 @@ npm run preview    # serve dist/ locally to check the build
 
 `dist/` runs from any static web server with no backend (`base: './'`, so it works from any path).
 
+### Code checks
+
+```bash
+npm run check          # everything below except coverage, in order; stops at the first failure. Run before committing.
+npm run format         # rewrite files in the project style (Prettier)
+npm run format:check   # verify formatting without changing files
+npm run lint           # ESLint: undefined/unused variables and other likely bugs
+npm run typecheck      # type-check JS using its JSDoc (tsc with jsconfig.json; no TypeScript conversion)
+npm run coverage       # unit tests with a coverage table; HTML report in coverage/index.html
+```
+
+- Prettier owns formatting and ESLint only looks for bugs, so they never disagree. Name a deliberately unused parameter with a leading `_` (`update(_time, delta)`).
+- Type-checking covers `src/` and `tests/`. `window.__GAME__` is declared in `src/types/globals.d.ts`.
+- The commit that first applied Prettier is listed in `.git-blame-ignore-revs`. Run `git config blame.ignoreRevsFile .git-blame-ignore-revs` once so `git blame` skips it.
+
+### Continuous integration
+
+`.github/workflows/ci.yml` runs `npm ci`, `npm run check` and `npm run e2e` on every push and pull request. When a step fails, the Playwright report and videos are uploaded as the `playwright-results` artifact on the run. It starts running once the repo is pushed to GitHub.
+
 ### Browser tests and videos (Playwright)
 
 ```bash

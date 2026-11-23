@@ -1,0 +1,37 @@
+# Runs the same commands you run locally: npm ci, npm run check, npm run e2e.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      # Format check, lint, typecheck, unit tests (stops at the first failure).
+      - run: npm run check
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run e2e
+
+      - name: Upload Playwright report and videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14

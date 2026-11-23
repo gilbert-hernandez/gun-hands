@@ -23,6 +23,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.guns = scene.add.sprite(x, y, 'player_guns_idle');
     this.guns.setDepth(1);
 
+    /** @type {'left' | 'right'} */
     this.facing = 'right';
     this.pointerUsed = false;
     this.keys = scene.input.keyboard.addKeys('W,A,S,D');

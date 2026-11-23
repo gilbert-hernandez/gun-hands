@@ -33,7 +33,7 @@ Vikunja: GH-23. The game has unit tests (Vitest) and browser tests (Playwright),
 
 ## Impact
 
-- **Dependencies (dev only):** `typescript`, `eslint`, `@eslint/js`, `globals`, `prettier`, `eslint-config-prettier`, `@vitest/coverage-v8`. Nothing is added to the shipped game bundle.
+- **Dependencies (dev only):** `typescript`, `eslint`, `@eslint/js`, `globals`, `prettier`, `eslint-config-prettier`, `@vitest/coverage-v8`, `@types/node` (so `tests/` can be type-checked where they import `node:fs`). Nothing is added to the shipped game bundle.
 - **New files:** `jsconfig.json`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`, `src/types/globals.d.ts` (declares `window.__GAME__`), `.github/workflows/ci.yml`.
 - **Changed files:** `package.json` (scripts and dev dependencies), `vite.config.js` (coverage settings), `.gitignore` (`coverage/`), `README.md`, plus any small fixes in `src/`, `tests/`, `e2e/` and `scripts/` that the new checks turn up. Prettier's first run reformats files repo-wide in one commit.
 - **CI:** the repo has no git remote yet, so the workflow only starts running once the repo is pushed to GitHub. Until then, `npm run check` and `npm run e2e` cover the same ground locally.

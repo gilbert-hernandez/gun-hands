@@ -5,6 +5,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   outputDir: './test-results',
+  // On CI: a stray test.only fails the run, and one retry absorbs a software-WebGL hiccup.
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
     baseURL: 'http://localhost:5173',

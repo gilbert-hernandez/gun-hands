@@ -19,13 +19,13 @@
 
 ## Decisions
 
-### 1. Type-check with `tsc --noEmit` and `jsconfig.json` (`checkJs`)
-`jsconfig.json` sets `checkJs: true`, `strict: false`, `noEmit`, `module/moduleResolution: "bundler"`, `target: "ES2022"`, `lib: ["ES2022", "DOM"]`, `types: ["vite/client"]` (for `import.meta.env`), and includes `src/**/*.js`, `src/types/*.d.ts` and `tests/**/*.js`. Phaser ships its own type definitions, so no `@types` package is needed.
+### 1. Type-check with `tsc` (TypeScript 7) and `jsconfig.json` (`checkJs`, `noEmit`)
+`jsconfig.json` sets `checkJs: true`, `strict: false`, `noEmit`, `module/moduleResolution: "bundler"`, `target: "ES2022"`, `lib: ["ES2022", "DOM"]`, `types: ["vite/client", "node"]` (`import.meta.env`, and `node:` imports in tests), `maxNodeModuleJsDepth: 0` (jsconfig otherwise type-checks JS inside node_modules), and includes `src/**/*.js`, `src/types/*.d.ts` and `tests/**/*.js`. Phaser ships its own type definitions, so no `@types` package is needed.
 - **Why not strict mode:** strict mode in JS mostly flags missing JSDoc on every callback parameter and Phaser `this.` property, which is noise for a 2-week demo. We start with `strict: false` plus `noImplicitReturns` and `noFallthroughCasesInSwitch`, and can tighten later.
 - **Alternative considered:** converting to TypeScript gives stronger guarantees, but it touches every file and the project context says plain JS. Rejected.
 - `src/types/globals.d.ts` declares `interface Window { __GAME__?: import('phaser').Game }`.
 
-### 2. ESLint 9 flat config with `@eslint/js` recommended rules and `eslint-config-prettier`
+### 2. ESLint (v10) flat config with `@eslint/js` recommended rules and `eslint-config-prettier`
 `eslint.config.js` sets environment globals per folder with the `globals` package: browser for `src/`, Node for `scripts/` and the root config files, and both for `e2e/` (Playwright callbacks run in the page). `eslint-config-prettier` goes last and turns off every style rule, so Prettier owns formatting. Ignore `dist/`, `coverage/`, `test-results/`, `playwright-report/`, `videos/` and `art/`.
 - **Alternative considered:** Biome does lint and format in one fast tool, but its rules cover less and the ESLint ecosystem is the standard you'll meet on client projects. Rejected for now.
 - Unused variables are allowed when they start with `_`, so Phaser callbacks like `update(_time, delta)` stay clean.

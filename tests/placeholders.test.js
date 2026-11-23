@@ -20,6 +20,10 @@ const fakeDoc = {
   },
 };
 
+// The fake isn't a real Document/canvas, so loosen types at this one call site.
+/** @param {any} entry @returns {any} */
+const draw = (entry) => drawPlaceholderCanvas(entry, /** @type {any} */ (fakeDoc));
+
 describe('placeholders', () => {
   it('has a color for every category', () => {
     for (const e of MANIFEST) expect(CATEGORY_COLORS[e.category]).toMatch(/^#[0-9a-f]{6}$/);
@@ -27,7 +31,7 @@ describe('placeholders', () => {
 
   it('generates the declared size for every manifest entry', () => {
     for (const e of MANIFEST) {
-      const c = drawPlaceholderCanvas(e, fakeDoc);
+      const c = draw(e);
       if (e.type === 'tileset') {
         expect([c.width, c.height]).toEqual([e.columns * e.frameWidth, (e.frames / e.columns) * e.frameHeight]);
       } else {
@@ -43,7 +47,7 @@ describe('placeholders', () => {
 
   it('makes the brute walk a 64x64 strip with its declared frame count', () => {
     const e = asset('enemy_brute_walk');
-    const c = drawPlaceholderCanvas(e, fakeDoc);
+    const c = draw(e);
     expect(c.height).toBe(64);
     expect(c.width / 64).toBe(e.frames);
   });

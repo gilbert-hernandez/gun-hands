@@ -9,5 +9,12 @@ export default defineConfig({
   },
   test: {
     include: ['tests/**/*.test.js'],
+    coverage: {
+      provider: 'v8',
+      // All of src/, so untested files (scenes) show as 0% instead of being hidden.
+      include: ['src/**/*.js'],
+      reporter: [['text', { skipFull: false }], 'html'],
+      reportsDirectory: 'coverage',
+    },
   },
 });
