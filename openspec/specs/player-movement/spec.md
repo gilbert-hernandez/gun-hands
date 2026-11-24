@@ -43,11 +43,15 @@ The player body SHALL face left or right. When the mouse pointer has been moved 
 - **THEN** the body plays the run animation while moving and returns to the idle animation when stopped
 
 ### Requirement: Arena bounds
-The arena SHALL be a fixed world size from config, larger than the screen. The player SHALL NOT be able to move any part of its hurtbox outside the arena.
+The arena SHALL be a fixed world size taken from the arena map, larger than the screen. The player SHALL NOT be able to move any part of its hurtbox outside the arena, and SHALL NOT be able to overlap any wall or obstacle tile.
 
 #### Scenario: Walk into a wall
 - **WHEN** the player holds A long enough to reach the left edge of the arena
-- **THEN** the player stops at the edge and stays fully inside the arena
+- **THEN** the player stops flush against the border wall and stays fully inside the arena
+
+#### Scenario: World size comes from the map
+- **WHEN** a game session starts
+- **THEN** the arena's width and height equal the map's width and height in pixels
 
 ### Requirement: Camera follow clamped to the arena
 The camera SHALL follow the player with smoothing (lerp from config) and SHALL never show anything outside the arena.
