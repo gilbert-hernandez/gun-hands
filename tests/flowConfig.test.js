@@ -49,4 +49,12 @@ describe('FLOW config', () => {
     const button = asset(FLOW.keys.button);
     expect(FLOW.pause.quitY - FLOW.pause.resumeY).toBeGreaterThanOrEqual(button.frameHeight);
   });
+
+  it('puts the version label on screen, below the controls hint', () => {
+    const { x, y } = FLOW.title.version;
+    expect(x).toBeGreaterThanOrEqual(0);
+    expect(x).toBeLessThan(DISPLAY.width);
+    expect(y).toBeGreaterThan(FLOW.title.hintY);
+    expect(y).toBeLessThanOrEqual(DISPLAY.height);
+  });
 });

@@ -61,6 +61,10 @@ In `npm run dev`, debug mode is on (`DEBUG.enabled` in `src/config/display.js`).
 
 Production builds turn these off.
 
+### Version
+
+The version lives in `package.json` (`version`) and nowhere else. Vite injects it at build time, and the title screen shows it bottom-left: `v0.2.0` in production builds, `v0.2.0-dev (<commit>)` in `npm run dev`. To release, bump `package.json`, update `CHANGELOG.md`, and tag `v<version>`.
+
 ## Project layout
 
 ```

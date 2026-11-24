@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 import { DISPLAY } from '../src/config/display.js';
 import { FLOW } from '../src/config/flow.js';
@@ -7,7 +8,7 @@ import { ignoreWindowBlur } from './support.js';
 
 // Game flow (GH-11): the title screen and its Start button, menu button frames, the Esc / focus-loss
 // pause menu with Resume and Quit to Title, the GameOver screen with Restart and Title, and the
-// clean-session guarantee. Real window blur is ignored (see support.js); the focus-loss test emits
+// clean-session guarantee, plus the build version label on the title (GH-24). Real window blur is ignored (see support.js); the focus-loss test emits
 // Phaser's own `blur` game event instead. Tests wait on game state, not wall-clock time.
 
 let errors;
@@ -196,6 +197,52 @@ test('while the logo is a placeholder the title shows GUN HANDS as text', async 
     return { placeholder: placeholders.includes('ui_logo'), type: title.logo.type, text: title.logo.text };
   });
   expect(t).toEqual({ placeholder: true, type: 'Text', text: 'GUN HANDS' });
+});
+
+test('the title shows the package.json version as a dev build, clear of the other title items', async ({ page }) => {
+  const { version } = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const v = await page.evaluate((hint) => {
+    const title = window.__GAME__.scene.getScene('Title');
+    const box = (o) => {
+      const r = o.getBounds();
+      return { x: r.x, y: r.y, w: r.width, h: r.height };
+    };
+    const hintText = title.children.list.find((o) => o.type === 'Text' && o.text === hint);
+    return {
+      text: title.versionText.text,
+      interactive: !!title.versionText.input,
+      label: box(title.versionText),
+      others: [box(title.logo), box(title.startButton), box(hintText)],
+    };
+  }, FLOW.title.hint);
+
+  // The dev server builds in development mode; the commit is there only when git is.
+  expect(v.text).toMatch(new RegExp(`^v${version.replaceAll('.', '\\.')}-dev( \\([0-9a-f]+\\))?$`));
+  expect(v.interactive).toBe(false);
+  const { label } = v;
+  expect(label.x).toBeGreaterThanOrEqual(0);
+  expect(label.y).toBeGreaterThanOrEqual(0);
+  expect(label.x + label.w).toBeLessThanOrEqual(DISPLAY.width);
+  expect(label.y + label.h).toBeLessThanOrEqual(DISPLAY.height);
+  for (const o of v.others) {
+    const overlap = label.x < o.x + o.w && o.x < label.x + label.w && label.y < o.y + o.h && o.y < label.y + label.h;
+    expect(overlap).toBe(false);
+  }
+});
+
+test('clicking the version label does not start a session', async ({ page }) => {
+  const c = await page.evaluate(() => {
+    const r = window.__GAME__.scene.getScene('Title').versionText.getBounds();
+    return { x: r.centerX, y: r.centerY };
+  });
+  const p = await toPage(page, c.x, c.y);
+  await page.mouse.click(p.x, p.y);
+  await waitLoopMs(page, 500);
+  const s = await page.evaluate(() => ({
+    title: window.__GAME__.scene.isActive('Title'),
+    game: window.__GAME__.scene.isActive('Game'),
+  }));
+  expect(s).toEqual({ title: true, game: false });
 });
 
 // ---------------------------------------------------------------- buttons

@@ -18,6 +18,8 @@ export const FLOW = {
     hint: 'WASD move · Mouse aim · Esc pause',
     // Background fill while `ui_title_bg` is a placeholder.
     placeholderFill: 0x111827,
+    // Build version label (GH-24), anchored by its bottom-left corner. Dimmer than the hint.
+    version: { x: 8, y: 532, fontSize: '12px', color: '#6b7280' },
   },
   pause: {
     // Esc is ignored this long after the overlay opens (covers a doubled or held keydown).

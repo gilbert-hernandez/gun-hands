@@ -24,5 +24,10 @@ export default [
   { files: ['e2e/**/*.js'], languageOptions: { globals: { ...globals.node, ...globals.browser } } },
   // Scripts and root config files run in Node; record.js also passes callbacks into the page.
   { files: ['scripts/**/*.js', '*.config.js'], languageOptions: { globals: { ...globals.node, ...globals.browser } } },
+  // Build-time constants injected by vite.config.js `define` (declared in src/types/globals.d.ts).
+  {
+    files: ['src/**/*.js', 'tests/**/*.js'],
+    languageOptions: { globals: { __APP_VERSION__: 'readonly', __APP_COMMIT__: 'readonly' } },
+  },
   prettier,
 ];
