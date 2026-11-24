@@ -3,6 +3,7 @@ import { ENEMIES } from '../src/config/enemies.js';
 import { PLAYER } from '../src/config/player.js';
 import { POWERUPS } from '../src/config/powerups.js';
 import { WEAPON } from '../src/config/weapon.js';
+import { ignoreWindowBlur } from './support.js';
 
 // Loot powerups (GH-9): drops, pickups on the floor, the six effects, timers, pausing, and the
 // debug key. Every test turns the wave director, the player's auto-fire, powerup drops, and the
@@ -18,6 +19,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
@@ -492,9 +494,14 @@ test('a new session starts with no active powerups and no pickups', async ({ pag
     const scene = window.__GAME__.scene.getScene('Game');
     scene.combat.damagePlayer(scene.player.hp, { force: true });
   });
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('GameOver'), null, { timeout: 10000 });
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('Title'));
+  await page.waitForFunction(
+    () => window.__GAME__.scene.isActive('GameOver') && window.__GAME__.scene.getScene('GameOver').ready,
+    null,
+    {
+      timeout: 10000,
+    },
+  );
+  // Restart goes straight into a new session (GH-11).
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => {
     const g = window.__GAME__.scene.getScene('Game');

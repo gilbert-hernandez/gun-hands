@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { WEAPON } from '../src/config/weapon.js';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { DISPLAY } from '../src/config/display.js';
+import { ignoreWindowBlur } from './support.js';
 
 // Aiming, auto-fire, bullet stats, pooling and pierce (GH-3).
 // Frame timing in headless swiftshader is uneven, so rates are measured against the game's own
@@ -16,6 +17,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
@@ -449,11 +451,11 @@ test('each shot shows the muzzle flash at the gun tip; no duplicate events after
   // It hides between shots (60 ms flash, 250 ms interval).
   await page.waitForFunction(() => !window.__GAME__.scene.getScene('Game').muzzle.visible, null, { timeout: 2000 });
 
-  // Game -> GameOver -> Title -> Game, then count events against the game's own shot count.
+  // Game -> GameOver -> Restart -> Game, then count events against the game's own shot count.
   await page.keyboard.press('KeyG');
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('GameOver'));
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('Title'));
+  await page.waitForFunction(
+    () => window.__GAME__.scene.isActive('GameOver') && window.__GAME__.scene.getScene('GameOver').ready,
+  );
   await page.keyboard.press('Enter');
   await page.waitForFunction(
     () => window.__GAME__.scene.getScene('Game')?.player?.body && window.__GAME__.scene.isActive('Game'),

@@ -6,6 +6,7 @@ import TitleScene from './scenes/TitleScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 import LevelUpScene from './scenes/LevelUpScene.js';
+import PauseScene from './scenes/PauseScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
 
 const game = new Phaser.Game({
@@ -23,7 +24,7 @@ const game = new Phaser.Game({
     default: 'arcade',
     arcade: { debug: DEBUG.physics },
   },
-  scene: [BootScene, PreloadScene, TitleScene, GameScene, UIScene, LevelUpScene, GameOverScene],
+  scene: [BootScene, PreloadScene, TitleScene, GameScene, UIScene, LevelUpScene, PauseScene, GameOverScene],
 });
 
 if (import.meta.env.DEV) {

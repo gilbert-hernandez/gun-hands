@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { ENEMIES } from '../src/config/enemies.js';
+import { ignoreWindowBlur } from './support.js';
 
 // Enemies (GH-5): types, ring spawning, chase with separation, walls, pool, recycling, waves.
 // Most tests turn the wave director off and place enemies themselves. Positions refer to the
@@ -19,6 +20,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');

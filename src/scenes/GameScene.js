@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DEBUG, DISPLAY, WEAPON, WORLD } from '../config/index.js';
+import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
 import Enemies from '../enemy/Enemies.js';
 import Bullets from '../weapon/Bullets.js';
@@ -73,6 +73,17 @@ export default class GameScene extends Phaser.Scene {
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
 
+    // Pause menu (GH-11). `pauseOpen` is a flag, not the scene state, for the same reason as
+    // `xp.levelUpOpen`: Phaser queues pause/launch, and a doubled keydown must not open it twice.
+    this.pauseOpen = false;
+    this.input.keyboard.on('keydown-ESC', () => this.openPause());
+    if (FLOW.pauseOnBlur) {
+      // The one listener on a game-wide emitter: it must go with the session.
+      const onBlur = () => this.openPause();
+      this.game.events.on(Phaser.Core.Events.BLUR, onBlur);
+      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.game.events.off(Phaser.Core.Events.BLUR, onBlur));
+    }
+
     if (DEBUG.enabled) {
       // Tuning aid, not the HUD (see UIScene): survival time, live enemies / cap, HP, kills.
       this.debugText = this.add
@@ -89,6 +100,17 @@ export default class GameScene extends Phaser.Scene {
       // P: drop the next powerup (cycling through all six) in front of the player.
       this.input.keyboard.on('keydown-P', () => this.powerups.debugDrop());
     }
+  }
+
+  /**
+   * Pause Game and open the Pause menu, unless the player is dead, LevelUp is open (or about to
+   * open), or Pause already is.
+   */
+  openPause() {
+    if (this.player.dead || this.xp.levelUpOpen || this.pauseOpen) return;
+    this.pauseOpen = true;
+    this.scene.pause();
+    this.scene.launch('Pause');
   }
 
   update(time, delta) {

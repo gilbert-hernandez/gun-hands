@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ENEMIES } from '../src/config/enemies.js';
 import { PLAYER } from '../src/config/player.js';
 import { XP } from '../src/config/xp.js';
+import { ignoreWindowBlur } from './support.js';
 
 // XP gems and levelling (GH-7): drops, the pickup-radius magnet, collection, the gem pool merge,
 // levels, and the queued LevelUp flow. Every test turns the wave director and the player's
@@ -20,6 +21,7 @@ test.beforeEach(async ({ page }) => {
     // Opening LevelUp twice in one frame used to pause Game twice.
     if (m.type() === 'warning' && m.text().includes('Cannot pause')) errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');

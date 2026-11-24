@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { PLAYER } from '../src/config/player.js';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { DISPLAY } from '../src/config/display.js';
+import { ignoreWindowBlur } from './support.js';
 
 // Player movement, facing, bounds, camera and hurtbox (GH-2). Since GH-4 the arena is the Tiled map,
 // so the player stops at the inner face of the 1-tile border wall.
@@ -19,6 +20,7 @@ let errors;
 test.beforeEach(async ({ page }) => {
   errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');

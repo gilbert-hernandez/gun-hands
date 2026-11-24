@@ -1,11 +1,14 @@
 import Phaser from 'phaser';
-import { DISPLAY } from '../config/index.js';
+import { DISPLAY, FLOW } from '../config/index.js';
 import { formatTime } from '../util/format.js';
+import Button from '../ui/Button.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 /** @typedef {import('../combat/events.js').RunStats} RunStats */
 
-// Stub: shows the run stats it is started with (GH-6). The real screen and Restart arrive in GH-11.
+// The GameOver screen (GH-11): the run stats Combat starts it with (GH-6) on the GameOver panel,
+// with Restart (button or Enter: a new session straight away) and Title (button or Esc). All input
+// waits for an input delay, so keys or clicks held at the moment of death can't skip the screen.
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
     super('GameOver');
@@ -18,34 +21,59 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create() {
-    const { width, height } = DISPLAY;
+    const { width } = DISPLAY;
+    const { keys, gameOver } = FLOW;
+    const placeholders = new Set(this.registry.get('placeholders') ?? []);
+    /** Input is accepted once the input delay has passed (e2e tests wait on this). */
+    this.ready = false;
+    /** Set by the first accepted Restart or Title; every later input is ignored. */
+    this.left = false;
+
+    const panel = this.add.image(width / 2, gameOver.panelY, keys.gameOverPanel);
+    if (placeholders.has(keys.gameOverPanel)) panel.setTint(FLOW.panelPlaceholderTint);
     addSceneLabel(this);
-    this.add
-      .text(width / 2, height / 2 - 60, 'GAME OVER', { fontFamily: 'monospace', fontSize: '48px', color: '#ef4444' })
-      .setOrigin(0.5);
-
-    if (this.stats) {
-      const { timeMs, kills, level } = this.stats;
-      this.statsText = this.add
-        .text(width / 2, height / 2 + 10, [`Time   ${formatTime(timeMs)}`, `Kills  ${kills}`, `Level  ${level}`], {
-          fontFamily: 'monospace',
-          fontSize: '20px',
-          color: '#ffffff',
-          align: 'left',
-        })
-        .setOrigin(0.5);
-    }
 
     this.add
-      .text(width / 2, height / 2 + 90, 'Click or press Enter to return to title', {
-        fontFamily: 'monospace',
-        fontSize: '16px',
-        color: '#ffffff',
+      .text(width / 2, gameOver.titleY, 'GAME OVER', {
+        fontFamily: FLOW.fontFamily,
+        fontSize: '44px',
+        color: '#ef4444',
+        fontStyle: 'bold',
       })
       .setOrigin(0.5);
 
-    const back = () => this.scene.start('Title');
-    this.input.once('pointerdown', back);
-    this.input.keyboard.once('keydown-ENTER', back);
+    const s = this.stats;
+    const dash = '—';
+    this.statsText = this.add
+      .text(
+        width / 2,
+        gameOver.statsY,
+        [`Time   ${s ? formatTime(s.timeMs) : dash}`, `Kills  ${s ? s.kills : dash}`, `Level  ${s ? s.level : dash}`],
+        { fontFamily: FLOW.fontFamily, fontSize: '22px', color: '#ffffff', align: 'left', lineSpacing: 6 },
+      )
+      .setOrigin(0.5);
+
+    const offset = (this.textures.getFrame(keys.button).width + gameOver.buttonGap) / 2;
+    this.restartButton = new Button(this, width / 2 - offset, gameOver.buttonsY, 'RESTART', () => this.restart());
+    this.titleButton = new Button(this, width / 2 + offset, gameOver.buttonsY, 'TITLE', () => this.toTitle());
+
+    this.input.keyboard.on('keydown-ENTER', () => this.restart());
+    this.input.keyboard.on('keydown-ESC', () => this.toTitle());
+    this.time.delayedCall(gameOver.inputDelayMs, () => {
+      this.ready = true;
+    });
+  }
+
+  /** Start a new session directly. */
+  restart() {
+    if (!this.ready || this.left) return;
+    this.left = true;
+    this.scene.start('Game');
+  }
+
+  toTitle() {
+    if (!this.ready || this.left) return;
+    this.left = true;
+    this.scene.start('Title');
   }
 }

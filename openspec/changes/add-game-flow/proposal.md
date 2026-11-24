@@ -1,4 +1,4 @@
-# Proposal
+w# Proposal
 
 ## Why
 
@@ -37,5 +37,5 @@ Vikunja: GH-11. The demo loop is meant to be title → play → level-ups → de
 ## Impact
 
 - New: `src/config/flow.js` (`FLOW`), `src/ui/Button.js`, `src/scenes/PauseScene.js`, `tests/flowConfig.test.js`, `e2e/flow.spec.js`.
-- Changed: `src/scenes/TitleScene.js`, `src/scenes/GameOverScene.js`, `src/scenes/GameScene.js` (Esc and blur open Pause), `src/main.js` (registers Pause above LevelUp), `src/config/index.js`, `scripts/record.js`, and the e2e specs that leave GameOver with Enter (`combat`, `hud`, `levelup`, `powerups`).
+- Changed: `src/scenes/TitleScene.js`, `src/scenes/GameOverScene.js`, `src/scenes/GameScene.js` (Esc and blur open Pause), `src/main.js` (registers Pause above LevelUp), `src/config/index.js`, `scripts/record.js`, and the e2e specs that leave GameOver with Enter (`combat`, `hud`, `levelup`, `powerups`, `shooting`).
 - No new dependencies, and no manifest or ASSETS.md changes: `ui_button`, `ui_logo`, `ui_title_bg` and `ui_gameover_panel` already exist.

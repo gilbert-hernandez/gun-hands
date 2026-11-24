@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { DISPLAY } from '../src/config/display.js';
+import { ignoreWindowBlur } from './support.js';
 
 // The Tiled arena: size, spawn, wall collision for the player, bullets and other actors (GH-4).
 // Positions below refer to the shipped map: a vertical wall run in column 14, rows 17-22
@@ -21,6 +22,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');

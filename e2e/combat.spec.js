@@ -3,6 +3,7 @@ import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { ENEMIES } from '../src/config/enemies.js';
 import { PLAYER } from '../src/config/player.js';
 import { COMBAT } from '../src/config/combat.js';
+import { ignoreWindowBlur } from './support.js';
 
 // Combat (GH-6): bullet hits on enemies, contact damage, invulnerability, death into GameOver,
 // and the combat events. Every test turns the wave director and the player's auto-fire off,
@@ -23,6 +24,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
@@ -487,9 +489,8 @@ test('at 0 HP everything stops, player-died fires once, and GameOver shows the r
   expect(go.text).toContain('Level  3');
   expect(go.ui).toBe(false);
 
-  // A new session starts at full HP.
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('Title'));
+  // Restart (after the GameOver input delay) starts a new session at full HP.
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('GameOver').ready);
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => {
     const g = window.__GAME__.scene.getScene('Game');

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { HUD } from '../src/config/hud.js';
 import { PLAYER } from '../src/config/player.js';
 import { POWERUPS } from '../src/config/powerups.js';
+import { ignoreWindowBlur } from './support.js';
 
 // HUD (GH-10): the UI scene's HP bar, XP bar and level, mm:ss timer, kill count, and active
 // powerup icons, checked through the fields the UI scene exposes. Every test turns the wave
@@ -34,6 +35,7 @@ test.beforeEach(async ({ page }) => {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await startSession(page);
 });
@@ -58,7 +60,6 @@ function hud(page) {
       timer: u.timerText.text,
       kills: u.killsText.text,
       slots: u.slots.filter((s) => s.id).map((s) => ({ id: s.id, text: s.text.text, tint: s.icon.tintTopLeft })),
-      flashing: u.flashMs > 0,
       positions: objs.map((o) => [o.x, o.y]),
       scroll: [u.cameras.main.scrollX, u.cameras.main.scrollY],
     };
@@ -138,11 +139,22 @@ test('the HUD stays put while the camera follows the player', async ({ page }) =
 });
 
 test('HP follows damage (with a flash), heals, a Max HP upgrade and death, on whole pixels', async ({ page }) => {
+  // The 120 ms flash can end between two polls under parallel load, so record in the page whether
+  // each flashHp call started the flash (same pattern as the level pop below).
+  await page.evaluate(() => {
+    const ui = window.__GAME__.scene.getScene('UI');
+    const flash = ui.flashHp;
+    window.__flashes = [];
+    ui.flashHp = function () {
+      flash.apply(this);
+      window.__flashes.push(this.flashMs > 0);
+    };
+  });
   await inGame(page, 'g.combat.damagePlayer(25, { force: true });');
   let h = await hud(page);
   expect(h.hp).toBe('75/100');
   expect(h.hpW).toBe(Math.round(0.75 * h.full));
-  expect(h.flashing).toBe(true);
+  expect(await page.evaluate(() => window.__flashes)).toEqual([true]);
   await page.waitForFunction(() => window.__GAME__.scene.getScene('UI').flashMs <= 0);
 
   await inGame(page, "g.player.hp = 50; g.powerups.collect('health');");
@@ -307,8 +319,15 @@ test('after death, title and a new start the HUD is fresh', async ({ page }) => 
     page,
     "g.combat.kills = 12; g.survivalMs = 90000; g.powerups.collect('spread'); g.xp.collect(3); g.combat.damagePlayer(g.player.hp, { force: true });",
   );
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('GameOver'), null, { timeout: 10000 });
-  await page.keyboard.press('Enter');
+  await page.waitForFunction(
+    () => window.__GAME__.scene.isActive('GameOver') && window.__GAME__.scene.getScene('GameOver').ready,
+    null,
+    {
+      timeout: 10000,
+    },
+  );
+  // Esc on GameOver goes to the title (GH-11).
+  await page.keyboard.press('Escape');
   await startSession(page);
   await inGame(page, 'g.survivalMs = 0;');
   const h = await hud(page);

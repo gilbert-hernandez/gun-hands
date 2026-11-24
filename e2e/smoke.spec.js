@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ignoreWindowBlur } from './support.js';
 
 /** Wait until the given Phaser scene is active (uses window.__GAME__, dev builds only). */
 async function waitForScene(page, key) {
@@ -9,6 +10,7 @@ test('boots to the title screen and starts the game', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await expect(page.locator('#game canvas')).toBeVisible();
   await waitForScene(page, 'Title');

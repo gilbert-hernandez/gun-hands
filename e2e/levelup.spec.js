@@ -3,6 +3,7 @@ import { DISPLAY } from '../src/config/display.js';
 import { PLAYER } from '../src/config/player.js';
 import { UPGRADES } from '../src/config/upgrades.js';
 import { WEAPON } from '../src/config/weapon.js';
+import { ignoreWindowBlur } from './support.js';
 
 // The pick-1-of-3 LevelUp screen (GH-8): the card draw, choosing by key and click, the input
 // delay, the no-way-out rule, queued level-ups, the upgrade-chosen event, and each upgrade's
@@ -22,6 +23,7 @@ test.beforeEach(async ({ page }) => {
     if (m.type() === 'error') errors.push(m.text());
     if (m.type() === 'warning' && m.text().includes('Cannot pause')) errors.push(m.text());
   });
+  await ignoreWindowBlur(page);
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
@@ -347,14 +349,19 @@ test('a new session starts with every upgrade at rank 0 and config stats', async
     await page.waitForFunction(() => window.__GAME__.scene.getScene('LevelUp').chosen === false);
   }
   await pickKey(page, '3');
-  // Die through the real path, then start a new session from Title.
+  // Die through the real path, then Restart into a new session.
   await page.evaluate(() => {
     const scene = window.__GAME__.scene.getScene('Game');
     scene.combat.damagePlayer(scene.player.hp, { force: true });
   });
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('GameOver'), null, { timeout: 10000 });
-  await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__.scene.isActive('Title'));
+  await page.waitForFunction(
+    () => window.__GAME__.scene.isActive('GameOver') && window.__GAME__.scene.getScene('GameOver').ready,
+    null,
+    {
+      timeout: 10000,
+    },
+  );
+  // Restart goes straight into a new session (GH-11).
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => {
     const g = window.__GAME__.scene.getScene('Game');

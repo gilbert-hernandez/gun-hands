@@ -13,10 +13,37 @@ mkdirSync('videos/.tmp', { recursive: true });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const context = await browser.newContext({ viewport: size, recordVideo: { dir: 'videos/.tmp', size } });
 const page = await context.newPage();
+// A focus change on the recording machine must not open the pause menu (GH-11) mid-route.
+await page.addInitScript(() => window.addEventListener('blur', (e) => e.stopImmediatePropagation(), true));
 await page.goto(process.env.URL ?? 'http://localhost:5173');
-await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
-await page.waitForTimeout(1000);
-await page.keyboard.press('Enter');
+await page.waitForFunction(() => window.__GAME__?.scene.getScene('Title')?.startButton);
+const box = await page.locator('#game canvas').boundingBox();
+const scale = box.width / size.width;
+
+/**
+ * Move the mouse onto a menu button (GH-11) so its hover frame shows, then click it.
+ * @param {string} sceneKey
+ * @param {string} name the button's field on that scene
+ * @param {number} hoverMs
+ */
+async function clickButton(sceneKey, name, hoverMs = 700) {
+  const b = await page.evaluate(
+    ([k, n]) => {
+      const btn = window.__GAME__.scene.getScene(k)[n];
+      return { x: btn.x, y: btn.y };
+    },
+    [sceneKey, name],
+  );
+  await page.mouse.move(box.x + b.x * scale, box.y + b.y * scale, { steps: 10 });
+  await page.waitForTimeout(hoverMs);
+  await page.mouse.down();
+  await page.waitForTimeout(150);
+  await page.mouse.up();
+}
+
+// Title (GH-11): hover the Start button, then click it.
+await page.waitForTimeout(1200);
+await clickButton('Title', 'startButton', 900);
 await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player);
 // Crowd contact (GH-6) still hurts, so the HUD's HP bar (GH-10) drops and flashes, but it can't take
 // the player below HP_FLOOR before the scripted death scene, which restores the real damage path.
@@ -37,14 +64,16 @@ await page.evaluate((floor) => {
 // powerups; POWERUP_MS before the death scene shows each powerup at work (GH-9). The HUD (GH-10) is on
 // screen throughout: HP dropping and flashing on hits, XP and the level popping, the mm:ss timer,
 // kills, a Health Pack refilling HP, and the Rapid Fire and Spread Shot icons counting down.
-// The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level. Each step: keys to hold,
+// The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level; after
+// that comes Restart into a new run (GH-11). Along the way the route pauses once (Esc, then Resume). Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
-// off-screen ring right away. The spawn is at the map center; a vertical wall run is ~500 px left.
+// off-screen ring right away; ['pause', ms] opens the pause menu for ms, then clicks Resume. The spawn is at the map center; a vertical wall run is ~500 px left.
 const route = [
   [[], 3000, 'circle'], // the first Grunts walk in from off-screen
   ['spawn', { grunt: 6, runner: 4, brute: 2 }], // Runners (yellow) and Brutes (purple) join
   [[], 2000, 'circle'], // the crowd closes in and spreads out instead of stacking
+  ['pause', 2200], // Esc: PAUSED over the frozen crowd and HUD (GH-11), then the Resume button
   [['KeyA'], 2200, 'circle'], // run past the wall run: chasers behind it slide along it
   [['KeyW'], 1200, 'circle'],
   [['KeyD'], 2500, 'circle'], // kite back right; Runners keep up, Brutes fall behind
@@ -57,8 +86,6 @@ const SPREAD_MS = 9000 + POWERUP_MS + DEATH_MS; // then two queued level-ups (Mu
 const RADIUS = 150; // game px
 const LEVELUP_MS = 1200; // how long a card is hovered before it is picked
 const TURN_MS = 3000; // one full mouse circle
-const box = await page.locator('#game canvas').boundingBox();
-const scale = box.width / size.width;
 const end = Date.now() + seconds * 1000;
 let angle = 0;
 
@@ -127,6 +154,14 @@ async function circle(keys, ms, aim = 'circle') {
 
 for (const [keys, ms, aim] of route) {
   if (Date.now() >= end - SPREAD_MS) break;
+  if (keys === 'pause') {
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => window.__GAME__.scene.getScene('Pause')?.ready);
+    await page.waitForTimeout(ms);
+    await clickButton('Pause', 'resumeButton');
+    await page.waitForFunction(() => !window.__GAME__.scene.isActive('Pause'));
+    continue;
+  }
   if (keys === 'spawn') {
     await page.evaluate((counts) => {
       const { enemies } = window.__GAME__.scene.getScene('Game');
@@ -213,6 +248,28 @@ await page.evaluate(() => {
   enemies.spawnAt('grunt', player.x, player.y + 30);
 });
 await circle([], end - Date.now(), null);
+
+// GameOver (GH-11): the stats on the panel, then Restart straight into a fresh run (full HP, LV 1,
+// 00:00, KILLS 0) that plays for a few seconds. This runs past `seconds` by about RESTART_MS.
+const RESTART_MS = 4000;
+await page.waitForFunction(() => window.__GAME__.scene.getScene('GameOver')?.ready, null, { timeout: 15000 });
+await page.waitForTimeout(1500);
+await clickButton('GameOver', 'restartButton', 900);
+await page.waitForFunction(() => window.__GAME__.scene.isActive('Game') && window.__GAME__.scene.isActive('UI'));
+const restartEnd = Date.now() + RESTART_MS;
+while (Date.now() < restartEnd) {
+  const p = await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const cam = scene.cameras.main;
+    return { x: scene.player.x - cam.scrollX, y: scene.player.y - cam.scrollY };
+  });
+  angle += (2 * Math.PI * 50) / TURN_MS;
+  await page.mouse.move(
+    box.x + (p.x + Math.cos(angle) * RADIUS) * scale,
+    box.y + (p.y + Math.sin(angle) * RADIUS) * scale,
+  );
+  await page.waitForTimeout(50);
+}
 
 const video = page.video();
 await context.close();

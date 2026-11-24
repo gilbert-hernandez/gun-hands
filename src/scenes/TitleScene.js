@@ -1,7 +1,11 @@
 import Phaser from 'phaser';
-import { DISPLAY } from '../config/index.js';
+import { DISPLAY, FLOW } from '../config/index.js';
+import Button from '../ui/Button.js';
 import { addSceneLabel } from './sceneLabel.js';
 
+// The title screen (GH-11): background, logo, Start button and a controls hint. Start, Enter or
+// Space start a session (once); a click anywhere else does nothing. While the logo or background
+// is a placeholder, the logo is drawn as text and the background as a plain fill.
 export default class TitleScene extends Phaser.Scene {
   constructor() {
     super('Title');
@@ -9,27 +13,42 @@ export default class TitleScene extends Phaser.Scene {
 
   create() {
     const { width, height } = DISPLAY;
+    const { keys, title } = FLOW;
+    const placeholders = new Set(this.registry.get('placeholders') ?? []);
+    /** Set by the first start; later inputs are ignored. */
+    this.started = false;
+
+    if (placeholders.has(keys.titleBg)) {
+      this.add.rectangle(0, 0, width, height, title.placeholderFill).setOrigin(0);
+    } else {
+      this.add.image(0, 0, keys.titleBg).setOrigin(0);
+    }
+
+    /** @type {Phaser.GameObjects.Image | Phaser.GameObjects.Text} */
+    this.logo = placeholders.has(keys.logo)
+      ? this.add
+          .text(width / 2, title.logoY, 'GUN HANDS', {
+            fontFamily: FLOW.fontFamily,
+            fontSize: '64px',
+            color: '#ffffff',
+            fontStyle: 'bold',
+          })
+          .setOrigin(0.5)
+      : this.add.image(width / 2, title.logoY, keys.logo);
+
+    this.startButton = new Button(this, width / 2, title.startY, 'START', () => this.start());
+    this.add
+      .text(width / 2, title.hintY, title.hint, { fontFamily: FLOW.fontFamily, fontSize: '14px', color: '#9ca3af' })
+      .setOrigin(0.5);
     addSceneLabel(this);
 
-    this.add
-      .text(width / 2, height / 2 - 40, 'GUN HANDS', {
-        fontFamily: 'monospace',
-        fontSize: '64px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-      })
-      .setOrigin(0.5);
-    const prompt = this.add
-      .text(width / 2, height / 2 + 40, 'Click or press Enter', {
-        fontFamily: 'monospace',
-        fontSize: '20px',
-        color: '#cccccc',
-      })
-      .setOrigin(0.5);
-    this.tweens.add({ targets: prompt, alpha: 0.3, duration: 700, yoyo: true, repeat: -1 });
+    this.input.keyboard.on('keydown-ENTER', () => this.start());
+    this.input.keyboard.on('keydown-SPACE', () => this.start());
+  }
 
-    const start = () => this.scene.start('Game');
-    this.input.once('pointerdown', start);
-    this.input.keyboard.once('keydown-ENTER', start);
+  start() {
+    if (this.started) return;
+    this.started = true;
+    this.scene.start('Game');
   }
 }
