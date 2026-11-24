@@ -26,7 +26,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.combat);
+  await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.xp);
   await setup(page);
 });
 
@@ -34,7 +34,7 @@ test.afterEach(() => {
   expect(errors).toEqual([]);
 });
 
-/** Director off, enemies cleared, auto-fire off, and combat events recorded in window.__ev. */
+/** Director off, enemies cleared, auto-fire off, magnet off, and combat events recorded in window.__ev. */
 function setup(page) {
   return page.evaluate(() => {
     const scene = window.__GAME__.scene.getScene('Game');
@@ -43,6 +43,8 @@ function setup(page) {
     for (const e of enemies.group.getChildren()) if (e.active) e.despawn();
     for (const b of scene.bullets.group.getChildren()) if (b.active) b.despawn();
     scene.player.fire = () => {};
+    // Magnet off (GH-7): collecting gems from kills could level up and pause Game mid-test.
+    scene.player.pickupRadius = 0;
     window.__ev = [];
     const t = () => scene.game.loop.time;
     scene.events.on('enemy-hit', ({ enemy, ...rest }) =>
@@ -86,6 +88,23 @@ function fire(page, x, y, angle, stats = {}) {
       return !!b;
     },
     [x, y, angle, stats],
+  );
+}
+
+/**
+ * Close `count` LevelUp screens with Enter, waiting for each to be ready for input (the screen
+ * restarts itself while level-ups are queued), then wait for Game to run again.
+ */
+async function closeLevelUps(page, count) {
+  for (let i = 0; i < count; i++) {
+    await page.waitForFunction(() => {
+      const lu = window.__GAME__.scene.getScene('LevelUp');
+      return window.__GAME__.scene.isActive('LevelUp') && lu.input.keyboard.listenerCount('keydown-ENTER') > 0;
+    });
+    await page.keyboard.press('Enter');
+  }
+  await page.waitForFunction(
+    () => window.__GAME__.scene.isActive('Game') && !window.__GAME__.scene.isActive('LevelUp'),
   );
 }
 
@@ -412,7 +431,14 @@ test('pausing the Game scene pauses invulnerability', async ({ page }) => {
 });
 
 test('at 0 HP everything stops, player-died fires once, and GameOver shows the run stats', async ({ page }) => {
-  // 7 kills, then a nearly dead player meets a Grunt (plus a Runner that keeps overlapping).
+  // Reach level 3 (two queued level-ups, closed with Enter), then 7 kills, then a nearly dead
+  // player meets a Grunt (plus a Runner that keeps overlapping).
+  await page.evaluate(() => {
+    const { xp } = window.__GAME__.scene.getScene('Game');
+    xp.grantLevel();
+    xp.grantLevel();
+  });
+  await closeLevelUps(page, 2);
   await page.evaluate(() => {
     const scene = window.__GAME__.scene.getScene('Game');
     for (let k = 0; k < 7; k++)
@@ -441,7 +467,7 @@ test('at 0 HP everything stops, player-died fires once, and GameOver shows the r
 
   const died = await events(page, 'player-died');
   expect(died).toHaveLength(1);
-  expect(died[0]).toMatchObject({ kills: 7, level: 1 });
+  expect(died[0]).toMatchObject({ kills: 7, level: 3 });
   expect(died[0].timeMs).toBeGreaterThan(0);
   expect((await events(page, 'player-hit')).at(-1).hp).toBe(0);
 
@@ -454,11 +480,11 @@ test('at 0 HP everything stops, player-died fires once, and GameOver shows the r
     const scene = window.__GAME__.scene.getScene('GameOver');
     return { stats: scene.stats, text: scene.statsText?.text, ui: window.__GAME__.scene.isActive('UI') };
   });
-  expect(go.stats).toEqual({ timeMs: died[0].timeMs, kills: 7, level: 1 });
+  expect(go.stats).toEqual({ timeMs: died[0].timeMs, kills: 7, level: 3 });
   const secs = Math.floor(died[0].timeMs / 1000);
   expect(go.text).toContain(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`);
   expect(go.text).toContain('Kills  7');
-  expect(go.text).toContain('Level  1');
+  expect(go.text).toContain('Level  3');
   expect(go.ui).toBe(false);
 
   // A new session starts at full HP.

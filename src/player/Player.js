@@ -56,8 +56,10 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.fireAcc = 0;
     this.maxHp = PLAYER.maxHp;
     this.hp = PLAYER.maxHp;
-    // Levelling arrives in GH-8; run stats report this.
+    // Kept in sync by the XP system (GH-7); run stats report it.
     this.level = 1;
+    // Per-run XP pickup radius in px: upgrades change this copy, never the config.
+    this.pickupRadius = PLAYER.pickupRadius;
     this.dead = false;
     /** ms of invulnerability left after a hit (blinking while > 0). */
     this.invulnerableMs = 0;

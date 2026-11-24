@@ -24,7 +24,9 @@ await page.evaluate(() => {
 });
 
 // Scripted route while the guns auto-fire (GH-3), enemies chase (GH-5), and bullets hit them: hit flash,
-// knockback, and death puffs (GH-6). The last DEATH_MS show the player hit, blinking, dying, and GameOver. Each step: keys to hold,
+// knockback, and death puffs (GH-6). Kills drop XP gems in three tiers that fly to the player inside the
+// pickup radius; each level-up pauses on the LevelUp stub for LEVELUP_MS, then Enter closes it (GH-7).
+// The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level. Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
 // off-screen ring right away. The spawn is at the map center; a vertical wall run is ~500 px left.
@@ -41,17 +43,38 @@ const route = [
 const DEATH_MS = 7000; // the player takes hits, dies, and GameOver shows the stats
 const SPREAD_MS = 7000 + DEATH_MS; // then a 3-projectile spread until the death scene
 const RADIUS = 150; // game px
+const LEVELUP_MS = 1200; // how long each LevelUp stub stays on screen
 const TURN_MS = 3000; // one full mouse circle
 const box = await page.locator('#game canvas').boundingBox();
 const scale = box.width / size.width;
 const end = Date.now() + seconds * 1000;
 let angle = 0;
+let levelUpSince = 0;
+
+/** Close the LevelUp stub with Enter once it has been on screen for LEVELUP_MS. */
+async function closeLevelUpWhenShown() {
+  const ready = await page.evaluate(() => {
+    const game = window.__GAME__;
+    const lu = game.scene.getScene('LevelUp');
+    return game.scene.isActive('LevelUp') && lu.input.keyboard.listenerCount('keydown-ENTER') > 0;
+  });
+  if (!ready) {
+    levelUpSince = 0;
+    return;
+  }
+  if (!levelUpSince) levelUpSince = Date.now();
+  if (Date.now() - levelUpSince >= LEVELUP_MS) {
+    levelUpSince = 0;
+    await page.keyboard.press('Enter');
+  }
+}
 
 /** Hold `keys` for `ms`, aiming as described above around the player's current screen position. */
 async function circle(keys, ms, aim = 'circle') {
   for (const k of keys) await page.keyboard.down(k);
   const stop = Math.min(Date.now() + ms, end);
   while (Date.now() < stop) {
+    await closeLevelUpWhenShown();
     if (aim !== null) {
       const p = await page.evaluate(() => {
         const scene = window.__GAME__.scene.getScene('Game');
@@ -102,7 +125,7 @@ await page.evaluate(() => {
   enemies.spawnAt('brute', player.x - 30, player.y);
   enemies.spawnAt('grunt', player.x, player.y + 30);
 });
-await page.waitForTimeout(Math.max(0, end - Date.now()));
+await circle([], end - Date.now(), null);
 
 const video = page.video();
 await context.close();

@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { DISPLAY } from '../config/index.js';
 import { addSceneLabel } from './sceneLabel.js';
 
-// Stub: the pick-1-of-3 upgrade screen arrives in GH-8. Pauses Game while open.
+// Stub: the pick-1-of-3 upgrade screen arrives in GH-8. Opened by the XP system (GH-7) with Game
+// paused; each close handles one queued level-up, and the screen shows again while more are pending.
 export default class LevelUpScene extends Phaser.Scene {
   constructor() {
     super('LevelUp');
@@ -24,6 +25,12 @@ export default class LevelUpScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     const resume = () => {
+      /** @type {import('../xp/Xp.js').default | undefined} */
+      const xp = /** @type {any} */ (this.scene.get('Game'))?.xp;
+      if (xp?.finishLevelUp()) {
+        this.scene.restart();
+        return;
+      }
       this.scene.resume('Game');
       this.scene.stop();
     };

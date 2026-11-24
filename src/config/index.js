@@ -5,3 +5,4 @@ export { WEAPON } from './weapon.js';
 export { WORLD } from './world.js';
 export { ENEMIES } from './enemies.js';
 export { COMBAT } from './combat.js';
+export { XP } from './xp.js';

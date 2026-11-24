@@ -22,7 +22,11 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.enemies);
+  await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.xp);
+  // Magnet off (GH-7): collecting gems from kills could level up and pause Game mid-test.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').player.pickupRadius = 0;
+  });
 });
 
 test.afterEach(() => {

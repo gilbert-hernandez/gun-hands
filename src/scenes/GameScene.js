@@ -6,13 +6,15 @@ import Bullets from '../weapon/Bullets.js';
 import { gunsFlipY } from '../weapon/aim.js';
 import Arena from '../world/Arena.js';
 import Combat from '../combat/Combat.js';
+import Xp from '../xp/Xp.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 // The play session: the Tiled arena, the player, enemies, and a camera that follows the player.
 // The player auto-fires from a bullet pool; walls stop the player, bullets, and enemies.
 // Enemies spawn off-screen and chase the player (GH-5); bullets hurt enemies, enemies hurt the
-// player, and the player's death ends the session in GameOver (GH-6, see Combat).
+// player, and the player's death ends the session in GameOver (GH-6, see Combat). Kills drop XP
+// gems that level the player up and open LevelUp (GH-7, see Xp).
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
@@ -49,6 +51,7 @@ export default class GameScene extends Phaser.Scene {
       enemies: this.enemies,
       survivalMs: () => this.survivalMs,
     });
+    this.xp = new Xp(this, this.player);
 
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
@@ -60,10 +63,8 @@ export default class GameScene extends Phaser.Scene {
         .setOrigin(0, 1)
         .setScrollFactor(0)
         .setDepth(100);
-      this.input.keyboard.on('keydown-L', () => {
-        this.scene.pause();
-        this.scene.launch('LevelUp');
-      });
+      // L: gain exactly the XP for the next level, through the real level-up path.
+      this.input.keyboard.on('keydown-L', () => this.xp.grantLevel());
       // G: die through the real death path. H: take 10 damage (ignores i-frames). J: full HP.
       this.input.keyboard.on('keydown-G', () => this.combat.damagePlayer(this.player.hp, { force: true }));
       this.input.keyboard.on('keydown-H', () => this.combat.damagePlayer(10, { force: true }));
@@ -79,10 +80,12 @@ export default class GameScene extends Phaser.Scene {
     if (this.muzzle.visible && this.muzzleMsLeft <= 0) this.muzzle.setVisible(false);
     this.player.update(time, delta);
     this.enemies.update(delta, this.survivalMs);
+    this.xp.update(delta);
     const p = this.player;
+    const xp = this.xp.progression;
     this.debugText?.setText(
       `t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}` +
-        `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}`,
+        `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}  lv ${xp.level}  xp ${xp.xpInto}/${xp.xpNeeded}`,
     );
   }
 
