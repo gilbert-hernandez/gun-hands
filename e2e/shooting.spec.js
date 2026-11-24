@@ -186,11 +186,12 @@ test('aim stays on the world point under a still mouse while the camera scrolls'
     });
   });
   const before = await state(page);
+  // Hold until the camera has scrolled (not a fixed time: headless frames slow down under load).
   await page.keyboard.down('KeyS');
-  await page.waitForTimeout(1200);
+  await expect
+    .poll(async () => (await state(page)).cam.scrollY, { timeout: 15000, intervals: [100] })
+    .toBeGreaterThan(before.cam.scrollY + 50);
   await page.keyboard.up('KeyS');
-  const after = await state(page);
-  expect(after.cam.scrollY).toBeGreaterThan(before.cam.scrollY + 50);
   const err = await page.evaluate(() => window.__aimErr);
   expect(err.frames).toBeGreaterThan(10);
   // The aim uses this frame's pre-physics position; one step of movement is < 2° at this range.
@@ -252,12 +253,16 @@ test('changing the per-run stats affects the next bullet, not the config or a ne
   expect(live).toBe(WEAPON.bullet.speed);
 
   // A new session starts from the config again.
+  // restart() is queued until the next game step, so wait for a new player object; otherwise the
+  // recorder below could wrap the old player's pool.
   await page.evaluate(() => {
-    window.__GAME__.scene.getScene('Game').scene.restart();
+    const scene = window.__GAME__.scene.getScene('Game');
+    window.__oldPlayer = scene.player;
+    scene.scene.restart();
   });
   await page.waitForFunction(() => {
     const p = window.__GAME__.scene.getScene('Game')?.player;
-    return p?.body && p.scene?.sys.isActive();
+    return p && p !== window.__oldPlayer && p.body && p.scene?.sys.isActive();
   });
   await installRecorder(page);
   const again = await nextShot(page);

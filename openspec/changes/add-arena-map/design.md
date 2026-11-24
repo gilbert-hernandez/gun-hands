@@ -57,6 +57,10 @@ The map uses: floor 0 (with 1–3 scattered as variants), wall 16, 2×2 obstacle
 ### 6. Bullets: a collider callback, with world bounds kept as a fallback
 The bullet–wall collider calls `despawn()`. The bullet is separated from the tile in the same step, so it never shows inside the wall. Pierce is not consulted (spec: walls always stop bullets). The world-bounds check in `Bullet.update` stays as a fallback for bullets spawned outside the walls, for example by test code or by a future spawn bug. At 480 px/s a bullet moves about 8 px per 60 Hz physics step, well under the 32 px tile, so it can't tunnel through.
 
+### 6a. Point-blank shots are checked before spawning
+The gun tip is 14 px from the player's center, but against a wall the center is only 8 px from the face. The tip is then inside the wall, and Arcade only stops bodies that cross a tile face from outside, so those bullets passed straight through (found in manual testing). Before spawning a shot, `Player.fire` samples the segment from the player's center along the aim for `muzzleOffset` plus the bullet radius, every 4 px, using `arena.isSolidAt` (the pure `pathBlocked` helper in `aim.js`). If any sample is solid, the shot hits the wall: no bullets spawn, and `player-fired` is still emitted with `blocked: true` so the muzzle flash shows and a later impact effect can hook it.
+- *Alternative: shorten the muzzle offset, or push the spawn point back out of the wall.* Rejected. A shorter offset changes how the guns look and only moves the problem. Pushing the spawn out of the wall would let a point-blank shot appear on the near side and fly away, which reads as the bullet bouncing.
+
 ### 7. `WORLD` loses width and height
 `src/config/world.js` keeps only `cameraLerp`. The world size is data in the map, not a tunable. A second copy in config could disagree with the map, and nothing would notice. The e2e tests read the size from the imported map JSON (`width * tilewidth`), and wall-edge checks use the inner edge of the border (32 px in) instead of 0 or the world width.
 

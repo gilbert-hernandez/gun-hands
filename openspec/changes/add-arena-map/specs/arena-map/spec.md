@@ -69,6 +69,10 @@ A bullet SHALL despawn and free its pool slot on the first solid tile it touches
 - **WHEN** a bullet with pierce 3 reaches a wall
 - **THEN** it despawns at the wall
 
+#### Scenario: Point-blank shot against a wall
+- **WHEN** the player stands flush against a wall and fires into it, so that the gun tip is inside the wall
+- **THEN** the shot hits the wall: no bullet appears beyond the wall, and the shot still counts as fired (muzzle flash and fired event)
+
 ### Requirement: Shared wall collision for other actors
 The arena SHALL offer a single way for other moving objects (such as enemies added in later tickets) to collide with the same solid tiles as the player. It SHALL also offer a way to ask whether a world position lies on a solid tile.
 

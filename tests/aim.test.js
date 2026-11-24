@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aimAngle, spreadAngles, shotsDue, applyHit, gunsFlipY } from '../src/weapon/aim.js';
+import { aimAngle, spreadAngles, shotsDue, applyHit, gunsFlipY, pathBlocked } from '../src/weapon/aim.js';
 
 const deg = (d) => (d * Math.PI) / 180;
 const origin = { x: 100, y: 100 };
@@ -98,5 +98,30 @@ describe('gunsFlipY', () => {
     expect(gunsFlipY(deg(-91))).toBe(true);
     expect(gunsFlipY(Math.PI)).toBe(true);
     expect(gunsFlipY(-Math.PI)).toBe(true);
+  });
+});
+
+describe('pathBlocked', () => {
+  // A wall occupying x 448..480 (one 32 px tile column).
+  const wall = (/** @type {number} */ x) => x >= 448 && x < 480;
+  const solid = (/** @type {number} */ x, /** @type {number} */ _y) => wall(x);
+
+  it('is true when the gun tip is inside the wall (player flush against it)', () => {
+    // Player center 8 px from the face, tip 14 px + 3 px bullet radius along the aim.
+    expect(pathBlocked(488, 640, Math.PI, 17, solid)).toBe(true);
+  });
+
+  it('is true when only the bullet radius would reach the wall', () => {
+    expect(pathBlocked(496, 640, Math.PI, 17, solid)).toBe(true);
+  });
+
+  it('is false when aiming away from the wall or standing clear of it', () => {
+    expect(pathBlocked(488, 640, 0, 17, solid)).toBe(false);
+    expect(pathBlocked(520, 640, Math.PI, 17, solid)).toBe(false);
+  });
+
+  it('catches a wall thinner than the path between samples', () => {
+    const thin = (/** @type {number} */ x) => x >= 470 && x < 472;
+    expect(pathBlocked(488, 640, Math.PI, 17, (x) => thin(x), 2)).toBe(true);
   });
 });

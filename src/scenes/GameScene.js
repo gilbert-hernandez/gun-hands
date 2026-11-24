@@ -24,6 +24,7 @@ export default class GameScene extends Phaser.Scene {
     this.bullets = new Bullets(this);
     this.player = new Player(this, spawn.x, spawn.y, this.bullets);
     this.arena.collide(this.player);
+    this.player.isSolidAt = (x, y) => this.arena.isSolidAt(x, y);
     // Walls always stop bullets, whatever pierce they have left.
     this.bulletWalls = this.arena.collide(this.bullets.group, (bullet) => /** @type {any} */ (bullet).despawn());
     this.createMuzzleFlash();

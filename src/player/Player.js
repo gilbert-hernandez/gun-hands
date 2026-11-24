@@ -1,12 +1,16 @@
 import Phaser from 'phaser';
 import { PLAYER, WEAPON } from '../config/index.js';
 import { velocityFrom, facingFrom } from './movement.js';
-import { aimAngle, spreadAngles, shotsDue, gunsFlipY } from '../weapon/aim.js';
+import { aimAngle, spreadAngles, shotsDue, gunsFlipY, pathBlocked } from '../weapon/aim.js';
+import { BODY_RADIUS as BULLET_RADIUS } from '../weapon/Bullets.js';
 
 const ANIM_IDLE = 'player_body_idle';
 const ANIM_RUN = 'player_body_run';
 
-/** Scene event emitted once per shot with `{ x, y, angle }` (gun tip, radians). */
+/**
+ * Scene event emitted once per shot with `{ x, y, angle, blocked }` (gun tip, radians; `blocked` is
+ * true when the guns were pushed into a wall, so the shot hit it and no bullets were spawned).
+ */
 export const PLAYER_FIRED = 'player-fired';
 
 /**
@@ -37,6 +41,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.facing = 'right';
     this.pointerUsed = false;
     this.bullets = bullets;
+    /**
+     * Wall test for point-blank shots, set by the scene once the arena exists (null = no walls).
+     * @type {((x: number, y: number) => boolean) | null}
+     */
+    this.isSolidAt = null;
     // Per-run weapon stats: upgrades and powerups change this copy, never the config.
     this.weapon = structuredClone(WEAPON);
     // Aim angle in radians (0 = right); points the way the body faces until the mouse is used.
@@ -105,11 +114,16 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     for (let i = 0; i < due.shots; i++) {
       const x = this.x + Math.cos(this.aim) * muzzleOffset;
       const y = this.y + Math.sin(this.aim) * muzzleOffset;
-      // A full pool returns null; that bullet is simply skipped.
-      for (const angle of spreadAngles(this.aim, bullet.count, bullet.spreadDeg)) {
-        this.bullets.fire(x, y, angle, bullet, time);
+      // Flush against a wall the gun tip is inside it: the shot hits the wall, nothing spawns.
+      const blocked =
+        this.isSolidAt !== null && pathBlocked(this.x, this.y, this.aim, muzzleOffset + BULLET_RADIUS, this.isSolidAt);
+      if (!blocked) {
+        // A full pool returns null; that bullet is simply skipped.
+        for (const angle of spreadAngles(this.aim, bullet.count, bullet.spreadDeg)) {
+          this.bullets.fire(x, y, angle, bullet, time);
+        }
       }
-      this.scene.events.emit(PLAYER_FIRED, { x, y, angle: this.aim });
+      this.scene.events.emit(PLAYER_FIRED, { x, y, angle: this.aim, blocked });
     }
   }
 

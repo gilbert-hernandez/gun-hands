@@ -204,6 +204,39 @@ test('a bullet with pierce 3 still stops at the wall', async ({ page }) => {
   expect(r.x).toBeLessThan(WALL_RUN_RIGHT + 12);
 });
 
+test('point blank: flush against a wall, shots hit it and no bullet gets through', async ({ page }) => {
+  await teleport(page, WALL_RUN_RIGHT + 40, 640);
+  await holdUntil(page, ['KeyA'], (t) => near(t.body.left, WALL_RUN_RIGHT));
+  // Aim straight left and slightly up/down too: the gun tip is inside the wall each time.
+  for (const dy of [0, -20, 20]) {
+    await pointAt(page, -80, dy);
+    await page.waitForTimeout(150);
+    const r = await page.evaluate(async () => {
+      const scene = window.__GAME__.scene.getScene('Game');
+      scene.player.weapon.fireRate = 20;
+      let shots = 0;
+      let blocked = 0;
+      let beyond = 0;
+      const onFired = (e) => {
+        shots++;
+        if (e.blocked) blocked++;
+      };
+      const watch = () => {
+        for (const b of scene.bullets.group.getChildren()) if (b.active && b.x < 15 * 32 - 4) beyond++;
+      };
+      scene.events.on('player-fired', onFired);
+      scene.events.on('postupdate', watch);
+      await new Promise((res) => setTimeout(res, 1200));
+      scene.events.off('player-fired', onFired);
+      scene.events.off('postupdate', watch);
+      return { shots, blocked, beyond };
+    });
+    expect(r.shots).toBeGreaterThanOrEqual(3);
+    expect(r.blocked).toBe(r.shots);
+    expect(r.beyond).toBe(0);
+  }
+});
+
 test('another physics body registered with arena.collide stops at a wall', async ({ page }) => {
   await page.evaluate((x) => {
     const scene = window.__GAME__.scene.getScene('Game');

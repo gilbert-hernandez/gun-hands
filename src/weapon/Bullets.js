@@ -7,7 +7,8 @@ const ANIM = 'fx_bullet_fly';
 const ANIM_FPS = 12;
 // Between the body (0) and the guns (1), so bullets look like they leave from under the guns.
 const DEPTH = 0.5;
-const BODY_RADIUS = 3;
+/** Bullet physics body radius in px. */
+export const BODY_RADIUS = 3;
 
 /**
  * One pooled bullet. Created by the group on demand (never by game code) and recycled:

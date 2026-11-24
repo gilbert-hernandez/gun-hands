@@ -65,3 +65,23 @@ export function applyHit(pierceLeft) {
 export function gunsFlipY(angle) {
   return Math.abs(angle) > Math.PI / 2;
 }
+
+/**
+ * True if any point on the segment from (x, y) along `angle` for `length` px is solid.
+ * Used before a shot: a gun tip pushed into a wall must hit the wall, not spawn a bullet inside it
+ * (physics only stops bodies that cross a wall face from outside). `step` must be smaller than a tile.
+ * @param {number} x
+ * @param {number} y
+ * @param {number} angle radians
+ * @param {number} length px
+ * @param {(x: number, y: number) => boolean} isSolid
+ * @param {number} [step] px between samples
+ */
+export function pathBlocked(x, y, angle, length, isSolid, step = 4) {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  for (let d = 0; d < length; d += step) {
+    if (isSolid(x + cos * d, y + sin * d)) return true;
+  }
+  return isSolid(x + cos * length, y + sin * length);
+}
