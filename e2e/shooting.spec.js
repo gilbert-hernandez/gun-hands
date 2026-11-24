@@ -368,7 +368,7 @@ test('a bullet despawns when it leaves the arena', async ({ page }) => {
 
 test('10 s of heavy firing never exceeds the pool size', async ({ page }) => {
   test.setTimeout(90000);
-  // 20 shots/s x 5 bullets x 1.2 s = 120 alive at the peak: right at the pool size.
+  // 20 shots/s x 5 bullets x 1.2 s = 120 alive at the peak, within the pool.
   await setWeapon(page, { weapon: { fireRate: 20 }, bullet: { count: 5, spreadDeg: 40 } });
   await resetRec(page);
   await waitGameMs(page, 10000);

@@ -5,8 +5,8 @@ export const WEAPON = {
   fireRate: 4,
   // Distance in px from the player's center to the gun tip, along the aim.
   muzzleOffset: 14,
-  // Max bullets alive at once (object pool size).
-  poolSize: 120,
+  // Max bullets alive at once (object pool size). Fits maxed upgrades plus Rapid Fire and Spread Shot (GH-9).
+  poolSize: 160,
   // How long the muzzle flash stays visible per shot (ms).
   muzzleFlashMs: 60,
   bullet: {

@@ -20,13 +20,17 @@ await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player);
 // Plenty of HP so crowd contact (GH-6) can't end the route before the scripted death scene.
 await page.evaluate(() => {
-  window.__GAME__.scene.getScene('Game').player.hp = 10000;
+  const scene = window.__GAME__.scene.getScene('Game');
+  scene.player.hp = 10000;
+  // Far more loot than a real run (GH-9), so drops visibly fall from kills along the route.
+  scene.powerups.dropChance = { grunt: 0.3, runner: 0.3, brute: 1 };
 });
 
 // Scripted route while the guns auto-fire (GH-3), enemies chase (GH-5), and bullets hit them: hit flash,
 // knockback, and death puffs (GH-6). Kills drop XP gems in three tiers that fly to the player inside the
 // pickup radius; each level-up pauses on the LevelUp cards (GH-7/GH-8): the most visible card is
-// hovered for LEVELUP_MS, then picked by a click or its number key, alternating.
+// hovered for LEVELUP_MS, then picked by a click or its number key, alternating. Kills also drop
+// powerups; POWERUP_MS before the death scene shows each powerup at work (GH-9).
 // The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level. Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
@@ -42,7 +46,8 @@ const route = [
   [[], 1500, 'circle'],
 ];
 const DEATH_MS = 7000; // the player takes hits, dies, and GameOver shows the stats
-const SPREAD_MS = 9000 + DEATH_MS; // then two queued level-ups (Multishot first) until the death scene
+const POWERUP_MS = 12500; // Rapid Fire + Spread Shot, a pickup blinking out, Shield, Bomb, Magnet
+const SPREAD_MS = 9000 + POWERUP_MS + DEATH_MS; // then two queued level-ups (Multishot first) until the powerups
 const RADIUS = 150; // game px
 const LEVELUP_MS = 1200; // how long a card is hovered before it is picked
 const TURN_MS = 3000; // one full mouse circle
@@ -141,6 +146,49 @@ await page.evaluate(() => {
 });
 await circle([], 2500);
 await circle(['KeyD'], 2000);
+await circle([], end - POWERUP_MS - DEATH_MS - Date.now());
+
+// Powerups (GH-9), each dropped at the player's feet so it is collected through the real pickup
+// path. Rapid Fire + Spread Shot together, while a pickup off to the side blinks out.
+await page.evaluate(() => {
+  const { powerups, player, enemies } = window.__GAME__.scene.getScene('Game');
+  powerups.pickups.drop(player.x, player.y, 'rapidfire');
+  powerups.pickups.drop(player.x, player.y, 'spread');
+  const p = powerups.pickups.drop(player.x + 120, player.y - 90, 'health');
+  if (p) p.msLeft = 3200;
+  for (let i = 0; i < 6; i++) enemies.spawnRing('grunt');
+});
+await circle([], 3000);
+// Shield: a Brute walks into the aura and does no damage.
+await page.evaluate(() => {
+  const { powerups, player, enemies } = window.__GAME__.scene.getScene('Game');
+  powerups.active = {};
+  powerups.pickups.drop(player.x, player.y, 'shield');
+  enemies.spawnAt('brute', player.x + 90, player.y);
+});
+await circle([], 2500, 180);
+// Bomb: a crowd on screen and gems lying far away; the blast clears the crowd.
+await page.evaluate(() => {
+  const scene = window.__GAME__.scene.getScene('Game');
+  const { player, enemies, xp } = scene;
+  player.pickupRadius = 40;
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * Math.PI * 2;
+    enemies.spawnAt(i % 3 ? 'grunt' : 'runner', player.x + Math.cos(a) * 200, player.y + Math.sin(a) * 160);
+  }
+  for (let i = 0; i < 8; i++) xp.gems.drop(player.x - 400 + i * 100, player.y + 230, 'small');
+});
+await circle([], 1200, null);
+await page.evaluate(() => {
+  const { powerups, player } = window.__GAME__.scene.getScene('Game');
+  powerups.pickups.drop(player.x, player.y, 'bomb');
+});
+await circle([], 2300, null);
+// Magnet: every gem on the floor flies in.
+await page.evaluate(() => {
+  const { powerups, player } = window.__GAME__.scene.getScene('Game');
+  powerups.pickups.drop(player.x, player.y, 'magnet');
+});
 await circle([], end - DEATH_MS - Date.now());
 
 // Death scene: a Brute and a Grunt reach a weakened player. The Brute's hit leaves 5 HP and starts
@@ -149,6 +197,7 @@ await page.evaluate(() => {
   const scene = window.__GAME__.scene.getScene('Game');
   const { player, enemies } = scene;
   enemies.director.enabled = false;
+  scene.powerups.active = {};
   player.hp = 25;
   enemies.spawnAt('brute', player.x - 30, player.y);
   enemies.spawnAt('grunt', player.x, player.y + 30);

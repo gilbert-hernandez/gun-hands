@@ -19,9 +19,11 @@ export default class Combat {
    * @param {import('../weapon/Bullets.js').default} parts.bullets
    * @param {import('../enemy/Enemies.js').default} parts.enemies
    * @param {() => number} parts.survivalMs current survival time in ms
+   * @param {() => boolean} [parts.shielded] true while a Shield powerup blocks contact (GH-9)
    */
-  constructor(scene, { player, bullets, enemies, survivalMs }) {
+  constructor(scene, { player, bullets, enemies, survivalMs, shielded = () => false }) {
     this.scene = scene;
+    this.shielded = shielded;
     this.player = player;
     this.enemies = enemies;
     this.survivalMs = survivalMs;
@@ -70,6 +72,22 @@ export default class Combat {
   }
 
   /**
+   * Damage an enemy without a bullet (the Bomb, GH-9): flash and knockback along (dirX, dirY) if it
+   * survives, the normal kill path if not. Emits no `enemy-hit` (that event is for bullet hits).
+   * @param {Enemy} enemy
+   * @param {number} damage
+   * @param {number} dirX push direction x (any length; 0,0 = no push)
+   * @param {number} dirY push direction y
+   * @returns {boolean} true if it died
+   */
+  damageEnemy(enemy, damage, dirX, dirY) {
+    if (!enemy.active) return false;
+    const killed = enemy.takeHit(damage, dirX, dirY);
+    if (killed) this.killEnemy(enemy);
+    return killed;
+  }
+
+  /**
    * Remove a dead enemy from play, play its puff, count it, and emit `enemy-killed`.
    * @param {Enemy} enemy
    */
@@ -84,7 +102,7 @@ export default class Combat {
   /** @param {Enemy} enemy */
   canContact(enemy) {
     const p = this.player;
-    return enemy.active && !p.dead && p.invulnerableMs <= 0;
+    return enemy.active && !p.dead && p.invulnerableMs <= 0 && !this.shielded();
   }
 
   /** @param {Enemy} enemy */

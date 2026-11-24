@@ -8,6 +8,7 @@ import Arena from '../world/Arena.js';
 import Combat from '../combat/Combat.js';
 import Xp from '../xp/Xp.js';
 import Upgrades from '../upgrades/Upgrades.js';
+import Powerups from '../powerups/Powerups.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
 
@@ -16,7 +17,7 @@ import { addSceneLabel } from './sceneLabel.js';
 // Enemies spawn off-screen and chase the player (GH-5); bullets hurt enemies, enemies hurt the
 // player, and the player's death ends the session in GameOver (GH-6, see Combat). Kills drop XP
 // gems that level the player up and open LevelUp (GH-7, see Xp), where the player picks an
-// upgrade (GH-8, see Upgrades).
+// upgrade (GH-8, see Upgrades). Kills also drop loot powerups now and then (GH-9, see Powerups).
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
@@ -52,10 +53,19 @@ export default class GameScene extends Phaser.Scene {
       bullets: this.bullets,
       enemies: this.enemies,
       survivalMs: () => this.survivalMs,
+      shielded: () => this.powerups?.isShielded() ?? false,
     });
     this.xp = new Xp(this, this.player);
     // Upgrade ranks for this session; the LevelUp screen draws and applies cards through it (GH-8).
     this.upgrades = new Upgrades(this, this.player);
+    // Loot powerups: drops, pickups, timed and instant effects (GH-9). Created after Xp, so a kill
+    // drops its gem before its powerup.
+    this.powerups = new Powerups(this, {
+      player: this.player,
+      combat: this.combat,
+      enemies: this.enemies,
+      gems: this.xp.gems,
+    });
 
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
@@ -73,6 +83,8 @@ export default class GameScene extends Phaser.Scene {
       this.input.keyboard.on('keydown-G', () => this.combat.damagePlayer(this.player.hp, { force: true }));
       this.input.keyboard.on('keydown-H', () => this.combat.damagePlayer(10, { force: true }));
       this.input.keyboard.on('keydown-J', () => this.player.heal());
+      // P: drop the next powerup (cycling through all six) in front of the player.
+      this.input.keyboard.on('keydown-P', () => this.powerups.debugDrop());
     }
   }
 
@@ -85,6 +97,7 @@ export default class GameScene extends Phaser.Scene {
     this.player.update(time, delta);
     this.enemies.update(delta, this.survivalMs);
     this.xp.update(delta);
+    this.powerups.update(delta);
     const p = this.player;
     const xp = this.xp.progression;
     const w = p.weapon;
@@ -92,7 +105,8 @@ export default class GameScene extends Phaser.Scene {
       `t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}` +
         `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}  lv ${xp.level}  xp ${xp.xpInto}/${xp.xpNeeded}` +
         `\nspd ${p.speed}  dmg ${w.bullet.damage}  rate ${w.fireRate}  n ${w.bullet.count}` +
-        `  pierce ${w.bullet.pierce}  pickup ${p.pickupRadius}`,
+        `  pierce ${w.bullet.pierce}  pickup ${p.pickupRadius}` +
+        `\npw ${this.powerups.debugText()}  pickups ${this.powerups.pickups.liveCount}`,
     );
   }
 

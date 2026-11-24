@@ -49,8 +49,14 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      * @type {((x: number, y: number) => boolean) | null}
      */
     this.isSolidAt = null;
-    // Per-run weapon stats: upgrades and powerups change this copy, never the config.
+    // Per-run weapon stats: upgrades change this copy, never the config.
     this.weapon = structuredClone(WEAPON);
+    /**
+     * The weapon each shot uses: `weapon` plus any active powerup boosts. Powerups (GH-9) replace
+     * this hook; by default it is the per-run weapon itself.
+     * @type {() => typeof WEAPON}
+     */
+    this.boosts = () => this.weapon;
     // Aim angle in radians (0 = right); points the way the body faces until the mouse is used.
     this.aim = 0;
     this.fireAcc = 0;
@@ -133,7 +139,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
   /** Fire the shots due this frame from the gun tip, one `PLAYER_FIRED` event per shot. */
   fire(time, delta) {
-    const { fireRate, muzzleOffset, bullet } = this.weapon;
+    const { fireRate, muzzleOffset, bullet } = this.boosts();
     const due = shotsDue(this.fireAcc, delta, fireRate);
     this.fireAcc = due.acc;
     for (let i = 0; i < due.shots; i++) {

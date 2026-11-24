@@ -1,4 +1,4 @@
-// Single import point for tunables. Later changes add drops.js, ...
+// Single import point for tunables.
 export { DISPLAY, DEBUG } from './display.js';
 export { PLAYER } from './player.js';
 export { WEAPON } from './weapon.js';
@@ -7,3 +7,4 @@ export { ENEMIES } from './enemies.js';
 export { COMBAT } from './combat.js';
 export { XP } from './xp.js';
 export { UPGRADES } from './upgrades.js';
+export { POWERUPS } from './powerups.js';
