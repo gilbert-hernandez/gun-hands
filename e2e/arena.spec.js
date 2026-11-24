@@ -98,14 +98,17 @@ function nextBulletDespawn(page) {
           const b = fire.apply(pool, args);
           if (!b) return b;
           pool.fire = fire;
+          // Read the physics body, not the sprite: the wall collider fires mid-step, before the
+          // sprite syncs, so at low frame rates b.x still lags one step behind the body.
           const track = () => {
-            minX = Math.min(minX, b.x);
+            minX = Math.min(minX, b.body.center.x);
           };
           scene.events.on('postupdate', track);
           b.despawn = () => {
             delete b.despawn;
             scene.events.off('postupdate', track);
-            const out = { x: b.x, minX: Math.min(minX, b.x), expired: loop.time >= b.expiresAt };
+            const x = b.body.center.x;
+            const out = { x, minX: Math.min(minX, x), expired: loop.time >= b.expiresAt };
             b.despawn();
             resolve({ ...out, active: b.active });
           };
@@ -182,7 +185,19 @@ test('a decor tile does not block movement', async ({ page }) => {
   expect(s.x).toBeGreaterThan(target);
 });
 
+/**
+ * Wall tests check where a bullet stops, not its lifetime. Under parallel workers loop time can
+ * outrun the capped physics step (GH-4 notes), so a 1.2 s bullet may expire short of a wall 120 px
+ * away. A long lifetime keeps `expired` meaning "missed the wall".
+ */
+function longLifetime(page) {
+  return page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').player.weapon.bullet.lifetime = 10000;
+  });
+}
+
 test('a bullet fired at a nearby wall despawns at its face, before its lifetime ends', async ({ page }) => {
+  await longLifetime(page);
   await teleport(page, WALL_RUN_RIGHT + 120, 640);
   await page.waitForTimeout(300);
   await pointAt(page, -60, 0);
@@ -199,6 +214,7 @@ test('a bullet with pierce 3 still stops at the wall', async ({ page }) => {
   await page.evaluate(() => {
     window.__GAME__.scene.getScene('Game').player.weapon.bullet.pierce = 3;
   });
+  await longLifetime(page);
   await teleport(page, WALL_RUN_RIGHT + 120, 640);
   await page.waitForTimeout(300);
   await pointAt(page, -60, 0);
