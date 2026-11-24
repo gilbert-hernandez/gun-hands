@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { WEAPON } from '../src/config/weapon.js';
-import { WORLD } from '../src/config/world.js';
+import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { DISPLAY } from '../src/config/display.js';
 
 // Aiming, auto-fire, bullet stats, pooling and pierce (GH-3).
@@ -296,33 +296,53 @@ test('count 1 ignores the spread angle', async ({ page }) => {
 
 test('a bullet despawns when its lifetime ends, inside the arena', async ({ page }) => {
   await setWeapon(page, { bullet: { lifetime: 300 } });
-  await nextShot(page);
-  await page.evaluate(() => {
-    const b = window.__rec.shots[0].bullets[0].ref;
-    window.__tracked = { b, startX: b.x, startY: b.y };
-    window.__rec.gameMs = 0;
-  });
-  await page.waitForFunction(() => !window.__tracked.b.active, null, { timeout: 5000 });
-  const r = await page.evaluate(() => {
-    const { b, startX, startY } = window.__tracked;
-    return {
-      gameMs: window.__rec.gameMs,
-      visible: b.visible,
-      enabled: b.body.enable,
-      dist: Math.hypot(b.x - startX, b.y - startY),
-    };
-  });
+  // Track the next bullet from the moment it is fired, in the page: a round trip from the test
+  // can take longer than the 300 ms lifetime, and by then the pool may have reused the object.
+  // Lifetime runs on the game loop clock, while physics distance depends on frame pacing (Phaser
+  // caps the physics delta when headless frames stall), so this checks time, not distance.
+  const r = await page.evaluate(
+    () =>
+      new Promise((resolve) => {
+        const scene = window.__GAME__.scene.getScene('Game');
+        const loop = scene.game.loop;
+        const pool = scene.player.bullets;
+        const fire = pool.fire;
+        pool.fire = (...args) => {
+          const b = fire.apply(pool, args);
+          if (!b) return b;
+          pool.fire = fire;
+          const t0 = loop.time;
+          b.despawn = () => {
+            delete b.despawn;
+            const out = {
+              ms: loop.time - t0,
+              expired: loop.time >= b.expiresAt,
+              nearWall: scene.arena.isSolidAt(b.x + 16, b.y),
+            };
+            b.despawn();
+            resolve({ ...out, visible: b.visible, enabled: b.body.enable });
+          };
+          return b;
+        };
+      }),
+  );
   expect(r.visible).toBe(false);
   expect(r.enabled).toBe(false);
-  // 480 px/s * 0.3 s = 144 px: far from the wall, so the lifetime ended it.
-  expect(r.dist).toBeGreaterThan(80);
-  expect(r.dist).toBeLessThan(220);
-  expect(r.gameMs).toBeGreaterThan(200);
+  // Fired right from the spawn with no wall in front of it, so the lifetime ended it: not before
+  // 300 ms (one frame of slack), and on the first update at or after its expiry time. Distance and
+  // an upper time bound aren't checked: stalled headless frames make both unreliable.
+  expect(r.nearWall).toBe(false);
+  expect(r.expired).toBe(true);
+  expect(r.ms).toBeGreaterThanOrEqual(250);
 });
 
 test('a bullet despawns when it leaves the arena', async ({ page }) => {
   await setWeapon(page, { bullet: { lifetime: 100000 } });
-  await teleport(page, 60, WORLD.height / 2);
+  // Walls normally stop bullets first (GH-4); switch that off to test the world-bounds fallback.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').bulletWalls.active = false;
+  });
+  await teleport(page, 60, (arenaMap.height * arenaMap.tileheight) / 2);
   await page.waitForTimeout(500);
   await pointAt(page, -40, 0);
   await page.waitForTimeout(200);

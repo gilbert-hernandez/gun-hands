@@ -10,7 +10,7 @@ export const WEAPON = {
   // How long the muzzle flash stays visible per shot (ms).
   muzzleFlashMs: 60,
   bullet: {
-    // px/s
+    // px/s. Keep under ~1900 (32 px tile x 60 Hz physics) or bullets can tunnel through 1-tile walls.
     speed: 480,
     damage: 10,
     // ms in flight before despawning

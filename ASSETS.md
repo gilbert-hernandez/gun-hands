@@ -65,7 +65,19 @@ Sizes are **per frame** (W×H). "Frames" is the number of frames in the strip.
 
 ### GH-19: Arena tileset
 
-One image on a 32×32 grid, **8 columns × 8 rows = 256×256 px**, with no spacing or margin (Tiled-ready). Leave unused cells transparent. Suggested layout: rows 1–2 floors and floor details, rows 3–4 walls and corners, row 5 obstacles (a 2×2 obstacle uses a 2×2 block of cells), row 6 walk-over props.
+One image on a 32×32 grid, **8 columns × 8 rows = 256×256 px**, with no spacing or margin (Tiled-ready). Leave unused cells transparent.
+
+**Keep to this layout.** The arena map (`src/assets/maps/gh_arena.json`) already places tiles by these positions, so a tileset in this layout drops in without editing the map:
+
+| Row | Tile ids | Use                                                                                 |
+| --- | -------- | ----------------------------------------------------------------------------------- |
+| 1–2 | 0–15     | Floors and floor details (low contrast). Tile 0 is the main floor; 1–3 are variants |
+| 3–4 | 16–31    | Walls and wall corners. Tile 16 is the generic wall                                 |
+| 5–6 | 32–47    | Obstacles. A 2×2 obstacle spans both rows: tiles 32, 33 (top) and 40, 41 (bottom)   |
+| 7   | 48–55    | Walk-over decor and props (cracks, debris). Tiles 48–51 are used                    |
+| 8   | 56–63    | Spare: leave transparent                                                            |
+
+Tile ids count left to right, top to bottom, starting at 0. Whether a tile blocks movement is set by the map layer it sits on, not by the tile, so decor can never become a wall by accident.
 
 | Ticket | File                 | Size  | Frames | Notes                                                  |
 | ------ | -------------------- | ----- | ------ | ------------------------------------------------------ |

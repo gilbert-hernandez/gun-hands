@@ -11,6 +11,19 @@ export const CATEGORY_COLORS = {
   tiles: '#8b5a2b', // brown
 };
 
+// Placeholder tileset colors by row, matching the GH-19 layout in ASSETS.md
+// (rows 1-2 floor, 3-4 walls, 5-6 obstacles, 7 decor, 8 spare). null = left transparent.
+export const TILE_ROW_COLORS = [
+  '#262c3a', // floor: dark, low contrast
+  '#262c3a',
+  '#8b5a2b', // walls: brown
+  '#8b5a2b',
+  '#5b6270', // obstacles: stone
+  '#5b6270',
+  '#3f7a3a', // decor: green
+  null, // spare
+];
+
 /** Darken a #rrggbb color by `amount` (0..1). */
 export function shade(hex, amount) {
   const n = parseInt(hex.slice(1), 16);
@@ -47,16 +60,19 @@ export function drawPlaceholderCanvas(entry, doc = document) {
   const ctx = canvas.getContext('2d');
 
   if (entry.type === 'tileset') {
-    // A grid of tiles; alternating tint so individual tiles are distinguishable.
+    // A grid of tiles tinted by row role; alternating shade so individual tiles are distinguishable.
     const cols = entry.columns;
     const rows = Math.ceil(frames / cols);
     canvas.width = cols * fw;
     canvas.height = rows * fh;
     for (let i = 0; i < frames; i++) {
-      const cx = (i % cols) * fw;
-      const cy = Math.floor(i / cols) * fh;
-      const odd = ((i % cols) + Math.floor(i / cols)) % 2 === 1;
-      drawCell(ctx, cx, cy, fw, fh, odd ? shade(color, 0.2) : color, 0);
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      // Rows past the layout fall back to the category color.
+      const base = row < TILE_ROW_COLORS.length ? TILE_ROW_COLORS[row] : color;
+      if (!base) continue;
+      const odd = (col + row) % 2 === 1;
+      drawCell(ctx, col * fw, row * fh, fw, fh, odd ? shade(base, 0.15) : base, 0);
     }
   } else {
     // Single-row strip (an 'image' is just a 1-frame strip without ticks).

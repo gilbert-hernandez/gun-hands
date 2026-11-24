@@ -8,3 +8,5 @@ videos/
 art/
 openspec/
 package-lock.json
+# Tiled writes its own JSON layout; reformatting it would explode the tile data to one number per line.
+src/assets/maps/

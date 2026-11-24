@@ -19,18 +19,18 @@ await page.waitForTimeout(1000);
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.__GAME__?.scene.isActive('Game'));
 
-// Scripted route: GH-2 movement while the mouse circles the player, so the guns (GH-3) rotate
-// all the way round and auto-fire the whole time. Each step: keys to hold, duration in ms.
+// Scripted route through the GH-4 arena while the guns auto-fire (GH-3). Each step: keys to hold,
+// duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
+// in degrees, null leaves the mouse untouched. The spawn is at the map center; the nearest wall to
+// the right is a vertical run about 450 px away.
 const route = [
-  [[], 1500], // idle, mouse untouched: guns point and fire right
-  [['KeyD'], 1500],
-  [['KeyS'], 1500],
-  [['KeyA'], 1500],
-  [['KeyW'], 1500], // four directions
-  [['KeyW', 'KeyD'], 1000],
-  [['KeyS', 'KeyA'], 1000], // diagonals
-  [['KeyW', 'KeyA'], 5000], // toward the top-left corner: bullets vanish at the arena wall
-  [['KeyS', 'KeyD'], 1500], // back out
+  [[], 1500, null], // idle, mouse untouched: guns fire right and the bullets stop at the wall run
+  [['KeyD'], 2800, 0], // walk into the wall run and stop flush, firing into it point blank
+  [['KeyD', 'KeyW'], 1500, 'circle'], // slide up along it and round the end
+  [['KeyA'], 2500, 'circle'],
+  [['KeyS'], 1500, 'circle'],
+  [['KeyW', 'KeyA'], 4000, 'circle'], // to the top-left corner: stops at the border walls
+  [['KeyS', 'KeyD'], 1500, 'circle'], // back out
 ];
 const SPREAD_MS = 7000; // then a 3-projectile spread for the rest
 const RADIUS = 150; // game px
@@ -40,18 +40,19 @@ const scale = box.width / size.width;
 const end = Date.now() + seconds * 1000;
 let angle = 0;
 
-/** Hold `keys` for `ms`, moving the mouse around the player's current screen position. */
-async function circle(keys, ms, { moveMouse = true } = {}) {
+/** Hold `keys` for `ms`, aiming as described above around the player's current screen position. */
+async function circle(keys, ms, aim = 'circle') {
   for (const k of keys) await page.keyboard.down(k);
   const stop = Math.min(Date.now() + ms, end);
   while (Date.now() < stop) {
-    if (moveMouse) {
+    if (aim !== null) {
       const p = await page.evaluate(() => {
         const scene = window.__GAME__.scene.getScene('Game');
         const cam = scene.cameras.main;
         return { x: scene.player.x - cam.scrollX, y: scene.player.y - cam.scrollY };
       });
-      angle += (2 * Math.PI * 50) / TURN_MS;
+      if (aim === 'circle') angle += (2 * Math.PI * 50) / TURN_MS;
+      else angle = (aim * Math.PI) / 180;
       await page.mouse.move(
         box.x + (p.x + Math.cos(angle) * RADIUS) * scale,
         box.y + (p.y + Math.sin(angle) * RADIUS) * scale,
@@ -62,9 +63,9 @@ async function circle(keys, ms, { moveMouse = true } = {}) {
   for (const k of keys) await page.keyboard.up(k);
 }
 
-for (const [i, [keys, ms]] of route.entries()) {
+for (const [keys, ms, aim] of route) {
   if (Date.now() >= end - SPREAD_MS) break;
-  await circle(keys, ms, { moveMouse: i > 0 });
+  await circle(keys, ms, aim);
 }
 
 // Multishot preview: what the upgrade / Spread Shot powerup will do to the per-run stats.

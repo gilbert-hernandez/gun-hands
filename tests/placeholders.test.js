@@ -52,6 +52,24 @@ describe('placeholders', () => {
     expect(c.width / 64).toBe(e.frames);
   });
 
+  it('tints the arena tileset by row role and leaves the spare row transparent', () => {
+    const e = asset('tiles_arena');
+    const c = draw(e);
+    expect([c.width, c.height]).toEqual([256, 256]);
+    // The fill of a tile is the call covering its inner area (after the outline rect).
+    const fillAt = (/** @type {number} */ id) => {
+      const x = (id % 8) * 32;
+      const y = Math.floor(id / 8) * 32;
+      return c.calls.find((/** @type {any} */ r) => r.x === x + 1 && r.y === y + 1 && r.w === 30)?.color;
+    };
+    const floor = fillAt(0);
+    const wall = fillAt(16);
+    const obstacle = fillAt(32);
+    const decor = fillAt(48);
+    expect(new Set([floor, wall, obstacle, decor]).size).toBe(4);
+    expect(c.calls.some((/** @type {any} */ r) => r.y >= 7 * 32)).toBe(false);
+  });
+
   it('darkens colors for outlines', () => {
     expect(shade('#ffffff', 0.5)).toBe('#808080');
     expect(shade('#22d3ee', 0)).toBe('#22d3ee');

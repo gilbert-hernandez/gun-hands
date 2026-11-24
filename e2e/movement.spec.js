@@ -1,11 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { PLAYER } from '../src/config/player.js';
-import { WORLD } from '../src/config/world.js';
+import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { DISPLAY } from '../src/config/display.js';
 
-// Player movement, facing, bounds, camera and hurtbox (GH-2).
+// Player movement, facing, bounds, camera and hurtbox (GH-2). Since GH-4 the arena is the Tiled map,
+// so the player stops at the inner face of the 1-tile border wall.
 // Frame timing in headless swiftshader is uneven, so these assert on velocity, direction and
 // bounds rather than on exact distance travelled.
+
+const WORLD_W = arenaMap.width * arenaMap.tilewidth;
+const WORLD_H = arenaMap.height * arenaMap.tileheight;
+const WALL = arenaMap.tilewidth;
+// Tile separation can leave float dust, so compare edges to within 0.01 px.
+const near = (a, b) => Math.abs(a - b) < 0.01;
 
 let errors;
 
@@ -119,15 +126,15 @@ test('A + D cancel out horizontally', async ({ page }) => {
   expect(s.x).toBe(start.x);
 });
 
-test("can't leave the left/top bounds and the camera clamps at the corner", async ({ page }) => {
+test("can't pass the left/top border walls and the camera clamps at the corner", async ({ page }) => {
   await teleport(page, 100, 100);
   const s = await holdUntil(
     page,
     ['KeyW', 'KeyA'],
-    (t) => t.body.left === 0 && t.body.top === 0 && t.cam.scrollX === 0 && t.cam.scrollY === 0,
+    (t) => near(t.body.left, WALL) && near(t.body.top, WALL) && t.cam.scrollX === 0 && t.cam.scrollY === 0,
   );
-  expect(s.body.left).toBe(0);
-  expect(s.body.top).toBe(0);
+  expect(s.body.left).toBeCloseTo(WALL, 2);
+  expect(s.body.top).toBeCloseTo(WALL, 2);
   expect(s.cam.scrollX).toBe(0);
   expect(s.cam.scrollY).toBe(0);
 });
@@ -139,20 +146,20 @@ test('camera follows and clamps at the bottom-right corner', async ({ page }) =>
   await release(page, ['KeyD']);
   expect(followed.cam.scrollX).toBeGreaterThan(start.cam.scrollX);
 
-  await teleport(page, WORLD.width - 100, WORLD.height - 100);
+  await teleport(page, WORLD_W - 100, WORLD_H - 100);
   const s = await holdUntil(
     page,
     ['KeyS', 'KeyD'],
     (t) =>
-      t.body.right === WORLD.width &&
-      t.body.bottom === WORLD.height &&
-      t.cam.scrollX === WORLD.width - DISPLAY.width &&
-      t.cam.scrollY === WORLD.height - DISPLAY.height,
+      near(t.body.right, WORLD_W - WALL) &&
+      near(t.body.bottom, WORLD_H - WALL) &&
+      t.cam.scrollX === WORLD_W - DISPLAY.width &&
+      t.cam.scrollY === WORLD_H - DISPLAY.height,
   );
-  expect(s.body.right).toBe(WORLD.width);
-  expect(s.body.bottom).toBe(WORLD.height);
-  expect(s.cam.scrollX).toBe(WORLD.width - DISPLAY.width);
-  expect(s.cam.scrollY).toBe(WORLD.height - DISPLAY.height);
+  expect(s.body.right).toBeCloseTo(WORLD_W - WALL, 2);
+  expect(s.body.bottom).toBeCloseTo(WORLD_H - WALL, 2);
+  expect(s.cam.scrollX).toBe(WORLD_W - DISPLAY.width);
+  expect(s.cam.scrollY).toBe(WORLD_H - DISPLAY.height);
   // Off-center: the player is in the right half / bottom half of the screen.
   expect(s.x - s.cam.scrollX).toBeGreaterThan(DISPLAY.width / 2);
   expect(s.y - s.cam.scrollY).toBeGreaterThan(DISPLAY.height / 2);

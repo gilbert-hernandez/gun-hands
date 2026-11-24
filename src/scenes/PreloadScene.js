@@ -3,9 +3,12 @@ import { DISPLAY } from '../config/index.js';
 import { MANIFEST } from '../assets/manifest.js';
 import { AVAILABLE_FILES } from '../assets/available.js';
 import { createPlaceholder } from '../assets/placeholders.js';
+import arenaMap from '../assets/maps/gh_arena.json';
+import { MAP_KEY } from '../world/Arena.js';
 import { addSceneLabel } from './sceneLabel.js';
 
-// Loads every manifest entry whose PNG exists and generates placeholders for the rest.
+// Loads every manifest entry whose PNG exists and generates placeholders for the rest,
+// plus the arena tilemap (bundled JSON, so no extra request).
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super('Preload');
@@ -24,6 +27,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image(entry.key, url);
       }
     }
+    this.load.tilemapTiledJSON(MAP_KEY, arenaMap);
   }
 
   createProgressBar() {
