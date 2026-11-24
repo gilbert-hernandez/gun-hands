@@ -20,6 +20,10 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player?.body);
+  // No enemies (GH-5/6): a chaser could absorb a test bullet or touch the player mid-test.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').enemies.director.enabled = false;
+  });
   await installRecorder(page);
 });
 

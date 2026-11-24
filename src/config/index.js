@@ -4,3 +4,4 @@ export { PLAYER } from './player.js';
 export { WEAPON } from './weapon.js';
 export { WORLD } from './world.js';
 export { ENEMIES } from './enemies.js';
+export { COMBAT } from './combat.js';

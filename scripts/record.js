@@ -17,9 +17,14 @@ await page.goto(process.env.URL ?? 'http://localhost:5173');
 await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
 await page.waitForTimeout(1000);
 await page.keyboard.press('Enter');
-await page.waitForFunction(() => window.__GAME__?.scene.isActive('Game'));
+await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player);
+// Plenty of HP so crowd contact (GH-6) can't end the route before the scripted death scene.
+await page.evaluate(() => {
+  window.__GAME__.scene.getScene('Game').player.hp = 10000;
+});
 
-// Scripted route while the guns auto-fire (GH-3) and enemies chase (GH-5). Each step: keys to hold,
+// Scripted route while the guns auto-fire (GH-3), enemies chase (GH-5), and bullets hit them: hit flash,
+// knockback, and death puffs (GH-6). The last DEATH_MS show the player hit, blinking, dying, and GameOver. Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
 // off-screen ring right away. The spawn is at the map center; a vertical wall run is ~500 px left.
@@ -33,7 +38,8 @@ const route = [
   [['KeyS'], 1500, 'circle'],
   [[], 1500, 'circle'],
 ];
-const SPREAD_MS = 7000; // then a 3-projectile spread for the rest
+const DEATH_MS = 7000; // the player takes hits, dies, and GameOver shows the stats
+const SPREAD_MS = 7000 + DEATH_MS; // then a 3-projectile spread until the death scene
 const RADIUS = 150; // game px
 const TURN_MS = 3000; // one full mouse circle
 const box = await page.locator('#game canvas').boundingBox();
@@ -84,7 +90,19 @@ await page.evaluate(() => {
 });
 await circle([], 2500);
 await circle(['KeyD'], 2000);
-await circle([], end - Date.now());
+await circle([], end - DEATH_MS - Date.now());
+
+// Death scene: a Brute and a Grunt reach a weakened player. The Brute's hit leaves 5 HP and starts
+// the blink; when invulnerability ends the next contact kills, then GameOver shows the run stats.
+await page.evaluate(() => {
+  const scene = window.__GAME__.scene.getScene('Game');
+  const { player, enemies } = scene;
+  enemies.director.enabled = false;
+  player.hp = 25;
+  enemies.spawnAt('brute', player.x - 30, player.y);
+  enemies.spawnAt('grunt', player.x, player.y + 30);
+});
+await page.waitForTimeout(Math.max(0, end - Date.now()));
 
 const video = page.video();
 await context.close();

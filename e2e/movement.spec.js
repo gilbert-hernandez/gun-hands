@@ -23,6 +23,10 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player?.body);
+  // No enemies (GH-5/6): a chaser could absorb a test bullet or touch the player mid-test.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').enemies.director.enabled = false;
+  });
   await page.waitForTimeout(200);
 });
 
@@ -116,8 +120,15 @@ test('diagonal speed equals the configured speed (±1%)', async ({ page }) => {
 });
 
 test('A + D cancel out horizontally', async ({ page }) => {
-  // Keys go down one at a time, so a frame may run with only A held. Measure after both are down.
+  // Keys go down one at a time, so a frame may run with only A held (and under parallel workers
+  // that frame can land late). Measure from the first frame both keys are seen as down.
   await hold(page, ['KeyA', 'KeyD'], 100);
+  await page.waitForFunction(() => {
+    const { keys, body } = window.__GAME__.scene.getScene('Game').player;
+    return keys.A.isDown && keys.D.isDown && body.velocity.x === 0;
+  });
+  // One more physics step, so any movement from an A-only frame has already been applied.
+  await page.evaluate(() => new Promise((r) => window.__GAME__.events.once('postrender', () => r(undefined))));
   const start = await state(page);
   await page.waitForTimeout(300);
   const s = await state(page);

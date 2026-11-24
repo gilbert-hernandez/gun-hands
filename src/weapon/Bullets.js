@@ -20,6 +20,12 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.damage = 0;
     this.pierceLeft = 0;
     this.expiresAt = 0;
+    /**
+     * Enemies this bullet has already damaged in this flight, by object -> its spawnId then.
+     * A pooled enemy that respawns gets a new spawnId, so it counts as a different enemy.
+     * @type {Map<object, number>}
+     */
+    this.hitEnemies = new Map();
   }
 
   /**
@@ -38,6 +44,7 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     this.damage = stats.damage;
     this.pierceLeft = stats.pierce;
     this.expiresAt = now + stats.lifetime;
+    this.hitEnemies.clear();
     this.play(ANIM, true);
     return this;
   }
@@ -47,6 +54,22 @@ export class Bullet extends Phaser.Physics.Arcade.Sprite {
     if (time >= this.expiresAt || !this.scene.physics.world.bounds.contains(this.x, this.y)) {
       this.despawn();
     }
+  }
+
+  /**
+   * Whether this bullet already damaged `enemy` (in its current spawn) during this flight.
+   * @param {{ spawnId: number }} enemy
+   */
+  hasHit(enemy) {
+    return this.hitEnemies.get(enemy) === enemy.spawnId;
+  }
+
+  /**
+   * Remember that this bullet damaged `enemy`, so overlaps on later frames are ignored.
+   * @param {{ spawnId: number }} enemy
+   */
+  markHit(enemy) {
+    this.hitEnemies.set(enemy, enemy.spawnId);
   }
 
   /**

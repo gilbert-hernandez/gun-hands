@@ -25,6 +25,10 @@ test.beforeEach(async ({ page }) => {
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player?.body);
+  // No enemies (GH-5/6): a chaser could absorb a test bullet or touch the player mid-test.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('Game').enemies.director.enabled = false;
+  });
 });
 
 test.afterEach(() => {
@@ -144,7 +148,8 @@ test('holding A+W against the left border wall slides up along it', async ({ pag
   await page.keyboard.down('KeyW');
   await page.waitForTimeout(150);
   const a = await state(page);
-  await page.waitForTimeout(600);
+  // Wait for 20 px of slide rather than a fixed time: stalled headless frames move less per second.
+  await expect.poll(async () => (await state(page)).y, { timeout: 10000, intervals: [100] }).toBeLessThan(a.y - 20);
   const b = await state(page);
   await page.keyboard.up('KeyA');
   await page.keyboard.up('KeyW');

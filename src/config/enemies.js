@@ -1,9 +1,11 @@
-// Enemy tunables (GH-5). Enemy and spawner code reads these; don't hard-code them elsewhere.
+// Enemy tunables (GH-5, combat numbers GH-6). Enemy and spawner code reads these; don't hard-code them elsewhere.
 
 /**
  * @typedef {object} EnemyType
  * @property {number} speed move speed in px/s (keep below PLAYER.speed)
- * @property {number} hp max HP (damage arrives in GH-6)
+ * @property {number} hp max HP
+ * @property {number} contactDamage HP the player loses when this enemy touches them
+ * @property {number} knockback push speed in px/s when hit by a bullet (for COMBAT.knockbackMs)
  * @property {number} size sprite frame size in px (square)
  * @property {{width: number, height: number}} hurtbox physics body, centered horizontally and bottom-aligned in the sprite
  * @property {string} walk walk animation sprite sheet key (asset manifest)
@@ -16,6 +18,8 @@ const types = {
   grunt: {
     speed: 70,
     hp: 30,
+    contactDamage: 10,
+    knockback: 220,
     size: 32,
     hurtbox: { width: 18, height: 20 },
     walk: 'enemy_grunt_walk',
@@ -25,6 +29,8 @@ const types = {
   runner: {
     speed: 130,
     hp: 12,
+    contactDamage: 6,
+    knockback: 320,
     size: 32,
     hurtbox: { width: 14, height: 16 },
     walk: 'enemy_runner_walk',
@@ -34,6 +40,8 @@ const types = {
   brute: {
     speed: 45,
     hp: 120,
+    contactDamage: 20,
+    knockback: 60,
     size: 64,
     hurtbox: { width: 40, height: 44 },
     walk: 'enemy_brute_walk',

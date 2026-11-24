@@ -55,6 +55,8 @@ export default class Enemies {
       capOverride: null,
       wave: waveAt(0, ENEMIES.waves),
     };
+    /** Set by `freeze()` when the player dies: every enemy stands still from then on. */
+    this.frozen = false;
 
     // Scratch buffers for steering, reused every frame.
     /** @type {Enemy[]} */
@@ -112,6 +114,16 @@ export default class Enemies {
     return pt ? this.spawnAt(typeId, pt.x, pt.y) : null;
   }
 
+  /** Stop spawning and stop every enemy for good (the player died). */
+  freeze() {
+    this.frozen = true;
+    this.director.enabled = false;
+    for (const child of this.group.getChildren()) {
+      const e = /** @type {Enemy} */ (child);
+      if (e.active) e.setVelocity(0, 0);
+    }
+  }
+
   /**
    * Run the wave director, recycle far-away enemies, and steer the rest. Call once per frame.
    * @param {number} delta frame time in ms
@@ -120,7 +132,7 @@ export default class Enemies {
   update(delta, survivalMs) {
     this.director.wave = waveAt(survivalMs / 1000, ENEMIES.waves);
     if (this.director.enabled && survivalMs >= ENEMIES.spawn.startDelayMs) this.runDirector(delta);
-    this.steer();
+    this.steer(delta);
   }
 
   /** @param {number} delta */
@@ -135,7 +147,8 @@ export default class Enemies {
     }
   }
 
-  steer() {
+  /** @param {number} delta frame time in ms */
+  steer(delta) {
     const { target } = this;
     const recycle2 = ENEMIES.recycleDistance * ENEMIES.recycleDistance;
     const live = this.live;
@@ -143,6 +156,7 @@ export default class Enemies {
     for (const child of this.group.getChildren()) {
       const e = /** @type {Enemy} */ (child);
       if (!e.active) continue;
+      e.tick(delta);
       const dx = e.x - target.x;
       const dy = e.y - target.y;
       if (dx * dx + dy * dy > recycle2) {
@@ -158,6 +172,12 @@ export default class Enemies {
     separationPushes(this.xs, this.ys, live.length, radius, this.pushX, this.pushY);
     for (let i = 0; i < live.length; i++) {
       const e = live[i];
+      if (this.frozen) {
+        e.setVelocity(0, 0);
+        continue;
+      }
+      // Knocked-back enemies keep their push velocity (they still count for separation above).
+      if (e.knockMs > 0) continue;
       const v = chaseVelocity(e, target, e.speed, this.pushX[i], this.pushY[i], strength);
       e.setVelocity(v.x, v.y);
       if (Math.abs(v.x) >= FACING_DEAD_ZONE) e.setFlipX(v.x < 0);

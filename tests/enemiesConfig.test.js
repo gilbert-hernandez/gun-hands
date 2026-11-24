@@ -21,6 +21,20 @@ describe('enemy types', () => {
     expect(types.grunt.hp).toBeLessThan(types.brute.hp);
   });
 
+  it('orders knockback runner > grunt > brute > 0', () => {
+    expect(types.runner.knockback).toBeGreaterThan(types.grunt.knockback);
+    expect(types.grunt.knockback).toBeGreaterThan(types.brute.knockback);
+    expect(types.brute.knockback).toBeGreaterThan(0);
+  });
+
+  it('has positive contact damage below the player max HP, largest for the brute', () => {
+    for (const t of Object.values(types)) {
+      expect(t.contactDamage).toBeGreaterThan(0);
+      expect(t.contactDamage).toBeLessThan(PLAYER.maxHp);
+      if (t !== types.brute) expect(types.brute.contactDamage).toBeGreaterThan(t.contactDamage);
+    }
+  });
+
   it('uses 64 px sprites for the brute and 32 px for the others', () => {
     expect(types.brute.size).toBe(64);
     expect(types.grunt.size).toBe(32);

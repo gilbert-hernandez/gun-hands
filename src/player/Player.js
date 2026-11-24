@@ -3,9 +3,11 @@ import { PLAYER, WEAPON } from '../config/index.js';
 import { velocityFrom, facingFrom } from './movement.js';
 import { aimAngle, spreadAngles, shotsDue, gunsFlipY, pathBlocked } from '../weapon/aim.js';
 import { BODY_RADIUS as BULLET_RADIUS } from '../weapon/Bullets.js';
+import { applyDamage, blinkVisible, tickTimer } from '../combat/rules.js';
 
 const ANIM_IDLE = 'player_body_idle';
 const ANIM_RUN = 'player_body_run';
+const ANIM_DEATH = 'player_body_death';
 
 /**
  * Scene event emitted once per shot with `{ x, y, angle, blocked }` (gun tip, radians; `blocked` is
@@ -17,6 +19,7 @@ export const PLAYER_FIRED = 'player-fired';
  * The player: an Arcade physics sprite for the body (with a hurtbox smaller than the sprite)
  * plus a plain sprite for the gun-hands that follows the body and rotates toward the aim.
  * The guns auto-fire bullets from the pool at `weapon.fireRate`.
+ * The player has HP, blinks while invulnerable after a hit, and stops for good on death (GH-6).
  */
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   /**
@@ -51,11 +54,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     // Aim angle in radians (0 = right); points the way the body faces until the mouse is used.
     this.aim = 0;
     this.fireAcc = 0;
+    this.maxHp = PLAYER.maxHp;
+    this.hp = PLAYER.maxHp;
+    // Levelling arrives in GH-8; run stats report this.
+    this.level = 1;
+    this.dead = false;
+    /** ms of invulnerability left after a hit (blinking while > 0). */
+    this.invulnerableMs = 0;
     /** @type {Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key>} */
     this.keys = /** @type {any} */ (scene.input.keyboard.addKeys('W,A,S,D'));
 
     ensureAnim(scene, ANIM_IDLE, PLAYER.anims.idle);
     ensureAnim(scene, ANIM_RUN, PLAYER.anims.run);
+    if (!scene.anims.exists(ANIM_DEATH)) {
+      scene.anims.create({
+        key: ANIM_DEATH,
+        frames: scene.anims.generateFrameNumbers(ANIM_DEATH),
+        frameRate: PLAYER.anims.death,
+        repeat: 0,
+      });
+    }
     this.play(ANIM_IDLE);
 
     // Aim facing only kicks in after the mouse has actually moved over the game.
@@ -82,6 +100,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * @param {number} delta frame time in ms
    */
   update(time, delta) {
+    if (this.dead) return;
+    this.tickInvulnerable(delta);
+
     const k = this.keys;
     const v = velocityFrom({ up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown }, PLAYER.speed);
     this.setVelocity(v.x, v.y);
@@ -125,6 +146,47 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
       }
       this.scene.events.emit(PLAYER_FIRED, { x, y, angle: this.aim, blocked });
     }
+  }
+
+  /**
+   * Lose `amount` HP (floored at 0) and, if still alive, become invulnerable.
+   * Callers check invulnerability first (see `Combat.damagePlayer`).
+   * @param {number} amount
+   * @returns {{ hp: number, dead: boolean }}
+   */
+  takeDamage(amount) {
+    const r = applyDamage(this.hp, amount, true);
+    this.hp = r.hp;
+    if (!r.dead) this.invulnerableMs = PLAYER.invulnerableMs;
+    return r;
+  }
+
+  /** Restore full HP (dev shortcut; healing pickups arrive in GH-9). */
+  heal() {
+    this.hp = this.maxHp;
+  }
+
+  /** Count invulnerability down on scene time and blink body and guns meanwhile. */
+  tickInvulnerable(delta) {
+    if (this.invulnerableMs <= 0) return;
+    this.invulnerableMs = tickTimer(this.invulnerableMs, delta);
+    const visible = blinkVisible(this.invulnerableMs, PLAYER.blinkMs);
+    this.setVisible(visible);
+    this.guns.setVisible(visible);
+  }
+
+  /**
+   * Die: stop moving and firing, hide the guns, and play the death animation once.
+   * @param {() => void} onDone called when the death animation finishes
+   */
+  die(onDone) {
+    this.dead = true;
+    this.invulnerableMs = 0;
+    this.setVelocity(0, 0);
+    this.setVisible(true);
+    this.guns.setVisible(false);
+    this.once(Phaser.Animations.Events.ANIMATION_COMPLETE_KEY + ANIM_DEATH, onDone);
+    this.play(ANIM_DEATH);
   }
 
   destroy(fromScene) {

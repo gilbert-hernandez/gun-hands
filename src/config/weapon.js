@@ -11,6 +11,7 @@ export const WEAPON = {
   muzzleFlashMs: 60,
   bullet: {
     // px/s. Keep under ~1900 (32 px tile x 60 Hz physics) or bullets can tunnel through 1-tile walls.
+    // Above ~800 px/s a bullet can step past the 14 px Runner hurtbox at low frame rates (GH-6).
     speed: 480,
     damage: 10,
     // ms in flight before despawning
