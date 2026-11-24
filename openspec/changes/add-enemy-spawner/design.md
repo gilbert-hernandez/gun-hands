@@ -38,7 +38,7 @@ Pure modules take `rand` as a parameter so tests are deterministic. *Alternative
 
 Ring center = the camera's `worldView` center (not the player, since the camera is clamped at map edges). Radius = half the view diagonal (√(480² + 270²) ≈ 551 px) + the largest half sprite size (32 px for a Brute) + `spawn.margin` (default 32). Any point on that circle is outside the view rectangle with the whole sprite off-screen.
 
-For each attempt: pick θ uniformly in [0, 2π), compute the point, and reject it if any of the hurtbox's four corners plus its center is on a solid tile or outside the map (`isSolidAt` already returns true outside the map). The corners are inset by 1 px. The largest hurtbox (Brute, about 40 px) is narrower than two tiles, so five sample points can't miss a wall tile between them. Default `spawn.attempts` = 12.
+For each attempt: pick θ uniformly in [0, 2π), compute the point, and reject it if the hurtbox sticks out of the map or any point of a sample grid over it (edges inset by 1 px, points at most 16 px apart) is on a solid tile. With samples at most half a tile apart, no wall tile can hide between them. (An earlier plan sampled only the center and four corners; a unit test showed that misses a tile touching the middle of a 44 px side edge.) Default `spawn.attempts` = 12.
 
 When the player is near a map corner, most of the ring lies outside the map and many attempts fail. The arena is 1920 px wide and the ring diameter is about 1230 px, so some arc is always inside the map. Twelve attempts makes a skipped tick rare and harmless (the director tries again next interval).
 

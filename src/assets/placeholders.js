@@ -4,7 +4,8 @@
 
 export const CATEGORY_COLORS = {
   player: '#22d3ee', // cyan
-  enemy: '#ef4444', // red
+  // Light gray: each enemy type tints it its own color (ENEMIES.types[*].placeholderTint).
+  enemy: '#e5e7eb',
   fx: '#facc15', // yellow
   pickup: '#22c55e', // green
   ui: '#9ca3af', // gray

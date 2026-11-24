@@ -1,14 +1,15 @@
 import Phaser from 'phaser';
-import { DEBUG, WEAPON, WORLD } from '../config/index.js';
+import { DEBUG, DISPLAY, WEAPON, WORLD } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
+import Enemies from '../enemy/Enemies.js';
 import Bullets from '../weapon/Bullets.js';
 import { gunsFlipY } from '../weapon/aim.js';
 import Arena from '../world/Arena.js';
 import { addSceneLabel } from './sceneLabel.js';
 
-// The play session: the Tiled arena, the player, and a camera that follows it.
-// The player auto-fires from a bullet pool; walls stop the player and bullets.
-// Enemies etc. arrive in later GH tickets (they collide via `this.arena.collide`).
+// The play session: the Tiled arena, the player, enemies, and a camera that follows the player.
+// The player auto-fires from a bullet pool; walls stop the player, bullets, and enemies.
+// Enemies spawn off-screen and chase the player (GH-5); combat between them arrives in GH-6.
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
@@ -16,6 +17,8 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     addSceneLabel(this);
+    /** Survival time in ms: counted in update(), so it stops while the scene is paused. */
+    this.survivalMs = 0;
 
     this.arena = new Arena(this);
     const { width, height, spawn } = this.arena;
@@ -34,10 +37,19 @@ export default class GameScene extends Phaser.Scene {
     cam.setRoundPixels(true);
     cam.startFollow(this.player, true, WORLD.cameraLerp, WORLD.cameraLerp);
 
+    this.enemies = new Enemies(this, this.player, (x, y) => this.arena.isSolidAt(x, y), { width, height });
+    this.arena.collide(this.enemies.group);
+
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
 
     if (DEBUG.enabled) {
+      // Tuning aid, not the HUD (GH-10): survival time and live enemies / cap.
+      this.debugText = this.add
+        .text(8, DISPLAY.height - 8, '', { fontFamily: 'monospace', fontSize: '12px', color: '#ffffff' })
+        .setOrigin(0, 1)
+        .setScrollFactor(0)
+        .setDepth(100);
       this.input.keyboard.on('keydown-L', () => {
         this.scene.pause();
         this.scene.launch('LevelUp');
@@ -50,10 +62,13 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    this.survivalMs += delta;
     // Count the flash down before firing, so a shot this frame shows for the full duration.
     this.muzzleMsLeft -= delta;
     if (this.muzzle.visible && this.muzzleMsLeft <= 0) this.muzzle.setVisible(false);
     this.player.update(time, delta);
+    this.enemies.update(delta, this.survivalMs);
+    this.debugText?.setText(`t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}`);
   }
 
   /**
@@ -71,4 +86,10 @@ export default class GameScene extends Phaser.Scene {
     this.events.on(PLAYER_FIRED, onFired);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(PLAYER_FIRED, onFired));
   }
+}
+
+/** ms -> "m:ss" */
+function formatTime(ms) {
+  const total = Math.floor(ms / 1000);
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }

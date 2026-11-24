@@ -19,18 +19,19 @@ await page.waitForTimeout(1000);
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.__GAME__?.scene.isActive('Game'));
 
-// Scripted route through the GH-4 arena while the guns auto-fire (GH-3). Each step: keys to hold,
+// Scripted route while the guns auto-fire (GH-3) and enemies chase (GH-5). Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
-// in degrees, null leaves the mouse untouched. The spawn is at the map center; the nearest wall to
-// the right is a vertical run about 450 px away.
+// in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
+// off-screen ring right away. The spawn is at the map center; a vertical wall run is ~500 px left.
 const route = [
-  [[], 1500, null], // idle, mouse untouched: guns fire right and the bullets stop at the wall run
-  [['KeyD'], 2800, 0], // walk into the wall run and stop flush, firing into it point blank
-  [['KeyD', 'KeyW'], 1500, 'circle'], // slide up along it and round the end
-  [['KeyA'], 2500, 'circle'],
+  [[], 3000, 'circle'], // the first Grunts walk in from off-screen
+  ['spawn', { grunt: 6, runner: 4, brute: 2 }], // Runners (yellow) and Brutes (purple) join
+  [[], 2000, 'circle'], // the crowd closes in and spreads out instead of stacking
+  [['KeyA'], 2200, 'circle'], // run past the wall run: chasers behind it slide along it
+  [['KeyW'], 1200, 'circle'],
+  [['KeyD'], 2500, 'circle'], // kite back right; Runners keep up, Brutes fall behind
   [['KeyS'], 1500, 'circle'],
-  [['KeyW', 'KeyA'], 4000, 'circle'], // to the top-left corner: stops at the border walls
-  [['KeyS', 'KeyD'], 1500, 'circle'], // back out
+  [[], 1500, 'circle'],
 ];
 const SPREAD_MS = 7000; // then a 3-projectile spread for the rest
 const RADIUS = 150; // game px
@@ -65,6 +66,13 @@ async function circle(keys, ms, aim = 'circle') {
 
 for (const [keys, ms, aim] of route) {
   if (Date.now() >= end - SPREAD_MS) break;
+  if (keys === 'spawn') {
+    await page.evaluate((counts) => {
+      const { enemies } = window.__GAME__.scene.getScene('Game');
+      for (const [type, n] of Object.entries(counts)) for (let i = 0; i < n; i++) enemies.spawnRing(type);
+    }, ms);
+    continue;
+  }
   await circle(keys, ms, aim);
 }
 

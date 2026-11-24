@@ -61,6 +61,9 @@ export default class PreloadScene extends Phaser.Scene {
       }
     }
 
+    // Game code checks this to style placeholders (e.g. per-type enemy tints).
+    this.registry.set('placeholders', placeholders);
+
     if (import.meta.env.DEV && placeholders.length > 0) {
       console.warn(
         `[assets] ${placeholders.length} placeholder(s) in use (art not delivered yet): ${placeholders.join(', ')}`,

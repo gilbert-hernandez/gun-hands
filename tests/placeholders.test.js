@@ -70,6 +70,13 @@ describe('placeholders', () => {
     expect(c.calls.some((/** @type {any} */ r) => r.y >= 7 * 32)).toBe(false);
   });
 
+  it('draws enemies in a light, neutral gray so per-type tints show their own hue', () => {
+    const n = parseInt(CATEGORY_COLORS.enemy.slice(1), 16);
+    const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    expect(Math.min(r, g, b)).toBeGreaterThan(200);
+    expect(Math.max(r, g, b) - Math.min(r, g, b)).toBeLessThan(16);
+  });
+
   it('darkens colors for outlines', () => {
     expect(shade('#ffffff', 0.5)).toBe('#808080');
     expect(shade('#22d3ee', 0)).toBe('#22d3ee');

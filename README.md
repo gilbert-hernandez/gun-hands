@@ -57,6 +57,7 @@ In `npm run dev`, debug mode is on (`DEBUG.enabled` in `src/config/display.js`).
 
 - `L` opens the LevelUp screen (Enter or click to resume)
 - `G` jumps to GameOver (Enter or click to go back to Title)
+- bottom left: survival time and live enemies / cap, for tuning the waves in `src/config/enemies.js`
 
 Production builds turn these off.
 
@@ -66,11 +67,15 @@ Production builds turn these off.
 index.html                 page shell
 vite.config.js             Vite + Vitest config
 src/main.js                Phaser.Game config (960×540, FIT, pixelArt, Arcade Physics)
-src/config/                tunables (display.js now; player/enemies/drops later), re-exported by index.js
+src/config/                tunables (display, player, weapon, world, enemies), re-exported by index.js
 src/assets/manifest.js     every graphic: key, file, type, frame size, frames, category, plus validate()
 src/assets/placeholders.js generated stand-ins for missing art
 src/assets/available.js    which PNGs exist in src/assets/img/ (import.meta.glob)
 src/assets/img/            david's PNGs go here
+src/player/                the player sprite and pure movement math
+src/weapon/                bullet pool and pure aim/fire math
+src/world/                 the Tiled arena (walls, spawn, collision helper)
+src/enemy/                 enemy pool, wave director, chase steering; spawn/steering/waves.js are pure math
 src/scenes/                Boot → Preload → Title → Game (+ UI overlay), LevelUp, GameOver
 tests/                     Vitest unit tests
 ASSETS.md                  the art spec david's tickets point to
