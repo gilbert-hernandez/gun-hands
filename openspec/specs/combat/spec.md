@@ -88,11 +88,11 @@ The player SHALL start each session with the configured max HP. HP SHALL NOT go 
 - **THEN** the player's HP is 0
 
 ### Requirement: Player death sequence
-When the player's HP reaches 0, the player SHALL die exactly once: player input and firing SHALL stop, the player SHALL stop moving, enemy spawning SHALL stop, all enemies SHALL stop moving, and no further damage SHALL be dealt or taken. The player death animation SHALL play once. After it finishes and a configured delay passes, the Game and UI scenes SHALL stop and the GameOver scene SHALL start with the run stats: survival time in milliseconds (as of the moment of death), kills, and level.
+When the player's HP reaches 0, the player SHALL die exactly once: player input and firing SHALL stop, the player SHALL stop moving, enemy spawning SHALL stop, all enemies SHALL stop moving, and no further damage SHALL be dealt or taken. The player death animation SHALL play once. After it finishes and a configured delay passes, the Game and UI scenes SHALL stop and the GameOver scene SHALL start with the run stats: survival time in milliseconds (as of the moment of death), kills, and the level the player had reached.
 
 #### Scenario: Death to GameOver
-- **WHEN** the player's HP reaches 0 after killing 7 enemies
-- **THEN** firing stops, enemies stop, the death animation plays, and then GameOver starts with kills 7, level 1, and the survival time at death
+- **WHEN** the player's HP reaches 0 at level 3 after killing 7 enemies
+- **THEN** firing stops, enemies stop, the death animation plays, and then GameOver starts with kills 7, level 3, and the survival time at death
 
 #### Scenario: Survival time stops at death
 - **WHEN** the player dies at 42.0 s of survival time and GameOver starts a second later
