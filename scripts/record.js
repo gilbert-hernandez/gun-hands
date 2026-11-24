@@ -18,19 +18,25 @@ await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'));
 await page.waitForTimeout(1000);
 await page.keyboard.press('Enter');
 await page.waitForFunction(() => window.__GAME__?.scene.getScene('Game')?.player);
-// Plenty of HP so crowd contact (GH-6) can't end the route before the scripted death scene.
-await page.evaluate(() => {
+// Crowd contact (GH-6) still hurts, so the HUD's HP bar (GH-10) drops and flashes, but it can't take
+// the player below HP_FLOOR before the scripted death scene, which restores the real damage path.
+await page.evaluate((floor) => {
   const scene = window.__GAME__.scene.getScene('Game');
-  scene.player.hp = 10000;
+  const { combat, player } = scene;
+  const damage = combat.damagePlayer;
+  window.__realDamage = damage;
+  combat.damagePlayer = (amount, opts) => damage.call(combat, Math.max(0, Math.min(amount, player.hp - floor)), opts);
   // Far more loot than a real run (GH-9), so drops visibly fall from kills along the route.
   scene.powerups.dropChance = { grunt: 0.3, runner: 0.3, brute: 1 };
-});
+}, 20);
 
 // Scripted route while the guns auto-fire (GH-3), enemies chase (GH-5), and bullets hit them: hit flash,
 // knockback, and death puffs (GH-6). Kills drop XP gems in three tiers that fly to the player inside the
 // pickup radius; each level-up pauses on the LevelUp cards (GH-7/GH-8): the most visible card is
 // hovered for LEVELUP_MS, then picked by a click or its number key, alternating. Kills also drop
-// powerups; POWERUP_MS before the death scene shows each powerup at work (GH-9).
+// powerups; POWERUP_MS before the death scene shows each powerup at work (GH-9). The HUD (GH-10) is on
+// screen throughout: HP dropping and flashing on hits, XP and the level popping, the mm:ss timer,
+// kills, a Health Pack refilling HP, and the Rapid Fire and Spread Shot icons counting down.
 // The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level. Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
@@ -149,9 +155,12 @@ await circle(['KeyD'], 2000);
 await circle([], end - POWERUP_MS - DEATH_MS - Date.now());
 
 // Powerups (GH-9), each dropped at the player's feet so it is collected through the real pickup
-// path. Rapid Fire + Spread Shot together, while a pickup off to the side blinks out.
+// path. Rapid Fire + Spread Shot together (two HUD icons counting down), a Health Pack refilling the
+// HUD's HP bar, and a pickup off to the side blinking out.
 await page.evaluate(() => {
   const { powerups, player, enemies } = window.__GAME__.scene.getScene('Game');
+  player.hp = Math.min(player.hp, Math.round(player.maxHp / 2));
+  powerups.pickups.drop(player.x, player.y, 'health');
   powerups.pickups.drop(player.x, player.y, 'rapidfire');
   powerups.pickups.drop(player.x, player.y, 'spread');
   const p = powerups.pickups.drop(player.x + 120, player.y - 90, 'health');
@@ -195,7 +204,8 @@ await circle([], end - DEATH_MS - Date.now());
 // the blink; when invulnerability ends the next contact kills, then GameOver shows the run stats.
 await page.evaluate(() => {
   const scene = window.__GAME__.scene.getScene('Game');
-  const { player, enemies } = scene;
+  const { player, enemies, combat } = scene;
+  combat.damagePlayer = window.__realDamage;
   enemies.director.enabled = false;
   scene.powerups.active = {};
   player.hp = 25;

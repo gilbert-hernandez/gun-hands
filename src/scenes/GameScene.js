@@ -24,7 +24,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
-    addSceneLabel(this);
+    // Debug label bottom-right, clear of the HUD (GH-10) and the debug readout.
+    addSceneLabel(this)
+      ?.setOrigin(1, 1)
+      .setPosition(DISPLAY.width - 4, DISPLAY.height - 4);
     /** Survival time in ms: counted in update(), so it stops while the scene is paused. */
     this.survivalMs = 0;
 
@@ -71,7 +74,7 @@ export default class GameScene extends Phaser.Scene {
     this.scene.launch('UI');
 
     if (DEBUG.enabled) {
-      // Tuning aid, not the HUD (GH-10): survival time, live enemies / cap, HP, kills.
+      // Tuning aid, not the HUD (see UIScene): survival time, live enemies / cap, HP, kills.
       this.debugText = this.add
         .text(8, DISPLAY.height - 8, '', { fontFamily: 'monospace', fontSize: '12px', color: '#ffffff' })
         .setOrigin(0, 1)

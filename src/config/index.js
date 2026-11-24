@@ -8,3 +8,4 @@ export { COMBAT } from './combat.js';
 export { XP } from './xp.js';
 export { UPGRADES } from './upgrades.js';
 export { POWERUPS } from './powerups.js';
+export { HUD } from './hud.js';
