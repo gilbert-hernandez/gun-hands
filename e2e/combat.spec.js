@@ -92,16 +92,16 @@ function fire(page, x, y, angle, stats = {}) {
 }
 
 /**
- * Close `count` LevelUp screens with Enter, waiting for each to be ready for input (the screen
- * restarts itself while level-ups are queued), then wait for Game to run again.
+ * Close `count` LevelUp screens by picking the first card (key 1), waiting for each to be ready
+ * for input (the screen restarts itself while level-ups are queued), then wait for Game to run again.
  */
 async function closeLevelUps(page, count) {
   for (let i = 0; i < count; i++) {
     await page.waitForFunction(() => {
       const lu = window.__GAME__.scene.getScene('LevelUp');
-      return window.__GAME__.scene.isActive('LevelUp') && lu.input.keyboard.listenerCount('keydown-ENTER') > 0;
+      return window.__GAME__.scene.isActive('LevelUp') && lu.ready && !lu.chosen;
     });
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('1');
   }
   await page.waitForFunction(
     () => window.__GAME__.scene.isActive('Game') && !window.__GAME__.scene.isActive('LevelUp'),
@@ -431,7 +431,7 @@ test('pausing the Game scene pauses invulnerability', async ({ page }) => {
 });
 
 test('at 0 HP everything stops, player-died fires once, and GameOver shows the run stats', async ({ page }) => {
-  // Reach level 3 (two queued level-ups, closed with Enter), then 7 kills, then a nearly dead
+  // Reach level 3 (two queued level-ups, each closed by picking a card), then 7 kills, then a nearly dead
   // player meets a Grunt (plus a Runner that keeps overlapping).
   await page.evaluate(() => {
     const { xp } = window.__GAME__.scene.getScene('Game');

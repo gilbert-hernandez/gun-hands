@@ -25,7 +25,8 @@ await page.evaluate(() => {
 
 // Scripted route while the guns auto-fire (GH-3), enemies chase (GH-5), and bullets hit them: hit flash,
 // knockback, and death puffs (GH-6). Kills drop XP gems in three tiers that fly to the player inside the
-// pickup radius; each level-up pauses on the LevelUp stub for LEVELUP_MS, then Enter closes it (GH-7).
+// pickup radius; each level-up pauses on the LevelUp cards (GH-7/GH-8): the most visible card is
+// hovered for LEVELUP_MS, then picked by a click or its number key, alternating.
 // The last DEATH_MS show the player hit, blinking, dying, and GameOver with the reached level. Each step: keys to hold,
 // duration in ms, and the aim: 'circle' sweeps the mouse round the player, a number is a fixed angle
 // in degrees, null leaves the mouse untouched. A step of ['spawn', {type: count}] adds enemies on the
@@ -41,31 +42,51 @@ const route = [
   [[], 1500, 'circle'],
 ];
 const DEATH_MS = 7000; // the player takes hits, dies, and GameOver shows the stats
-const SPREAD_MS = 7000 + DEATH_MS; // then a 3-projectile spread until the death scene
+const SPREAD_MS = 9000 + DEATH_MS; // then two queued level-ups (Multishot first) until the death scene
 const RADIUS = 150; // game px
-const LEVELUP_MS = 1200; // how long each LevelUp stub stays on screen
+const LEVELUP_MS = 1200; // how long a card is hovered before it is picked
 const TURN_MS = 3000; // one full mouse circle
 const box = await page.locator('#game canvas').boundingBox();
 const scale = box.width / size.width;
 const end = Date.now() + seconds * 1000;
 let angle = 0;
-let levelUpSince = 0;
 
-/** Close the LevelUp stub with Enter once it has been on screen for LEVELUP_MS. */
-async function closeLevelUpWhenShown() {
-  const ready = await page.evaluate(() => {
-    const game = window.__GAME__;
-    const lu = game.scene.getScene('LevelUp');
-    return game.scene.isActive('LevelUp') && lu.input.keyboard.listenerCount('keydown-ENTER') > 0;
-  });
-  if (!ready) {
-    levelUpSince = 0;
-    return;
-  }
-  if (!levelUpSince) levelUpSince = Date.now();
-  if (Date.now() - levelUpSince >= LEVELUP_MS) {
-    levelUpSince = 0;
-    await page.keyboard.press('Enter');
+// Cards worth showing on video, best first: their effect is visible right away.
+const PREFERRED = ['multishot', 'movespeed', 'firerate', 'pierce', 'damage', 'pickup', 'maxhp', 'patchup'];
+let picks = 0;
+
+/**
+ * If the LevelUp cards are up (GH-8): hover the most visible card for LEVELUP_MS, then pick it,
+ * alternating a click and its number key. Handles queued level-ups until Game runs again.
+ * @returns {Promise<boolean>} true if a LevelUp screen was handled
+ */
+async function handleLevelUp() {
+  let handled = false;
+  for (;;) {
+    const lu = await page.evaluate(() => {
+      const game = window.__GAME__;
+      const scene = game.scene.getScene('LevelUp');
+      if (!game.scene.isActive('LevelUp') || !scene.ready || scene.chosen) return null;
+      return { choices: scene.choices, cards: scene.cards.map((c) => ({ x: c.x, y: c.y })) };
+    });
+    if (!lu) {
+      if (!handled) return false;
+      // Between two queued screens LevelUp restarts; wait until it is ready again or Game runs.
+      const running = await page.evaluate(
+        () => window.__GAME__.scene.isActive('Game') && !window.__GAME__.scene.isActive('LevelUp'),
+      );
+      if (running) return true;
+      await page.waitForTimeout(50);
+      continue;
+    }
+    handled = true;
+    const i = lu.choices.indexOf(PREFERRED.find((id) => lu.choices.includes(id)));
+    const card = { x: box.x + lu.cards[i].x * scale, y: box.y + lu.cards[i].y * scale };
+    await page.mouse.move(card.x, card.y, { steps: 8 });
+    await page.waitForTimeout(LEVELUP_MS);
+    if (picks++ % 2 === 0) await page.mouse.click(card.x, card.y);
+    else await page.keyboard.press(String(i + 1));
+    await page.waitForTimeout(100);
   }
 }
 
@@ -74,7 +95,7 @@ async function circle(keys, ms, aim = 'circle') {
   for (const k of keys) await page.keyboard.down(k);
   const stop = Math.min(Date.now() + ms, end);
   while (Date.now() < stop) {
-    await closeLevelUpWhenShown();
+    await handleLevelUp();
     if (aim !== null) {
       const p = await page.evaluate(() => {
         const scene = window.__GAME__.scene.getScene('Game');
@@ -105,11 +126,18 @@ for (const [keys, ms, aim] of route) {
   await circle(keys, ms, aim);
 }
 
-// Multishot preview: what the upgrade / Spread Shot powerup will do to the per-run stats.
+// Two queued level-ups in one pickup: the first draw is fixed so Multishot's fan shows on video,
+// the second is a normal random draw.
 await page.evaluate(() => {
-  const { bullet } = window.__GAME__.scene.getScene('Game').player.weapon;
-  bullet.count = 3;
-  bullet.spreadDeg = 30;
+  const { xp, upgrades } = window.__GAME__.scene.getScene('Game');
+  const draw = upgrades.draw;
+  upgrades.draw = () => {
+    upgrades.draw = draw;
+    return ['damage', 'multishot', 'pierce'];
+  };
+  const p = xp.progression;
+  const next = Math.round(p.curve.base + p.curve.growth * p.level ** p.curve.exponent);
+  xp.collect(p.xpNeeded - p.xpInto + next);
 });
 await circle([], 2500);
 await circle(['KeyD'], 2000);

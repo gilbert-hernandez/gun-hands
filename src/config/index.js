@@ -6,3 +6,4 @@ export { WORLD } from './world.js';
 export { ENEMIES } from './enemies.js';
 export { COMBAT } from './combat.js';
 export { XP } from './xp.js';
+export { UPGRADES } from './upgrades.js';

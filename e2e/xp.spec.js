@@ -115,7 +115,7 @@ function waitNoGems(page) {
 function waitLevelUpReady(page) {
   return page.waitForFunction(() => {
     const lu = window.__GAME__.scene.getScene('LevelUp');
-    return window.__GAME__.scene.isActive('LevelUp') && lu.input.keyboard.listenerCount('keydown-ENTER') > 0;
+    return window.__GAME__.scene.isActive('LevelUp') && lu.ready && !lu.chosen;
   });
 }
 
@@ -125,11 +125,11 @@ function waitGameRunning(page) {
   );
 }
 
-/** Close `count` LevelUp screens with Enter, then wait for Game to run again. */
+/** Close `count` LevelUp screens by picking the first card (key 1), then wait for Game to run again. */
 async function closeLevelUps(page, count) {
   for (let i = 0; i < count; i++) {
     await waitLevelUpReady(page);
-    await page.keyboard.press('Enter');
+    await page.keyboard.press('1');
   }
   await waitGameRunning(page);
 }
@@ -278,12 +278,12 @@ test('a pickup worth two levels opens LevelUp twice before Game resumes', async 
   expect((await events(page, 'player-leveled')).map((e) => e.level)).toEqual([2, 3]);
 
   await waitLevelUpReady(page);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('1');
   await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').xp.progression.pending === 1);
   await waitLevelUpReady(page);
   // Still paused between the two screens.
   expect(await page.evaluate(() => [window.__GAME__.scene.isPaused('Game'), window.__resumes])).toEqual([true, 0]);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press('1');
   await waitGameRunning(page);
   expect(await page.evaluate(() => window.__resumes)).toBe(1);
   expect((await progress(page)).pending).toBe(0);

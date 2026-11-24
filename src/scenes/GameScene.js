@@ -7,6 +7,7 @@ import { gunsFlipY } from '../weapon/aim.js';
 import Arena from '../world/Arena.js';
 import Combat from '../combat/Combat.js';
 import Xp from '../xp/Xp.js';
+import Upgrades from '../upgrades/Upgrades.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
 
@@ -14,7 +15,8 @@ import { addSceneLabel } from './sceneLabel.js';
 // The player auto-fires from a bullet pool; walls stop the player, bullets, and enemies.
 // Enemies spawn off-screen and chase the player (GH-5); bullets hurt enemies, enemies hurt the
 // player, and the player's death ends the session in GameOver (GH-6, see Combat). Kills drop XP
-// gems that level the player up and open LevelUp (GH-7, see Xp).
+// gems that level the player up and open LevelUp (GH-7, see Xp), where the player picks an
+// upgrade (GH-8, see Upgrades).
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
@@ -52,6 +54,8 @@ export default class GameScene extends Phaser.Scene {
       survivalMs: () => this.survivalMs,
     });
     this.xp = new Xp(this, this.player);
+    // Upgrade ranks for this session; the LevelUp screen draws and applies cards through it (GH-8).
+    this.upgrades = new Upgrades(this, this.player);
 
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');
@@ -83,9 +87,12 @@ export default class GameScene extends Phaser.Scene {
     this.xp.update(delta);
     const p = this.player;
     const xp = this.xp.progression;
+    const w = p.weapon;
     this.debugText?.setText(
       `t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}` +
-        `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}  lv ${xp.level}  xp ${xp.xpInto}/${xp.xpNeeded}`,
+        `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}  lv ${xp.level}  xp ${xp.xpInto}/${xp.xpNeeded}` +
+        `\nspd ${p.speed}  dmg ${w.bullet.damage}  rate ${w.fireRate}  n ${w.bullet.count}` +
+        `  pierce ${w.bullet.pierce}  pickup ${p.pickupRadius}`,
     );
   }
 

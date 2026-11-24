@@ -60,6 +60,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.level = 1;
     // Per-run XP pickup radius in px: upgrades change this copy, never the config.
     this.pickupRadius = PLAYER.pickupRadius;
+    // Per-run move speed in px/s: the Move Speed upgrade changes this copy, never the config (GH-8).
+    this.speed = PLAYER.speed;
     this.dead = false;
     /** ms of invulnerability left after a hit (blinking while > 0). */
     this.invulnerableMs = 0;
@@ -106,7 +108,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.tickInvulnerable(delta);
 
     const k = this.keys;
-    const v = velocityFrom({ up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown }, PLAYER.speed);
+    const v = velocityFrom({ up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown }, this.speed);
     this.setVelocity(v.x, v.y);
 
     let aimPoint;
@@ -163,9 +165,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     return r;
   }
 
-  /** Restore full HP (dev shortcut; healing pickups arrive in GH-9). */
-  heal() {
-    this.hp = this.maxHp;
+  /**
+   * Restore `amount` HP, capped at max HP (default: full heal, the dev shortcut).
+   * @param {number} [amount]
+   */
+  heal(amount = this.maxHp) {
+    this.hp = Math.min(this.maxHp, this.hp + amount);
   }
 
   /** Count invulnerability down on scene time and blink body and guns meanwhile. */
