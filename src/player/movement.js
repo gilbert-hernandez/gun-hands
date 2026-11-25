@@ -10,10 +10,20 @@
 export function velocityFrom({ up = false, down = false, left = false, right = false }, speed) {
   const dx = (right ? 1 : 0) - (left ? 1 : 0);
   const dy = (down ? 1 : 0) - (up ? 1 : 0);
-  if (dx === 0 && dy === 0) return { x: 0, y: 0 };
-  const scale = speed / Math.hypot(dx, dy);
+  return velocityFromVector({ x: dx, y: dy }, speed);
+}
+
+/**
+ * Velocity along a direction at full `speed`, whatever the vector's length; zero stays zero.
+ * @param {{x: number, y: number}} v
+ * @param {number} speed px/s
+ * @returns {{x: number, y: number}}
+ */
+export function velocityFromVector(v, speed) {
+  const length = Math.hypot(v.x, v.y);
+  if (length === 0) return { x: 0, y: 0 };
   // `+ 0` turns -0 into 0 so callers can compare with ===.
-  return { x: dx * scale + 0, y: dy * scale + 0 };
+  return { x: (v.x / length) * speed + 0, y: (v.y / length) * speed + 0 };
 }
 
 /**

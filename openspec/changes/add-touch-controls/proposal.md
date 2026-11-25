@@ -22,6 +22,7 @@ Vikunja: GH-25. The game can't be played on a phone: moving needs WASD, pausing 
 - Mobile layout: larger text and cards, touch in the letterbox bars, safe areas, rotate prompt (GH-26).
 - Auto-aim, analog speed, remappable or fixed sticks, haptics, gamepads.
 - Stick and pause art: they are drawn in code, so GH-21 and GH-12 aren't affected.
+- iPhone/iOS support: it can't be tested for now, so it is neither verified nor claimed.
 - Native app, PWA, fullscreen or orientation lock.
 
 ## Capabilities

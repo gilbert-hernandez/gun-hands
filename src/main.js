@@ -20,6 +20,9 @@ const game = new Phaser.Game({
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
   },
+  // One touch per thumb (GH-25); Phaser's default is a single touch.
+  input: { activePointers: 2 },
+  disableContextMenu: true,
   physics: {
     default: 'arcade',
     arcade: { debug: DEBUG.physics },

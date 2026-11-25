@@ -4,6 +4,7 @@ import { PLAYER_HIT } from '../combat/events.js';
 import { PLAYER_LEVELED } from '../xp/events.js';
 import { activePowerups, fillWidth, iconVisible } from '../hud/rules.js';
 import { formatClock } from '../util/format.js';
+import TouchOverlay from '../ui/TouchOverlay.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 /** @typedef {import('../config/powerups.js').TimedPowerupId} TimedPowerupId */
@@ -74,6 +75,9 @@ export default class UIScene extends Phaser.Scene {
 
     addSceneLabel(this)?.setY(this.powerupY + 22);
 
+    // Thumbsticks and the pause button (GH-25).
+    this.touch = new TouchOverlay(this, this.gameScene);
+
     // Feedback from Game's events; listeners go away with this scene.
     const gameEvents = this.gameScene.events;
     const onHit = () => this.flashHp();
@@ -95,6 +99,7 @@ export default class UIScene extends Phaser.Scene {
       if (this.flashMs <= 0) this.restoreHpTint();
     }
     this.refresh();
+    this.touch.update();
   }
 
   /**

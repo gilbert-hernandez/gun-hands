@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
+import PlayerInput from '../input/PlayerInput.js';
 import Enemies from '../enemy/Enemies.js';
 import Bullets from '../weapon/Bullets.js';
 import { gunsFlipY } from '../weapon/aim.js';
@@ -36,7 +37,7 @@ export default class GameScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, width, height);
 
     this.bullets = new Bullets(this);
-    this.player = new Player(this, spawn.x, spawn.y, this.bullets);
+    this.player = new Player(this, spawn.x, spawn.y, this.bullets, new PlayerInput(this));
     this.arena.collide(this.player);
     this.player.isSolidAt = (x, y) => this.arena.isSolidAt(x, y);
     // Walls always stop bullets, whatever pierce they have left.

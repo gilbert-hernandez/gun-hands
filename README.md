@@ -7,6 +7,18 @@ A top-down arena-survivor shooter demo: run around an arena, your hands are guns
 - Node.js 20 or newer (developed on 24) and npm
 - A modern browser with WebGL
 
+## Controls
+
+|       | Keyboard and mouse     | Touch (Android, landscape)         |
+| ----- | ---------------------- | ---------------------------------- |
+| Move  | WASD                   | Left thumb, anywhere on the left   |
+| Aim   | Mouse                  | Right thumb, anywhere on the right |
+| Fire  | Automatic              | Automatic                          |
+| Pause | Esc                    | Pause button, top right            |
+| Cards | Click, or press 1 to 3 | Tap                                |
+
+The game switches between the two as you use them. To try it on a phone, run `npm run dev -- --host` (under WSL2 the port also has to be forwarded from Windows).
+
 ## Scripts
 
 ```bash

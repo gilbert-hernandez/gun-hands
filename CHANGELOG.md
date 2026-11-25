@@ -6,6 +6,10 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+### Added
+
+- **Touch controls** (GH-25): twin floating thumbsticks (left moves, right aims), an on-screen pause button, tap-to-pick upgrade cards that ignore thumbs left on the sticks, and automatic switching between touch and keyboard and mouse.
+
 ## [0.2.0] - 2026-11-24
 
 The first tagged version. Milestones M1 Core and M2 Progression are complete, so the full demo loop plays from title to game over and restart. **All art is still generated placeholder shapes.** The real art arrives with M3 (v0.3.0).

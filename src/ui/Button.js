@@ -48,8 +48,9 @@ export default class Button extends Phaser.GameObjects.Container {
       this.armed = true;
       this.refresh();
     });
-    this.image.on('pointerup', () => {
-      const act = this.armed;
+    this.image.on('pointerup', (pointer) => {
+      // Phaser reports a touch the system cancelled as a release.
+      const act = this.armed && !pointer.wasCanceled;
       this.armed = false;
       this.refresh();
       if (act) this.onClick();

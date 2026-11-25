@@ -126,7 +126,8 @@ test('A + D cancel out horizontally', async ({ page }) => {
   // that frame can land late). Measure from the first frame both keys are seen as down.
   await hold(page, ['KeyA', 'KeyD'], 100);
   await page.waitForFunction(() => {
-    const { keys, body } = window.__GAME__.scene.getScene('Game').player;
+    const { controls, body } = window.__GAME__.scene.getScene('Game').player;
+    const { keys } = controls;
     return keys.A.isDown && keys.D.isDown && body.velocity.x === 0;
   });
   // One more physics step, so any movement from an A-only frame has already been applied.

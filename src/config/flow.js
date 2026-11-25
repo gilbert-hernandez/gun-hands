@@ -16,6 +16,7 @@ export const FLOW = {
     startY: 330,
     hintY: 400,
     hint: 'WASD move · Mouse aim · Esc pause',
+    touchHint: 'Left thumb moves · Right thumb aims',
     // Background fill while `ui_title_bg` is a placeholder.
     placeholderFill: 0x111827,
     // Build version label (GH-24), anchored by its bottom-left corner. Dimmer than the hint.

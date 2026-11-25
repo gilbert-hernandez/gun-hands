@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { PLAYER, WEAPON } from '../config/index.js';
-import { velocityFrom, facingFrom } from './movement.js';
+import { velocityFromVector, facingFrom } from './movement.js';
 import { aimAngle, spreadAngles, shotsDue, gunsFlipY, pathBlocked } from '../weapon/aim.js';
 import { BODY_RADIUS as BULLET_RADIUS } from '../weapon/Bullets.js';
 import { applyDamage, blinkVisible, tickTimer } from '../combat/rules.js';
@@ -27,8 +27,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    * @param {number} x
    * @param {number} y
    * @param {import('../weapon/Bullets.js').default} bullets the bullet pool to fire from
+   * @param {import('../input/PlayerInput.js').default} controls what the player wants to do (GH-25)
    */
-  constructor(scene, x, y, bullets) {
+  constructor(scene, x, y, bullets, controls) {
     super(scene, x, y, ANIM_IDLE);
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -42,7 +43,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     /** @type {'left' | 'right'} */
     this.facing = 'right';
-    this.pointerUsed = false;
+    this.controls = controls;
     this.bullets = bullets;
     /**
      * Wall test for point-blank shots, set by the scene once the arena exists (null = no walls).
@@ -57,7 +58,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
      * @type {() => typeof WEAPON}
      */
     this.boosts = () => this.weapon;
-    // Aim angle in radians (0 = right); points the way the body faces until the mouse is used.
+    // Aim angle in radians (0 = right); points the way the body faces until the mouse or aim stick is used.
     this.aim = 0;
     this.fireAcc = 0;
     this.maxHp = PLAYER.maxHp;
@@ -71,8 +72,6 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.dead = false;
     /** ms of invulnerability left after a hit (blinking while > 0). */
     this.invulnerableMs = 0;
-    /** @type {Record<'W' | 'A' | 'S' | 'D', Phaser.Input.Keyboard.Key>} */
-    this.keys = /** @type {any} */ (scene.input.keyboard.addKeys('W,A,S,D'));
 
     ensureAnim(scene, ANIM_IDLE, PLAYER.anims.idle);
     ensureAnim(scene, ANIM_RUN, PLAYER.anims.run);
@@ -86,19 +85,12 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     }
     this.play(ANIM_IDLE);
 
-    // Aim facing only kicks in after the mouse has actually moved over the game.
-    const onPointerMove = () => {
-      this.pointerUsed = true;
-    };
-    scene.input.on('pointermove', onPointerMove);
-
     // Sync the guns after physics has moved the body this frame (no one-frame lag).
     // Rotation replaces flipX; flipY keeps them right side up when aiming left.
     const syncGuns = () => this.guns.setPosition(this.x, this.y).setRotation(this.aim).setFlipY(gunsFlipY(this.aim));
     scene.events.on(Phaser.Scenes.Events.POST_UPDATE, syncGuns);
 
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      scene.input.off('pointermove', onPointerMove);
       scene.events.off(Phaser.Scenes.Events.POST_UPDATE, syncGuns);
     });
   }
@@ -113,18 +105,15 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.dead) return;
     this.tickInvulnerable(delta);
 
-    const k = this.keys;
-    const v = velocityFrom({ up: k.W.isDown, down: k.S.isDown, left: k.A.isDown, right: k.D.isDown }, this.speed);
+    const { move, aimPoint, aimAngle: stickAngle } = this.controls.read();
+    const v = velocityFromVector(move, this.speed);
     this.setVelocity(v.x, v.y);
 
-    let aimPoint;
-    if (this.pointerUsed) {
-      const pointer = this.scene.input.activePointer;
-      // Recompute from screen coords so aim stays right while the camera scrolls.
-      aimPoint = this.scene.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    }
-    const aimX = aimPoint?.x;
-    this.facing = facingFrom({ vx: v.x, aimX, playerX: this.x, pointerUsed: this.pointerUsed, current: this.facing });
+    let aimX = aimPoint?.x;
+    // Rounded, so a straight up or down stick has no side (cos of ±90° isn't exactly 0).
+    if (stickAngle !== null) aimX = this.x + Math.round(Math.cos(stickAngle) * 1e6);
+    const pointerUsed = aimX !== undefined;
+    this.facing = facingFrom({ vx: v.x, aimX, playerX: this.x, pointerUsed, current: this.facing });
     // Art faces right; flip for left.
     this.setFlipX(this.facing === 'left');
 
@@ -132,7 +121,8 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     this.play(moving ? ANIM_RUN : ANIM_IDLE, true);
 
     const facingAngle = this.facing === 'left' ? Math.PI : 0;
-    this.aim = aimPoint ? aimAngle(this, aimPoint, facingAngle) : facingAngle;
+    if (aimPoint) this.aim = aimAngle(this, aimPoint, facingAngle);
+    else this.aim = stickAngle ?? facingAngle;
 
     this.fire(time, delta);
   }
@@ -194,6 +184,7 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
    */
   die(onDone) {
     this.dead = true;
+    this.controls.disable();
     this.invulnerableMs = 0;
     this.setVelocity(0, 0);
     this.setVisible(true);

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { DISPLAY, UPGRADES } from '../config/index.js';
+import { DISPLAY, TOUCH, UPGRADES } from '../config/index.js';
+import { useTouchWording } from '../input/mode.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 /** @typedef {import('../upgrades/rules.js').ChoiceId} ChoiceId */
@@ -34,6 +35,10 @@ export default class LevelUpScene extends Phaser.Scene {
     this.xp = game.xp;
     /** Input is accepted once the input delay has passed (e2e tests wait on this). */
     this.ready = false;
+    /** Touches may start on a card once the longer touch delay has passed (GH-25). */
+    this.touchReady = false;
+    /** @type {{ id: number, downTime: number, index: number } | null} the touch held on a card */
+    this.armed = null;
     /** Set on the first accepted pick; every later input is ignored. */
     this.chosen = false;
     /** @type {ChoiceId[]} the cards shown, left to right */
@@ -43,7 +48,8 @@ export default class LevelUpScene extends Phaser.Scene {
     this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0);
     addSceneLabel(this)?.setY(52);
     this.add.text(width / 2, 110, 'LEVEL UP', font(40, '#facc15')).setOrigin(0.5);
-    this.add.text(width / 2, 150, 'Pick an upgrade: click a card or press its number', font(14)).setOrigin(0.5);
+    const how = useTouchWording(this) ? 'tap a card' : 'click a card or press its number';
+    this.promptText = this.add.text(width / 2, 150, `Pick an upgrade: ${how}`, font(14)).setOrigin(0.5);
 
     const n = this.choices.length;
     const left = (width - (n * CARD_W + (n - 1) * CARD_GAP)) / 2 + CARD_W / 2;
@@ -58,6 +64,9 @@ export default class LevelUpScene extends Phaser.Scene {
     });
     this.time.delayedCall(UPGRADES.inputDelayMs, () => {
       this.ready = true;
+    });
+    this.time.delayedCall(TOUCH.levelUpDelayMs, () => {
+      this.touchReady = true;
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.keyboard.removeAllListeners());
   }
@@ -106,7 +115,18 @@ export default class LevelUpScene extends Phaser.Scene {
       outline.setVisible(false);
       card.setScale(1);
     });
-    frame.on('pointerdown', () => this.pick(index));
+    // A mouse picks on press. A touch must start and end on the same card, so a thumb coming off a
+    // stick can't pick by accident.
+    frame.on('pointerdown', (pointer) => {
+      if (!pointer.wasTouch) this.pick(index);
+      else if (this.touchReady) this.armed = { id: pointer.id, downTime: pointer.downTime, index };
+    });
+    frame.on('pointerup', (pointer) => {
+      const a = this.armed;
+      if (!pointer.wasTouch || !a || a.id !== pointer.id) return;
+      this.armed = null;
+      if (a.index === index && a.downTime === pointer.downTime && !pointer.wasCanceled) this.pick(index);
+    });
     return card;
   }
 
