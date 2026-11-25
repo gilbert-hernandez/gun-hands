@@ -6,7 +6,7 @@ Defines how the player character moves around the arena, which way it faces, how
 ## Requirements
 
 ### Requirement: WASD movement at configured speed
-The player SHALL move with W (up), A (left), S (down) and D (right) at the player's current move speed. Each session SHALL start the player's move speed at the value defined in the player config; raising it during the run (as upgrades do) SHALL NOT change the configuration. Pressing opposite keys together SHALL cancel out on that axis. With no keys held the player SHALL stop.
+The player SHALL move with W (up), A (left), S (down) and D (right) at the player's current move speed. Each session SHALL start the player's move speed at the value defined in the player config; raising it during the run (as upgrades do) SHALL NOT change the configuration. Pressing opposite keys together SHALL cancel out on that axis. In touch mode the player SHALL instead move in the direction of the move stick, at any angle, at the full current move speed once the thumb is past the dead zone. With no keys held and no move stick past its dead zone, the player SHALL stop.
 
 #### Scenario: Move right
 - **WHEN** the player holds D during a game session
@@ -24,6 +24,14 @@ The player SHALL move with W (up), A (left), S (down) and D (right) at the playe
 - **WHEN** the player holds A and D at the same time
 - **THEN** the player does not move horizontally
 
+#### Scenario: Move by stick
+- **WHEN** the move stick is dragged past the dead zone at 30° below right
+- **THEN** the player moves at that angle at its current move speed (within 1%)
+
+#### Scenario: Inside the dead zone
+- **WHEN** the move stick is held inside the dead zone
+- **THEN** the player stands still
+
 ### Requirement: Normalized diagonal movement
 Moving diagonally SHALL NOT be faster than moving along one axis. The speed when two perpendicular keys are held SHALL equal the player's current move speed.
 
@@ -32,7 +40,7 @@ Moving diagonally SHALL NOT be faster than moving along one axis. The speed when
 - **THEN** the player moves up and to the right, and its total speed equals the player's current move speed (within 1%)
 
 ### Requirement: Facing direction
-The player body SHALL face left or right. When the mouse pointer has been moved over the game, the body SHALL face the side of the player the pointer is on. Before that, it SHALL face the last horizontal direction moved. Moving only vertically SHALL keep the current facing. The body SHALL play its run animation while moving and its idle animation while still.
+The player body SHALL face left or right. When the mouse pointer has been moved over the game, the body SHALL face the side of the player the pointer is on. In touch mode, once the aim stick has been used, the body SHALL face the side the aim points to; an exactly vertical aim SHALL follow the horizontal movement, or keep the current facing. Before any aim, it SHALL face the last horizontal direction moved. Moving only vertically SHALL keep the current facing. The body SHALL play its run animation while moving and its idle animation while still.
 
 #### Scenario: Face by movement
 - **WHEN** the pointer has not been used and the player moves left
@@ -45,6 +53,10 @@ The player body SHALL face left or right. When the mouse pointer has been moved 
 #### Scenario: Run and idle animation
 - **WHEN** the player starts moving and then stops
 - **THEN** the body plays the run animation while moving and returns to the idle animation when stopped
+
+#### Scenario: Face by aim stick
+- **WHEN** the aim stick points left while the move stick points right
+- **THEN** the body faces left
 
 ### Requirement: Arena bounds
 The arena SHALL be a fixed world size taken from the arena map, larger than the screen. The player SHALL NOT be able to move any part of its hurtbox outside the arena, and SHALL NOT be able to overlap any wall or obstacle tile.

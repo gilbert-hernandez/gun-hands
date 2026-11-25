@@ -6,7 +6,7 @@ Defines how the player's gun-hands aim at the mouse pointer and fire automatical
 ## Requirements
 
 ### Requirement: Gun-hands aim at the pointer
-The gun-hands SHALL be drawn as a separate sprite on top of the body, centered on the player, and SHALL rotate to point from the player toward the mouse pointer's position in world coordinates. Aim SHALL stay correct while the camera scrolls, even if the mouse does not move. When the aim points to the left half (angle beyond ±90°), the guns SHALL be mirrored vertically so they are not drawn upside down. Before the pointer has been moved over the game, the guns SHALL point in the direction the body faces.
+The gun-hands SHALL be drawn as a separate sprite on top of the body, centered on the player, and SHALL rotate to point from the player toward the mouse pointer's position in world coordinates. Aim SHALL stay correct while the camera scrolls, even if the mouse does not move. When the aim points to the left half (angle beyond ±90°), the guns SHALL be mirrored vertically so they are not drawn upside down. In touch mode the guns SHALL instead point at the aim stick's angle once it is past the dead zone, and SHALL keep the last aim when it is released or inside the dead zone; the move stick SHALL NOT affect an aim that has been set. The last touch aim SHALL stay until the mouse or aim stick sets a new one. Before the aim stick has been used or the mouse pointer has been moved over the game, the guns SHALL point in the direction the body faces.
 
 #### Scenario: Aim at the pointer
 - **WHEN** the pointer is above and to the right of the player
@@ -23,6 +23,14 @@ The gun-hands SHALL be drawn as a separate sprite on top of the body, centered o
 #### Scenario: Pointer not used yet
 - **WHEN** a session starts and the mouse has not moved over the game
 - **THEN** the guns point in the body's facing direction (right at spawn)
+
+#### Scenario: Aim by stick
+- **WHEN** the aim stick is dragged straight up past the dead zone
+- **THEN** the guns point up (within 1°) and shots go up, wherever the thumb is on screen
+
+#### Scenario: Release the aim stick
+- **WHEN** the aim thumb lifts while aiming up
+- **THEN** the guns keep pointing and firing up
 
 ### Requirement: Automatic fire at the configured rate
 While a game session is running, the guns SHALL fire automatically, with no button held, toward the current aim, at the effective fire rate in shots per second: the fire rate from the player's weapon stats, multiplied by any active fire-rate powerup. Firing SHALL stop while the Game scene is paused (for example during LevelUp) and resume when it resumes. A slow frame SHALL NOT produce a burst of more than one extra shot.
