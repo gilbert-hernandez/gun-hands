@@ -11,16 +11,21 @@ export const FLOW = {
     titleBg: 'ui_title_bg',
     gameOverPanel: 'ui_gameover_panel',
   },
+  // Menu buttons: scale of the `ui_button` art and label size (px). `touch` blocks here and below
+  // override their section on touch devices (GH-26, see ui/layout.js).
+  button: { scale: 1, fontSize: 18, touch: { scale: 1.5, fontSize: 22 } },
   title: {
     logoY: 170,
     startY: 330,
     hintY: 400,
+    hintSize: 14,
     hint: 'WASD move · Mouse aim · Esc pause',
     touchHint: 'Left thumb moves · Right thumb aims',
     // Background fill while `ui_title_bg` is a placeholder.
     placeholderFill: 0x111827,
     // Build version label (GH-24), anchored by its bottom-left corner. Dimmer than the hint.
     version: { x: 8, y: 532, fontSize: '12px', color: '#6b7280' },
+    touch: { hintY: 412, hintSize: 20 },
   },
   pause: {
     // Esc is ignored this long after the overlay opens (covers a doubled or held keydown).
@@ -29,6 +34,7 @@ export const FLOW = {
     titleY: 190,
     resumeY: 270,
     quitY: 334,
+    touch: { quitY: 360 },
   },
   gameOver: {
     // All input is ignored this long after the screen appears (keys/clicks held at death).
@@ -39,6 +45,8 @@ export const FLOW = {
     buttonsY: 375,
     // Horizontal gap between Restart and Title.
     buttonGap: 24,
+    // Two touch buttons don't fit inside the panel, so they go below it.
+    touch: { buttonsY: 475 },
   },
   fontFamily: 'monospace',
   // Tints used only while the button art is a placeholder (all three frames look alike then).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { knobOffset, sideOf, stickVector } from '../src/input/sticks.js';
+import { clampToCanvas, knobOffset, sideOf, stickVector } from '../src/input/sticks.js';
 import { velocityFromVector } from '../src/player/movement.js';
 
 const origin = { x: 100, y: 200 };
@@ -61,5 +61,13 @@ describe('velocityFromVector', () => {
 
   it('stands still for a zero vector', () => {
     expect(velocityFromVector({ x: 0, y: 0 }, 200)).toEqual({ x: 0, y: 0 });
+  });
+});
+
+describe('clampToCanvas', () => {
+  it('leaves points on the canvas alone and moves others to the nearest edge', () => {
+    expect(clampToCanvas({ x: 10, y: 20 }, 960, 540)).toEqual({ x: 10, y: 20 });
+    expect(clampToCanvas({ x: -80, y: 20 }, 960, 540)).toEqual({ x: 0, y: 20 });
+    expect(clampToCanvas({ x: 1000, y: 600 }, 960, 540)).toEqual({ x: 960, y: 540 });
   });
 });

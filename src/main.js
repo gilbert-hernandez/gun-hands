@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { DISPLAY, DEBUG } from './config/index.js';
+import { trackBarTouches, shieldRotatePrompt } from './input/barTouches.js';
 import BootScene from './scenes/BootScene.js';
 import PreloadScene from './scenes/PreloadScene.js';
 import TitleScene from './scenes/TitleScene.js';
@@ -29,6 +30,9 @@ const game = new Phaser.Game({
   },
   scene: [BootScene, PreloadScene, TitleScene, GameScene, UIScene, LevelUpScene, PauseScene, GameOverScene],
 });
+
+trackBarTouches(game);
+shieldRotatePrompt();
 
 if (import.meta.env.DEV) {
   window.__GAME__ = game; // handy in the browser console

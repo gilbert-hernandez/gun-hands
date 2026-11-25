@@ -9,6 +9,7 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 ### Added
 
 - **Touch controls** (GH-25): twin floating thumbsticks (left moves, right aims), an on-screen pause button, tap-to-pick upgrade cards that ignore thumbs left on the sticks, and automatic switching between touch and keyboard and mouse.
+- **Mobile layout** (GH-26): larger text, buttons, cards and HUD on touch devices, a "Rotate your phone" prompt that pauses play in portrait, thumbs that work in the black side bars, and a canvas that stays clear of notches and browser bars.
 
 ## [0.2.0] - 2026-11-24
 

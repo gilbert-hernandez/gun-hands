@@ -351,7 +351,7 @@ test('a thumb already down, an early touch, a slide off and a cancel pick nothin
   expect((await picked(page)).chosen).toBe(false);
 
   await touch.down(1, left.x, left.y);
-  await touch.move(1, left.x, 500);
+  await touch.move(1, left.x, 530); // below the card
   await touch.up(1);
   await frames(page);
   expect((await picked(page)).chosen).toBe(false);

@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import { FLOW } from '../config/index.js';
+import { useTouchWording } from '../input/mode.js';
+import { pickLayout } from './layout.js';
 
 /** @typedef {'normal' | 'hover' | 'pressed'} ButtonState */
 
@@ -28,9 +30,15 @@ export default class Button extends Phaser.GameObjects.Container {
     this.over = false;
     this.placeholder = new Set(scene.registry.get('placeholders') ?? []).has(FLOW.keys.button);
 
-    this.image = scene.add.sprite(0, 0, FLOW.keys.button, FRAMES.normal);
+    const { scale, fontSize } = pickLayout(FLOW.button, useTouchWording(scene));
+    this.image = scene.add.sprite(0, 0, FLOW.keys.button, FRAMES.normal).setScale(scale);
     this.label = scene.add
-      .text(0, 0, label, { fontFamily: FLOW.fontFamily, fontSize: '18px', color: '#ffffff', fontStyle: 'bold' })
+      .text(0, 0, label, {
+        fontFamily: FLOW.fontFamily,
+        fontSize: `${fontSize}px`,
+        color: '#ffffff',
+        fontStyle: 'bold',
+      })
       .setOrigin(0.5);
     this.add([this.image, this.label]);
     scene.add.existing(this);

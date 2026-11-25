@@ -52,6 +52,15 @@ export async function touchDriver(page) {
       held.clear();
       await send('touchCancel');
     },
+    /** Like `down`/`move`, but in page pixels, for touches beside the canvas. */
+    async downPage(id, x, y) {
+      held.set(id, { x, y });
+      await send('touchStart');
+    },
+    async movePage(id, x, y) {
+      held.set(id, { x, y });
+      await send('touchMove');
+    },
     async tap(id, x, y) {
       await this.down(id, x, y);
       await this.up(id);

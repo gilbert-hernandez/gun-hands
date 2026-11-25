@@ -39,6 +39,10 @@ export default class PlayerInput {
     for (const key of Object.values(this.keys)) key.on('down', () => this.setMode('keys'));
 
     const onDown = (pointer) => this.pointerDown(pointer);
+    // Beside the canvas only touches count: browsers follow a tap there with emulated mouse events.
+    const onDownOutside = (pointer) => {
+      if (pointer.wasTouch) this.pointerDown(pointer);
+    };
     const onMove = (pointer) => {
       if (pointer.wasTouch) return;
       this.setMode('keys');
@@ -47,12 +51,14 @@ export default class PlayerInput {
     const reset = () => this.reset();
     const { Events } = Phaser.Scenes;
     scene.input.on('pointerdown', onDown);
+    scene.input.on('pointerdownoutside', onDownOutside);
     scene.input.on('pointermove', onMove);
     scene.events.on(Events.PAUSE, reset);
     scene.events.on(Events.RESUME, reset);
     scene.events.once(Events.SHUTDOWN, () => {
       this.disable();
       scene.input.off('pointerdown', onDown);
+      scene.input.off('pointerdownoutside', onDownOutside);
       scene.input.off('pointermove', onMove);
       scene.events.off(Events.PAUSE, reset);
       scene.events.off(Events.RESUME, reset);

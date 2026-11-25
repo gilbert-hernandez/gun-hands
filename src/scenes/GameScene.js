@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
+import { isPortraitPhone } from '../input/orientation.js';
 import PlayerInput from '../input/PlayerInput.js';
 import Enemies from '../enemy/Enemies.js';
 import Bullets from '../weapon/Bullets.js';
@@ -115,6 +116,12 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    // The rotate prompt covers the page in portrait (GH-26). Checked every frame, so nothing that
+    // resumes or starts Game behind it can let the run go on.
+    if (isPortraitPhone()) {
+      this.openPause();
+      if (this.pauseOpen) return;
+    }
     // Survival time stops at death, so run stats report the time the player died.
     if (!this.player.dead) this.survivalMs += delta;
     // Count the flash down before firing, so a shot this frame shows for the full duration.

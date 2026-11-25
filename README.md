@@ -17,7 +17,7 @@ A top-down arena-survivor shooter demo: run around an arena, your hands are guns
 | Pause | Esc                    | Pause button, top right            |
 | Cards | Click, or press 1 to 3 | Tap                                |
 
-The game switches between the two as you use them. To try it on a phone, run `npm run dev -- --host` (under WSL2 the port also has to be forwarded from Windows).
+The game switches between the two as you use them. On a phone, hold it in landscape: portrait pauses the run and asks you to rotate. Thumbs also work in the black bars beside the game, and touch devices get larger text, buttons and cards. To try it on a phone, run `npm run dev -- --host` (under WSL2 the port also has to be forwarded from Windows).
 
 ## Scripts
 

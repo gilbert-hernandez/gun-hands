@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import { DISPLAY, FLOW } from '../config/index.js';
 import { formatTime } from '../util/format.js';
+import { useTouchWording } from '../input/mode.js';
 import Button from '../ui/Button.js';
+import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 /** @typedef {import('../combat/events.js').RunStats} RunStats */
@@ -22,7 +24,10 @@ export default class GameOverScene extends Phaser.Scene {
 
   create() {
     const { width } = DISPLAY;
-    const { keys, gameOver } = FLOW;
+    const { keys } = FLOW;
+    const touch = useTouchWording(this);
+    const gameOver = pickLayout(FLOW.gameOver, touch);
+    const buttonScale = pickLayout(FLOW.button, touch).scale;
     const placeholders = new Set(this.registry.get('placeholders') ?? []);
     /** Input is accepted once the input delay has passed (e2e tests wait on this). */
     this.ready = false;
@@ -53,7 +58,7 @@ export default class GameOverScene extends Phaser.Scene {
       )
       .setOrigin(0.5);
 
-    const offset = (this.textures.getFrame(keys.button).width + gameOver.buttonGap) / 2;
+    const offset = (this.textures.getFrame(keys.button).width * buttonScale + gameOver.buttonGap) / 2;
     this.restartButton = new Button(this, width / 2 - offset, gameOver.buttonsY, 'RESTART', () => this.restart());
     this.titleButton = new Button(this, width / 2 + offset, gameOver.buttonsY, 'TITLE', () => this.toTitle());
 

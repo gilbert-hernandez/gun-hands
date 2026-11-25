@@ -41,3 +41,14 @@ export function knobOffset(origin, point, radius) {
   const scale = length > radius ? radius / length : 1;
   return { x: dx * scale, y: dy * scale };
 }
+
+/**
+ * The nearest point on the canvas, for drawing a stick that started beside it (GH-26).
+ * @param {Vec} point
+ * @param {number} width
+ * @param {number} height
+ * @returns {Vec}
+ */
+export function clampToCanvas(point, width, height) {
+  return { x: Math.min(Math.max(point.x, 0), width), y: Math.min(Math.max(point.y, 0), height) };
+}

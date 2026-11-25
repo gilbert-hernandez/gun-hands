@@ -88,6 +88,37 @@ export const UPGRADES = {
   // Clicks and number keys are ignored this long (ms) after LevelUp opens, so a stray input
   // at the moment it pops up doesn't pick a card.
   inputDelayMs: 250,
+  // LevelUp screen layout (GH-8), in screen pixels. Card art is cardWidth×cardHeight times cardScale;
+  // the offsets inside a card are from its center (number: from its top-left corner, rank: up from
+  // its bottom). `touch` overrides these on touch devices (GH-26, see ui/layout.js).
+  layout: {
+    titleY: 110,
+    promptY: 150,
+    promptSize: 14,
+    cardWidth: 160,
+    cardHeight: 220,
+    cardScale: 1,
+    cardGap: 24,
+    cardY: 300,
+    hoverScale: 1.05,
+    number: { x: 10, y: 8, size: 20 },
+    icon: { y: -48, scale: 2 },
+    name: { y: 8, size: 16 },
+    text: { y: 36, size: 12 },
+    rank: { bottom: 14, size: 14 },
+    touch: {
+      titleY: 60,
+      promptY: 110,
+      promptSize: 20,
+      cardScale: 1.5,
+      cardY: 340,
+      number: { size: 24 },
+      icon: { y: -72, scale: 3 },
+      name: { size: 24 },
+      text: { y: 44, size: 20 },
+      rank: { size: 20 },
+    },
+  },
   // Multishot also widens the fan (WEAPON.bullet.spreadDeg) by this many degrees per rank.
   spreadStepDeg: 10,
   // Shown alone once every upgrade is at max rank, so level-ups still do something.

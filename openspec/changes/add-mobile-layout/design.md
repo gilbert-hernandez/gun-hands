@@ -5,7 +5,7 @@
 Phaser scales a fixed 960×540 canvas with FIT and centers it in `#game`. `useTouchWording(scene)` already decides touch or desktop wording: the last input mode, else a coarse main pointer.
 
 Read in the Phaser 4.2.1 source:
-- Touch start and end outside the canvas reach Phaser through window listeners and fire `pointerdownoutside` / `pointerupoutside`. There is no window `touchmove` listener, so a bar touch never moves.
+- Touch start and end outside the canvas reach Phaser through window listeners and fire `pointerdownoutside` / `pointerupoutside`. There is no window `touchmove` listener, and `InputManager.onTouchMove` drops every move whose finger isn't over the canvas, so a bar touch never moves and a canvas touch that slides into a bar freezes.
 - Objects are hit-tested for outside touches too, so a DOM overlay alone doesn't shield the buttons under it.
 - FIT measures the parent with `getBoundingClientRect()`, which includes the parent's own padding.
 
@@ -37,7 +37,7 @@ Read in the Phaser 4.2.1 source:
 
 Text is created at its final size rather than scaled, so it stays sharp. LevelUp's card constants move into `UPGRADES` config. HUD bars keep their size, so fill math is unchanged.
 
-**5. Bar touches.** `barTouches.js` adds one window `touchmove` listener that forwards non-canvas touches to `game.input.onTouchMove`, removed on game destroy. `PlayerInput` also listens to `pointerdownoutside`, for touches only: browsers send emulated mouse events after a bar tap, and these must not switch the mode. `sideOf` already handles x outside 0–960. *Alternative:* `input.touch.target: #game`; rejected because the window listeners then handle each bar touch a second time.
+**5. Bar touches.** `barTouches.js` adds one window `touchmove` listener that applies moves off the canvas to the matching active touch pointer (`Pointer.touchmove`), removed on game destroy. Sticks poll their pointers, so no scene event is needed. `PlayerInput` also listens to `pointerdownoutside`, for touches only: browsers send emulated mouse events after a bar tap, and these must not switch the mode. `sideOf` already handles x outside 0–960. *Alternative:* `input.touch.target: #game`; rejected because the window listeners then handle each bar touch a second time.
 
 **6. Drawing bar sticks.** The overlay clamps the drawn center to the canvas; stick math keeps the real origin.
 

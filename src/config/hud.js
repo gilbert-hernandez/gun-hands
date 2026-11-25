@@ -28,6 +28,7 @@ export const HUD = {
   powerupOrder,
   // Width of one powerup slot (16 px icon + countdown text + spacing).
   powerupSlot: 48,
+  powerupIconScale: 1,
   // Icons blink for this last part of a timed powerup (ms), with this half-period (ms).
   powerupWarnMs: 2000,
   blinkMs: 120,
@@ -36,4 +37,11 @@ export const HUD = {
   // The level label pops to this scale and back on `player-leveled` (ms for the whole pop).
   levelPopMs: 250,
   levelPopScale: 1.4,
+  // Overrides on touch devices (GH-26, see ui/layout.js).
+  touch: {
+    rowGap: 12,
+    fontSize: { bar: 20, timer: 26, kills: 20, powerup: 20 },
+    powerupSlot: 96,
+    powerupIconScale: 2,
+  },
 };

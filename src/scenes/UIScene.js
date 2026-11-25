@@ -4,6 +4,8 @@ import { PLAYER_HIT } from '../combat/events.js';
 import { PLAYER_LEVELED } from '../xp/events.js';
 import { activePowerups, fillWidth, iconVisible } from '../hud/rules.js';
 import { formatClock } from '../util/format.js';
+import { useTouchWording } from '../input/mode.js';
+import { pickLayout } from '../ui/layout.js';
 import TouchOverlay from '../ui/TouchOverlay.js';
 import { addSceneLabel } from './sceneLabel.js';
 
@@ -34,7 +36,9 @@ export default class UIScene extends Phaser.Scene {
   }
 
   create() {
-    const { margin, rowGap, barInset, labelGap } = HUD;
+    /** Sizes for this session: desktop or touch (GH-26). */
+    const layout = pickLayout(HUD, useTouchWording(this));
+    const { margin, rowGap, barInset, labelGap, fontSize } = layout;
     /** @type {any} */
     this.gameScene = this.scene.get('Game');
     this.placeholders = new Set(this.registry.get('placeholders') ?? []);
@@ -57,19 +61,23 @@ export default class UIScene extends Phaser.Scene {
     this.fullFill = this.hpFill.frame.width;
 
     const textX = margin + this.hpFrame.width + labelGap;
-    this.hpText = this.addText(textX, 0, HUD.fontSize.bar);
+    this.hpText = this.addText(textX, 0, fontSize.bar);
     this.hpText.y = this.centerY(hpY, frameH, this.hpText);
-    this.levelText = this.addText(textX, 0, HUD.fontSize.bar, HUD.colors.level);
+    this.levelText = this.addText(textX, 0, fontSize.bar, HUD.colors.level);
     this.levelText.y = this.centerY(xpY, frameH, this.levelText);
-    this.timerText = this.addText(0, margin, HUD.fontSize.timer);
-    this.killsText = this.addText(0, margin, HUD.fontSize.kills);
+    this.timerText = this.addText(0, margin, fontSize.timer);
+    this.killsText = this.addText(0, margin, fontSize.kills);
 
     /** @type {PowerupSlot[]} fixed pool, one per timed powerup, filled left to right */
     this.slots = HUD.powerupOrder.map((_, i) => {
-      const x = margin + i * HUD.powerupSlot;
-      const icon = this.add.image(x, this.powerupY, `ui_icon_${HUD.powerupOrder[0]}`).setOrigin(0).setVisible(false);
-      const text = this.addText(x + icon.width + HUD.iconGap, 0, HUD.fontSize.powerup).setVisible(false);
-      text.y = this.centerY(this.powerupY, icon.height, text);
+      const x = margin + i * layout.powerupSlot;
+      const icon = this.add
+        .image(x, this.powerupY, `ui_icon_${HUD.powerupOrder[0]}`)
+        .setOrigin(0)
+        .setScale(layout.powerupIconScale)
+        .setVisible(false);
+      const text = this.addText(x + icon.displayWidth + HUD.iconGap, 0, fontSize.powerup).setVisible(false);
+      text.y = this.centerY(this.powerupY, icon.displayHeight, text);
       return { icon, text, id: null };
     });
 

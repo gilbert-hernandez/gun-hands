@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { DISPLAY, FLOW } from '../config/index.js';
 import { useTouchWording } from '../input/mode.js';
+import { pickLayout } from '../ui/layout.js';
 import Button from '../ui/Button.js';
 import { versionLabel } from '../util/version.js';
 import { addSceneLabel } from './sceneLabel.js';
@@ -16,7 +17,9 @@ export default class TitleScene extends Phaser.Scene {
 
   create() {
     const { width, height } = DISPLAY;
-    const { keys, title } = FLOW;
+    const { keys } = FLOW;
+    const touch = useTouchWording(this);
+    const title = pickLayout(FLOW.title, touch);
     const placeholders = new Set(this.registry.get('placeholders') ?? []);
     /** Set by the first start; later inputs are ignored. */
     this.started = false;
@@ -40,9 +43,13 @@ export default class TitleScene extends Phaser.Scene {
       : this.add.image(width / 2, title.logoY, keys.logo);
 
     this.startButton = new Button(this, width / 2, title.startY, 'START', () => this.start());
-    const hint = useTouchWording(this) ? title.touchHint : title.hint;
+    const hint = touch ? title.touchHint : title.hint;
     this.hintText = this.add
-      .text(width / 2, title.hintY, hint, { fontFamily: FLOW.fontFamily, fontSize: '14px', color: '#9ca3af' })
+      .text(width / 2, title.hintY, hint, {
+        fontFamily: FLOW.fontFamily,
+        fontSize: `${title.hintSize}px`,
+        color: '#9ca3af',
+      })
       .setOrigin(0.5);
     const v = title.version;
     this.versionText = this.add

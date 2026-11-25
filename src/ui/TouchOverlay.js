@@ -1,5 +1,5 @@
-import { TOUCH } from '../config/index.js';
-import { knobOffset } from '../input/sticks.js';
+import { DISPLAY, TOUCH } from '../config/index.js';
+import { clampToCanvas, knobOffset } from '../input/sticks.js';
 
 /**
  * The touch controls drawn over the HUD (GH-25): held sticks, and the pause button in touch mode.
@@ -51,7 +51,7 @@ export default class TouchOverlay {
     const { radius, knobRadius, color, baseAlpha, ringAlpha, knobAlpha } = TOUCH.stick;
     for (const stick of [input.sticks.move, input.sticks.aim]) {
       if (!stick) continue;
-      const { x, y } = stick.origin;
+      const { x, y } = clampToCanvas(stick.origin, DISPLAY.width, DISPLAY.height);
       const knob = knobOffset(stick.origin, stick.pointer, radius);
       g.fillStyle(color, baseAlpha).fillCircle(x, y, radius);
       g.lineStyle(2, color, ringAlpha).strokeCircle(x, y, radius);

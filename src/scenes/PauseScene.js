@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { DISPLAY, FLOW } from '../config/index.js';
+import { useTouchWording } from '../input/mode.js';
 import Button from '../ui/Button.js';
+import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 // The pause menu (GH-11). Launched by Game (`openPause`, on Esc or focus loss) with Game paused,
@@ -13,7 +15,7 @@ export default class PauseScene extends Phaser.Scene {
 
   create() {
     const { width, height } = DISPLAY;
-    const { pause } = FLOW;
+    const pause = pickLayout(FLOW.pause, useTouchWording(this));
     /** Esc is accepted once the input delay has passed (e2e tests wait on this). */
     this.ready = false;
     /** Set by the first Resume or Quit; every later input is ignored. */
