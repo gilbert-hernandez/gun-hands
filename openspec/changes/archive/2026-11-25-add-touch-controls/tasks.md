@@ -22,4 +22,4 @@
 ## 4. Manual verification
 
 - [x] 4.1 Run `npm run dev` and check on desktop: WASD, mouse aim, Esc, card keys and clicks behave as before, with no touch UI
-- [ ] 4.2 Run `npm run dev -- --host` (or a preview deploy) and play a full run on an Android phone (Chrome) in landscape: move and aim together, level up with thumbs down, pause and resume, switch apps, die and restart; tune `TOUCH` if needed and note the device on GH-25 (iPhone is not supported for now)
+- [x] 4.2 Run `npm run dev -- --host` (or a preview deploy) and play a full run on an Android phone (Chrome) in landscape: move and aim together, level up with thumbs down, pause and resume, switch apps, die and restart; tune `TOUCH` if needed and note the device on GH-25 (iPhone is not supported for now)
