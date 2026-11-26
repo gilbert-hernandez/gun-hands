@@ -385,6 +385,9 @@ test('10 s of heavy firing never exceeds the pool size', async ({ page }) => {
 });
 
 test('an exhausted pool fires what it can and skips the rest without errors', async ({ page }) => {
+  // Swap in the 2-bullet pool and clear the recorder in ONE evaluate (GH-27): no game step can run
+  // in between, so the first recorded shot is the first shot from the fresh, empty pool. With a
+  // separate reset (nextShot), a shot fired in the gap used both bullets and was then wiped.
   await page.evaluate(() => {
     const scene = window.__GAME__.scene.getScene('Game');
     const Bullets = scene.bullets.constructor;
@@ -392,8 +395,10 @@ test('an exhausted pool fires what it can and skips the rest without errors', as
     window.__rec.wrap(small);
     scene.player.bullets = small;
     scene.player.weapon.bullet.count = 5;
+    Object.assign(window.__rec, { shots: [], pending: [], gameMs: 0, maxPool: 0 });
   });
-  const shot = await nextShot(page);
+  await page.waitForFunction(() => window.__rec.shots.length > 0, null, { timeout: 10000 });
+  const shot = (await shots(page))[0];
   expect(shot.requested).toBe(5);
   expect(shot.bullets).toHaveLength(2);
   await resetRec(page);
@@ -401,8 +406,10 @@ test('an exhausted pool fires what it can and skips the rest without errors', as
   const r = await page.evaluate(() => ({
     len: window.__GAME__.scene.getScene('Game').player.bullets.group.getLength(),
     shots: window.__rec.shots.length,
+    maxPool: window.__rec.maxPool,
   }));
   expect(r.len).toBe(2);
+  expect(r.maxPool).toBeLessThanOrEqual(2);
   expect(r.shots).toBeGreaterThanOrEqual(4);
 });
 
