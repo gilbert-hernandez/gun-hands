@@ -7,3 +7,6 @@ test-results/
 playwright-report/
 videos/
 coverage/
+
+# Arcade SFX library (written by the SFX MCP / /sfx); export/ holds generated packs.
+assets-src/sfx/export/
