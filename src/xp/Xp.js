@@ -2,7 +2,7 @@ import { XP } from '../config/index.js';
 import { ENEMY_KILLED } from '../combat/events.js';
 import Gems from './Gems.js';
 import Progression from './Progression.js';
-import { PLAYER_LEVELED, XP_CHANGED } from './events.js';
+import { PLAYER_LEVELED, XP_CHANGED, XP_COLLECTED } from './events.js';
 
 /** @typedef {import('../combat/events.js').EnemyKilledEvent} EnemyKilledEvent */
 /** @typedef {import('../enemy/Enemy.js').EnemyTypeId} EnemyTypeId */
@@ -37,7 +37,10 @@ export default class Xp {
   update(delta) {
     if (this.player.dead) return;
     const amount = this.gems.update(delta, this.player);
-    if (amount > 0) this.collect(amount);
+    if (amount > 0) {
+      this.scene.events.emit(XP_COLLECTED, { amount });
+      this.collect(amount);
+    }
   }
 
   /**

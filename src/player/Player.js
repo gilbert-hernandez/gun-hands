@@ -4,16 +4,14 @@ import { velocityFromVector, facingFrom } from './movement.js';
 import { aimAngle, spreadAngles, shotsDue, gunsFlipY, pathBlocked } from '../weapon/aim.js';
 import { BODY_RADIUS as BULLET_RADIUS } from '../weapon/Bullets.js';
 import { applyDamage, blinkVisible, tickTimer } from '../combat/rules.js';
+import { PLAYER_FIRED } from './events.js';
 
 const ANIM_IDLE = 'player_body_idle';
 const ANIM_RUN = 'player_body_run';
 const ANIM_DEATH = 'player_body_death';
 
-/**
- * Scene event emitted once per shot with `{ x, y, angle, blocked }` (gun tip, radians; `blocked` is
- * true when the guns were pushed into a wall, so the shot hit it and no bullets were spawned).
- */
-export const PLAYER_FIRED = 'player-fired';
+// Re-exported so existing `import { PLAYER_FIRED } from './Player.js'` keeps working.
+export { PLAYER_FIRED };
 
 /**
  * The player: an Arcade physics sprite for the body (with a hurtbox smaller than the sprite)

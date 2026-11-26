@@ -285,13 +285,15 @@ test('the canvas stays inside body padding (safe-area insets) and refits a short
 
 test('menus use big buttons and readable text', async ({ page }) => {
   await expectButtons(page, 'Title', ['startButton']);
-  expectLaidOut(await boxes(page, 'Title', ['logo', 'startButton.image', 'hintText']));
+  expectLaidOut(await boxes(page, 'Title', ['logo', 'startButton.image', 'hintText', 'soundToggle']));
+  expectTarget((await boxes(page, 'Title', ['soundToggle']))[0]);
 
   await start(page);
   await page.evaluate(() => window.__GAME__.scene.getScene('Game').openPause());
   await pauseReady(page);
   await expectButtons(page, 'Pause', ['resumeButton', 'quitButton']);
-  expectLaidOut(await boxes(page, 'Pause', ['resumeButton.image', 'quitButton.image']));
+  expectLaidOut(await boxes(page, 'Pause', ['resumeButton.image', 'quitButton.image', 'soundToggle']));
+  expectTarget((await boxes(page, 'Pause', ['soundToggle']))[0]);
   await page.keyboard.press('Escape');
   await isActive(page, 'Game');
 

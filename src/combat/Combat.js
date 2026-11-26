@@ -1,6 +1,6 @@
 import { COMBAT, ENEMIES } from '../config/index.js';
 import Puffs from '../fx/Puffs.js';
-import { ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT } from './events.js';
+import { ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT, SHIELD_BLOCKED } from './events.js';
 
 /** @typedef {import('../enemy/Enemy.js').default} Enemy */
 /** @typedef {import('../weapon/Bullets.js').Bullet} Bullet */
@@ -99,10 +99,19 @@ export default class Combat {
     this.scene.events.emit(ENEMY_KILLED, { typeId, x, y, kills: this.kills });
   }
 
-  /** @param {Enemy} enemy */
+  /**
+   * Contact process callback: true when this contact should damage the player. A contact refused
+   * only because of the Shield emits `shield-blocked` (every step it lasts).
+   * @param {Enemy} enemy
+   */
   canContact(enemy) {
     const p = this.player;
-    return enemy.active && !p.dead && p.invulnerableMs <= 0 && !this.shielded();
+    if (!enemy.active || p.dead || p.invulnerableMs > 0) return false;
+    if (this.shielded()) {
+      this.scene.events.emit(SHIELD_BLOCKED, { typeId: enemy.typeId });
+      return false;
+    }
+    return true;
   }
 
   /** @param {Enemy} enemy */

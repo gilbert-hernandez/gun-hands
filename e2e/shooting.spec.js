@@ -485,6 +485,7 @@ test('each shot shows the muzzle flash at the gun tip; no duplicate events after
   expect(r.events).toBeGreaterThan(0);
   // One flash per event: a leftover listener from the first session would double it.
   expect(r.flashes).toBe(r.events);
-  // The recorder from the first session plus GameScene's own listener; no Player/scene leftovers.
-  expect(r.listeners).toBe(2);
+  // The recorder from the first session, GameScene's own listener and this session's sound
+  // wiring (GH-29); no Player/scene/audio leftovers from the first session.
+  expect(r.listeners).toBe(3);
 });

@@ -3,8 +3,11 @@ import { DISPLAY, FLOW } from '../config/index.js';
 import { useTouchWording } from '../input/mode.js';
 import { pickLayout } from '../ui/layout.js';
 import Button from '../ui/Button.js';
+import { getSfx } from '../audio/Sfx.js';
 import { versionLabel } from '../util/version.js';
 import { addSceneLabel } from './sceneLabel.js';
+import { bindMuteKey } from '../audio/muteKey.js';
+import { addSoundToggle } from '../ui/SoundToggle.js';
 
 // The title screen (GH-11): background, logo, Start button and a controls hint. Start, Enter or
 // Space start a session (once); a click anywhere else does nothing. While the logo or background
@@ -16,6 +19,8 @@ export default class TitleScene extends Phaser.Scene {
   }
 
   create() {
+    // M toggles sound effects (GH-29).
+    bindMuteKey(this);
     const { width, height } = DISPLAY;
     const { keys } = FLOW;
     const touch = useTouchWording(this);
@@ -59,6 +64,7 @@ export default class TitleScene extends Phaser.Scene {
         color: v.color,
       })
       .setOrigin(0, 1);
+    this.soundToggle = addSoundToggle(this, 'title');
     addSceneLabel(this);
 
     this.input.keyboard.on('keydown-ENTER', () => this.start());
@@ -68,6 +74,7 @@ export default class TitleScene extends Phaser.Scene {
   start() {
     if (this.started) return;
     this.started = true;
+    getSfx(this).play('game-start');
     this.scene.start('Game');
   }
 }

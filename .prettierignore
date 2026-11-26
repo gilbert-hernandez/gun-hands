@@ -12,3 +12,5 @@ package-lock.json
 src/assets/maps/
 # The Arcade SFX MCP rewrites this library in its own layout on every save.
 assets-src/sfx/
+# SFX pack files (GH-28) as exported by Arcade /sfx; sounds.json is reference data.
+src/assets/sfx/

@@ -3,8 +3,10 @@ import { DISPLAY, FLOW } from '../config/index.js';
 import { formatTime } from '../util/format.js';
 import { useTouchWording } from '../input/mode.js';
 import Button from '../ui/Button.js';
+import { getSfx } from '../audio/Sfx.js';
 import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
+import { bindMuteKey } from '../audio/muteKey.js';
 
 /** @typedef {import('../combat/events.js').RunStats} RunStats */
 
@@ -23,6 +25,8 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create() {
+    // M toggles sound effects (GH-29).
+    bindMuteKey(this);
     const { width } = DISPLAY;
     const { keys } = FLOW;
     const touch = useTouchWording(this);
@@ -64,6 +68,7 @@ export default class GameOverScene extends Phaser.Scene {
 
     this.input.keyboard.on('keydown-ENTER', () => this.restart());
     this.input.keyboard.on('keydown-ESC', () => this.toTitle());
+    getSfx(this).play('game-over');
     this.time.delayedCall(gameOver.inputDelayMs, () => {
       this.ready = true;
     });

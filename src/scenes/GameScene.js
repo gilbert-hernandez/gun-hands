@@ -8,11 +8,15 @@ import Bullets from '../weapon/Bullets.js';
 import { gunsFlipY } from '../weapon/aim.js';
 import Arena from '../world/Arena.js';
 import Combat from '../combat/Combat.js';
+import { BULLET_WALL } from '../combat/events.js';
+import GameAudio from '../audio/GameAudio.js';
+import { getSfx } from '../audio/Sfx.js';
 import Xp from '../xp/Xp.js';
 import Upgrades from '../upgrades/Upgrades.js';
 import Powerups from '../powerups/Powerups.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
+import { bindMuteKey } from '../audio/muteKey.js';
 
 // The play session: the Tiled arena, the player, enemies, and a camera that follows the player.
 // The player auto-fires from a bullet pool; walls stop the player, bullets, and enemies.
@@ -26,6 +30,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // M toggles sound effects (GH-29).
+    bindMuteKey(this);
     // Debug label bottom-right, clear of the HUD (GH-10) and the debug readout.
     addSceneLabel(this)
       ?.setOrigin(1, 1)
@@ -42,7 +48,11 @@ export default class GameScene extends Phaser.Scene {
     this.arena.collide(this.player);
     this.player.isSolidAt = (x, y) => this.arena.isSolidAt(x, y);
     // Walls always stop bullets, whatever pierce they have left.
-    this.bulletWalls = this.arena.collide(this.bullets.group, (bullet) => /** @type {any} */ (bullet).despawn());
+    this.bulletWalls = this.arena.collide(this.bullets.group, (bullet) => {
+      const b = /** @type {any} */ (bullet);
+      this.events.emit(BULLET_WALL, { x: b.x, y: b.y });
+      b.despawn();
+    });
     this.createMuzzleFlash();
 
     const cam = this.cameras.main;
@@ -71,6 +81,9 @@ export default class GameScene extends Phaser.Scene {
       enemies: this.enemies,
       gems: this.xp.gems,
     });
+
+    // Sound effects for this session (GH-29): listens to the events above, removed on shutdown.
+    this.audio = new GameAudio(this, getSfx(this));
 
     // HUD overlay runs in parallel on top of Game.
     this.scene.launch('UI');

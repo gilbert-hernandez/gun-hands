@@ -4,6 +4,8 @@ import { useTouchWording } from '../input/mode.js';
 import Button from '../ui/Button.js';
 import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
+import { bindMuteKey } from '../audio/muteKey.js';
+import { addSoundToggle } from '../ui/SoundToggle.js';
 
 // The pause menu (GH-11). Launched by Game (`openPause`, on Esc or focus loss) with Game paused,
 // so everything in the run stands still exactly as it does during LevelUp. Drawn above the HUD.
@@ -14,6 +16,8 @@ export default class PauseScene extends Phaser.Scene {
   }
 
   create() {
+    // M toggles sound effects (GH-29).
+    bindMuteKey(this);
     const { width, height } = DISPLAY;
     const pause = pickLayout(FLOW.pause, useTouchWording(this));
     /** Esc is accepted once the input delay has passed (e2e tests wait on this). */
@@ -34,6 +38,7 @@ export default class PauseScene extends Phaser.Scene {
     this.resumeButton = new Button(this, width / 2, pause.resumeY, 'RESUME', () => this.resume());
     this.quitButton = new Button(this, width / 2, pause.quitY, 'QUIT TO TITLE', () => this.quit());
 
+    this.soundToggle = addSoundToggle(this, 'pause');
     this.input.keyboard.on('keydown-ESC', () => {
       if (this.ready) this.resume();
     });

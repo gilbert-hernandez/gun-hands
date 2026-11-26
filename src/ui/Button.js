@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { FLOW } from '../config/index.js';
 import { useTouchWording } from '../input/mode.js';
 import { pickLayout } from './layout.js';
+import { getSfx } from '../audio/Sfx.js';
 
 /** @typedef {'normal' | 'hover' | 'pressed'} ButtonState */
 
@@ -12,7 +13,8 @@ const FRAMES = { normal: 0, hover: 1, pressed: 2 };
  * A menu button (GH-11): the `ui_button` sheet with a centered label. It shows the hover frame
  * while the pointer is over it and the pressed frame while a press that started on it is held
  * over it. It acts when that press is released over it; a press released elsewhere does nothing.
- * "Act once per screen" is up to the screen (see the scenes' `left`/`started` guards).
+ * "Act once per screen" is up to the screen (see the scenes' `left`/`started` guards). Hovering
+ * plays `ui-hover` and acting plays `ui-click` (GH-29).
  */
 export default class Button extends Phaser.GameObjects.Container {
   /**
@@ -47,6 +49,7 @@ export default class Button extends Phaser.GameObjects.Container {
     this.image.on('pointerover', () => {
       this.over = true;
       this.refresh();
+      getSfx(scene).play('ui-hover');
     });
     this.image.on('pointerout', () => {
       this.over = false;
@@ -61,7 +64,10 @@ export default class Button extends Phaser.GameObjects.Container {
       const act = this.armed && !pointer.wasCanceled;
       this.armed = false;
       this.refresh();
-      if (act) this.onClick();
+      if (act) {
+        getSfx(scene).play('ui-click');
+        this.onClick();
+      }
     });
     // A release anywhere else (on the canvas or outside it) cancels the press. Object-level
     // `pointerup` above runs before these scene-level events, so a release on the button acts first.

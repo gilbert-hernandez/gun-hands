@@ -1,4 +1,4 @@
-# Gun Hands: Art Spec
+# Gun Hands: Asset Spec
 
 This is the technical spec for every graphic in the game. Each Art ticket (GH-16 to GH-22) points here. If a ticket and this file disagree, **this file wins**. Tell Gilbert, and one of them gets fixed.
 
@@ -134,3 +134,40 @@ Font: recommend a free pixel font in a comment on GH-21.
 | GH-22  | `gh_ui_gameover_panel.png` | 400×300 | 1      | Panel behind the run stats and Restart button                |
 
 Optional (not loaded by the game): a 1200×630 social-preview image, attached to GH-22.
+
+## Audio
+
+Sound effects come from GH-28: one WAV per sound, made in the Arcade sound editor (`/sfx`) and exported as `gun-hands-sfx.zip`. The source library is `assets-src/sfx/gun-hands.sfx.json` (import it into `/sfx` to audition or tweak). Like the art, nothing waits on these files: a missing sound plays nothing, and the dev console lists every missing slug.
+
+- **Where files go:** `src/assets/sfx/<slug>.wav`. Keep `sounds.json` beside them for reference and leave out `sounds.js`, because the game doesn't use it.
+- **Names:** the slug is the audio key in code, so file names must match the table exactly. A misspelled file is ignored (`tests/audioConfig.test.js` fails on it).
+- **Levels:** frequent sounds (`shoot`, `enemy-hit`, `bullet-wall`, `xp-pickup`, `ui-hover`) stay quiet and short. The game also throttles them and sets per-sound volume in `src/config/audio.js`.
+
+### Delivery steps
+
+1. In `/sfx` (or with the arcade-sfx MCP), keep one preset per slug in the **Gun Hands** project and export the project ZIP.
+2. Attach the ZIP and the library JSON to the audio ticket in Vikunja and move it to **Review**.
+3. Gilbert unzips it into `src/assets/sfx/`, deletes `sounds.js`, and checks the sounds in the game.
+
+| Slug             | Trigger                                         | Notes                                                          |
+| ---------------- | ----------------------------------------------- | -------------------------------------------------------------- |
+| `shoot`          | every shot fired                                | very short and quiet; it plays constantly                      |
+| `bullet-wall`    | bullet hits a wall, or a shot is blocked by one | soft tick                                                      |
+| `enemy-hit`      | bullet damages an enemy (not a killing hit)     | short, punchy                                                  |
+| `enemy-die`      | Grunt or Runner dies                            |                                                                |
+| `brute-die`      | Brute dies                                      | heavier/lower version of `enemy-die`                           |
+| `player-hurt`    | player takes damage and survives                | clearly different from `enemy-hit`                             |
+| `player-die`     | player dies                                     | longer, falling                                                |
+| `xp-pickup`      | XP gems collected                               | tiny blip; the game raises the pitch on quick pickups in a row |
+| `level-up`       | level gained                                    | bright rising jingle                                           |
+| `card-pick`      | upgrade card chosen                             |                                                                |
+| `powerup-pickup` | Rapid Fire, Spread Shot or Magnet collected     |                                                                |
+| `heal`           | Health Pack collected                           |                                                                |
+| `shield-up`      | Shield collected                                |                                                                |
+| `shield-block`   | the shield absorbs an enemy contact             |                                                                |
+| `bomb`           | Bomb collected                                  | big boom                                                       |
+| `powerup-expire` | a timed powerup runs out                        | soft down-blip                                                 |
+| `ui-hover`       | pointer moves onto a menu button                | very subtle                                                    |
+| `ui-click`       | menu button pressed                             |                                                                |
+| `game-start`     | session started from the title screen           |                                                                |
+| `game-over`      | game over screen appears                        |                                                                |

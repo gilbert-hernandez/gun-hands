@@ -24,3 +24,16 @@ export const PLAYER_HIT = 'player-hit';
  * @typedef {{ timeMs: number, kills: number, level: number }} RunStats
  */
 export const PLAYER_DIED = 'player-died';
+
+/**
+ * A bullet hit a wall and was removed (GH-29: the wall tick sound).
+ * @typedef {{ x: number, y: number }} BulletWallEvent
+ */
+export const BULLET_WALL = 'bullet-wall';
+
+/**
+ * A live enemy is touching the player but the Shield absorbs it (GH-29: the block sound). Emitted
+ * on every physics step the contact lasts, so listeners throttle it. No `player-hit` follows.
+ * @typedef {{ typeId: string }} ShieldBlockedEvent
+ */
+export const SHIELD_BLOCKED = 'shield-blocked';

@@ -3,6 +3,7 @@ import { DISPLAY, TOUCH, UPGRADES } from '../config/index.js';
 import { useTouchWording } from '../input/mode.js';
 import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
+import { bindMuteKey } from '../audio/muteKey.js';
 
 /** @typedef {import('../upgrades/rules.js').ChoiceId} ChoiceId */
 
@@ -22,6 +23,8 @@ export default class LevelUpScene extends Phaser.Scene {
   }
 
   create() {
+    // M toggles sound effects (GH-29).
+    bindMuteKey(this);
     const { width, height } = DISPLAY;
     const touch = useTouchWording(this);
     const layout = pickLayout(UPGRADES.layout, touch);

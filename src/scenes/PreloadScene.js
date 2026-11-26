@@ -1,14 +1,17 @@
 import Phaser from 'phaser';
-import { DISPLAY } from '../config/index.js';
+import { AUDIO, DISPLAY } from '../config/index.js';
 import { MANIFEST } from '../assets/manifest.js';
 import { AVAILABLE_FILES } from '../assets/available.js';
 import { createPlaceholder } from '../assets/placeholders.js';
+import { AVAILABLE_SOUNDS } from '../audio/available.js';
+import Sfx from '../audio/Sfx.js';
 import arenaMap from '../assets/maps/gh_arena.json';
 import { MAP_KEY } from '../world/Arena.js';
 import { addSceneLabel } from './sceneLabel.js';
 
 // Loads every manifest entry whose PNG exists and generates placeholders for the rest,
-// plus the arena tilemap (bundled JSON, so no extra request).
+// plus the arena tilemap (bundled JSON, so no extra request) and every delivered sound effect.
+// It creates the game's one sound player (GH-29), kept in the registry as 'sfx'.
 export default class PreloadScene extends Phaser.Scene {
   constructor() {
     super('Preload');
@@ -28,6 +31,11 @@ export default class PreloadScene extends Phaser.Scene {
       }
     }
     this.load.tilemapTiledJSON(MAP_KEY, arenaMap);
+
+    for (const slug of Object.keys(AUDIO.sounds)) {
+      const url = AVAILABLE_SOUNDS[slug];
+      if (url) this.load.audio(slug, url);
+    }
   }
 
   createProgressBar() {
@@ -68,6 +76,18 @@ export default class PreloadScene extends Phaser.Scene {
       console.warn(
         `[assets] ${placeholders.length} placeholder(s) in use (art not delivered yet): ${placeholders.join(', ')}`,
       );
+    }
+
+    // A sound counts as available only once it loaded (and decoded); anything else stays silent.
+    const sfx = new Sfx({
+      sound: this.sound,
+      available: Object.keys(AUDIO.sounds).filter((slug) => this.cache.audio.exists(slug)),
+      now: () => this.game.loop.time,
+    });
+    this.registry.set('sfx', sfx);
+    const missingSounds = sfx.missing();
+    if (import.meta.env.DEV && missingSounds.length > 0) {
+      console.warn(`[audio] ${missingSounds.length} sound(s) missing (silent): ${missingSounds.join(', ')}`);
     }
 
     this.scene.start('Title');

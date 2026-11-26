@@ -88,11 +88,15 @@ Each sound SHALL have a configured minimum interval and maximum number of simult
 - **THEN** the request is dropped and the sounding plays continue
 
 ### Requirement: XP pickup chain rises in pitch
-Each XP pickup that comes within the configured chain gap of the previous one SHALL play `xp-pickup` one configured step higher than the previous pickup, up to a configured maximum. A pickup after a longer pause SHALL restart at the base pitch.
+Each XP pickup sound that plays within the configured chain gap of the previous one SHALL play one configured step higher than the previous one, up to a configured maximum. A pickup after a longer pause SHALL restart at the base pitch. Pickups dropped by throttling SHALL NOT advance the chain.
 
 #### Scenario: Quick pickups
-- **WHEN** the player collects gems in four consecutive frames
+- **WHEN** the player collects gems four times, 100 ms apart
 - **THEN** the pickups play at the base pitch, then one, two and three steps higher
+
+#### Scenario: Throttled pickups don't skip steps
+- **WHEN** the player collects gems on several frames inside the `xp-pickup` minimum interval, then once more after it
+- **THEN** the first pickup plays at the base pitch, the throttled ones play nothing, and the next one plays one step higher
 
 #### Scenario: Chain resets
 - **WHEN** the player collects a gem after a pause longer than the chain gap
