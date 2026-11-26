@@ -6,10 +6,26 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-26
+
+Phone play and sound. The demo now plays on touch screens and has sound effects throughout. M3 Art & Polish is still in progress, so **the art is still placeholder shapes.**
+
 ### Added
 
 - **Touch controls** (GH-25): twin floating thumbsticks (left moves, right aims), an on-screen pause button, tap-to-pick upgrade cards that ignore thumbs left on the sticks, and automatic switching between touch and keyboard and mouse.
 - **Mobile layout** (GH-26): larger text, buttons, cards and HUD on touch devices, a "Rotate your phone" prompt that pauses play in portrait, thumbs that work in the black side bars, and a canvas that stays clear of notches and browser bars.
+- **Sound effects** (GH-28, GH-29): 20 retro sounds for shots, hits, deaths, XP pickups, level-ups, upgrade cards, powerups, menu buttons, game start and game over. Frequent sounds are rate-limited with slight pitch variation, and quick XP pickups rise in pitch. Sound starts on the first click, key or tap. Mute with M or the SOUND ON/OFF toggle on the title screen and pause menu; the choice is remembered. A missing sound file plays nothing and never breaks the game.
+
+### Fixed
+
+- **Flaky browser test** (GH-27): the "exhausted bullet pool" test no longer fails intermittently under load. Test-only; no gameplay change.
+
+### Known limitations
+
+- Placeholder art throughout (art tickets GH-15 to GH-22, integration GH-12).
+- No juice or balance pass yet (GH-13): numbers and sound levels are first-pass tunables.
+- No music.
+- Not deployed yet. GH-14 deploys the demo to gunhands.hernandez.solutions.
 
 ## [0.2.0] - 2026-11-24
 
@@ -38,5 +54,6 @@ The first tagged version. Milestones M1 Core and M2 Progression are complete, so
 - No sound or music.
 - Not deployed yet. GH-14 deploys the demo to gunhands.hernandez.solutions.
 
-[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gilbert-hernandez/gun-hands/releases/tag/v0.2.0
