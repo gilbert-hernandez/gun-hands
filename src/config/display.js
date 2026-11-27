@@ -11,4 +11,6 @@ export const DEBUG = {
   enabled: import.meta.env?.DEV ?? false,
   // Draw Arcade Physics bodies.
   physics: false,
+  // Dev builds keep the last `max` run summaries in localStorage under `storageKey` (GH-13).
+  runLog: { storageKey: 'gunhands.runs', max: 20 },
 };

@@ -13,3 +13,5 @@ assets-src/sfx/export/
 
 # Local release archives (npm run package, GH-30).
 release/
+# Balance bot run summaries (npm run balance, GH-13).
+balance/

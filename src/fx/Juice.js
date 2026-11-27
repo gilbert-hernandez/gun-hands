@@ -1,14 +1,20 @@
 import Phaser from 'phaser';
-import { JUICE } from '../config/index.js';
-import { ENEMY_KILLED, PLAYER_HIT } from '../combat/events.js';
+import { ENEMIES, JUICE } from '../config/index.js';
+import { ENEMY_DAMAGED, ENEMY_KILLED, PLAYER_HIT } from '../combat/events.js';
 import { POWERUP_COLLECTED } from '../powerups/events.js';
 import { canHitStop, shakeIntensity, shouldShake } from './rules.js';
+import DamageNumbers from './DamageNumbers.js';
 
 /** @typedef {import('../combat/events.js').EnemyKilledEvent} EnemyKilledEvent */
 /** @typedef {import('../combat/events.js').PlayerHitEvent} PlayerHitEvent */
+/** @typedef {import('../combat/events.js').EnemyDamagedEvent} EnemyDamagedEvent */
+
+/** Between the death animations (0.75) and the impact sparks (0.8). */
+const PARTICLE_DEPTH = 0.78;
 
 /**
- * Game feel for one Game session (GH-13): camera shake and the hit-stop on Brute kills. It listens
+ * Game feel for one Game session (GH-13): camera shake, the hit-stop on Brute kills, hit and death
+ * particles, and damage numbers. It listens
  * to the Game events (like `GameAudio`) and removes its listeners on shutdown. Everything here is
  * cosmetic: the hit-stop freezes the whole scene and gives the time back, so no outcome changes.
  *
@@ -37,6 +43,20 @@ export default class Juice {
     /** `game.loop.time` when the last hit-stop ended, for the cooldown. */
     this.lastHitStopEnd = /** @type {number | null} */ (null);
 
+    const p = this.settings.particles;
+    // One emitter for every burst; the texture is generated in Boot. The cap is on live particles.
+    this.particles = scene.add
+      .particles(0, 0, p.texture, {
+        emitting: false,
+        speed: p.hit.speed,
+        lifespan: p.hit.lifespanMs,
+        scale: { start: 1, end: 0.3 },
+        alpha: { start: 1, end: 0 },
+        maxAliveParticles: p.max,
+      })
+      .setDepth(PARTICLE_DEPTH);
+    this.numbers = new DamageNumbers(scene, this.settings.damageNumbers);
+
     /** @type {Array<[string, Function]>} */
     const listeners = [
       [
@@ -44,7 +64,8 @@ export default class Juice {
         (/** @type {PlayerHitEvent} */ e) =>
           this.shake(this.settings.shake.playerHit.ms, shakeIntensity(this.settings.shake.playerHit, e.damage)),
       ],
-      [ENEMY_KILLED, (/** @type {EnemyKilledEvent} */ e) => e.typeId === 'brute' && this.bruteKilled()],
+      [ENEMY_DAMAGED, (/** @type {EnemyDamagedEvent} */ e) => this.enemyDamaged(e)],
+      [ENEMY_KILLED, (/** @type {EnemyKilledEvent} */ e) => this.enemyKilled(e)],
       [
         POWERUP_COLLECTED,
         (/** @type {{ id: string }} */ e) => e.id === 'bomb' && this.shakeKind(this.settings.shake.bomb),
@@ -79,9 +100,43 @@ export default class Juice {
     return true;
   }
 
-  bruteKilled() {
-    this.shakeKind(this.settings.shake.bruteKill);
-    this.hitStop();
+  /**
+   * A damage number above the enemy, plus a small spark burst for bullet hits.
+   * @param {EnemyDamagedEvent} e
+   */
+  enemyDamaged(e) {
+    const size = ENEMIES.types[/** @type {keyof typeof ENEMIES.types} */ (e.typeId)]?.size ?? 32;
+    this.numbers.show(e.x, e.y - size / 2, e.damage, e.killed);
+    if (e.source === 'bullet') this.burst(this.settings.particles.hit, this.settings.particles.hitColor, e.x, e.y);
+  }
+
+  /**
+   * A death burst in the type's color; Brutes also shake and hit-stop.
+   * @param {EnemyKilledEvent} e
+   */
+  enemyKilled(e) {
+    const { death } = this.settings.particles;
+    const color = death.colors[/** @type {keyof typeof death.colors} */ (e.typeId)] ?? 0xffffff;
+    this.burst(death, color, e.x, e.y);
+    if (e.typeId === 'brute') {
+      this.shakeKind(this.settings.shake.bruteKill);
+      this.hitStop();
+    }
+  }
+
+  /**
+   * Burst particles at (x, y). The emitter's live cap cuts a burst short when full.
+   * @param {{ count: number, speed: { min: number, max: number }, lifespanMs: number }} b
+   * @param {number} color
+   * @param {number} x
+   * @param {number} y
+   */
+  burst(b, color, x, y) {
+    const em = this.particles;
+    em.speed = b.speed;
+    em.lifespan = b.lifespanMs;
+    em.setParticleTint(color);
+    em.explode(b.count, x, y);
   }
 
   /** Whether the scene is frozen by a hit-stop. */
@@ -111,6 +166,7 @@ export default class Juice {
     this.scene.anims.pauseAll();
     this.scene.tweens.pauseAll();
     this.scene.time.paused = true;
+    this.particles.pause();
     return true;
   }
 
@@ -131,6 +187,7 @@ export default class Juice {
     this.scene.anims.resumeAll();
     this.scene.tweens.resumeAll();
     this.scene.time.paused = false;
+    this.particles.resume();
     this.lastHitStopEnd = this.scene.game.loop.time;
   }
 }

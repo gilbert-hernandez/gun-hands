@@ -1,5 +1,6 @@
 // Sound effect tunables (GH-29). The audio code reads these; don't hard-code them elsewhere.
-// Levels and throttles are first guesses, to be tuned in GH-13 (juice & balance pass).
+// Volumes start from measured loudness (GH-13: `node scripts/loudness.js`, design §9), then Gilbert's
+// by-ear pass. Throttles follow the highest reachable fire rate (16 shots/s with Rapid Fire).
 
 /**
  * @typedef {object} SoundConfig
@@ -20,25 +21,25 @@ const sound = ({ volume = 1, minIntervalMs = 0, maxVoices = 2, pitchJitter = 0 }
 // Every sound the game plays, keyed by slug: the WAV is src/assets/sfx/<slug>.wav (GH-28 pack).
 // ASSETS.md's Audio table lists exactly these slugs (tests/audioConfig.test.js checks this).
 const sounds = {
-  shoot: sound({ minIntervalMs: 60, maxVoices: 4, pitchJitter: 1 }),
+  shoot: sound({ minIntervalMs: 60, maxVoices: 3, pitchJitter: 1 }),
   'bullet-wall': sound({ minIntervalMs: 50, maxVoices: 4, pitchJitter: 1 }),
-  'enemy-hit': sound({ minIntervalMs: 50, maxVoices: 4, pitchJitter: 1 }),
-  'enemy-die': sound(),
-  'brute-die': sound(),
-  'player-hurt': sound(),
+  'enemy-hit': sound({ volume: 0.48, minIntervalMs: 50, maxVoices: 4, pitchJitter: 1 }),
+  'enemy-die': sound({ volume: 0.59 }),
+  'brute-die': sound({ volume: 0.76 }),
+  'player-hurt': sound({ volume: 0.66 }),
   'player-die': sound(),
-  'xp-pickup': sound({ minIntervalMs: 40, maxVoices: 3 }),
+  'xp-pickup': sound({ volume: 0.54, minIntervalMs: 40, maxVoices: 3 }),
   'level-up': sound({ minIntervalMs: 300, maxVoices: 1 }),
-  'card-pick': sound(),
-  'powerup-pickup': sound(),
+  'card-pick': sound({ volume: 0.46 }),
+  'powerup-pickup': sound({ volume: 0.45 }),
   heal: sound(),
-  'shield-up': sound(),
+  'shield-up': sound({ volume: 0.97 }),
   'shield-block': sound({ minIntervalMs: 300, maxVoices: 1 }),
   bomb: sound(),
-  'powerup-expire': sound(),
+  'powerup-expire': sound({ volume: 0.87 }),
   'ui-hover': sound({ minIntervalMs: 80, maxVoices: 1 }),
-  'ui-click': sound(),
-  'game-start': sound(),
+  'ui-click': sound({ volume: 0.61 }),
+  'game-start': sound({ volume: 0.7 }),
   'game-over': sound(),
 };
 

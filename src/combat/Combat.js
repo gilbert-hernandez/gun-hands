@@ -30,9 +30,14 @@ export default class Combat {
    * @param {import('../enemy/Enemies.js').default} parts.enemies
    * @param {() => number} parts.survivalMs current survival time in ms
    * @param {() => boolean} [parts.shielded] true while a Shield powerup blocks contact (GH-9)
+   * @param {() => { upgrades?: Record<string, number>, powerups?: Record<string, number> }} [parts.runExtras]
+   *   other systems' run tallies, merged into the run stats at death (GH-13)
    */
-  constructor(scene, { player, bullets, enemies, survivalMs, shielded = () => false }) {
+  constructor(scene, { player, bullets, enemies, survivalMs, shielded = () => false, runExtras = () => ({}) }) {
     this.scene = scene;
+    this.runExtras = runExtras;
+    /** Dev stress test (GH-13): contact never hurts the player while true. */
+    this.godMode = false;
     this.shielded = shielded;
     this.player = player;
     this.enemies = enemies;
@@ -142,7 +147,7 @@ export default class Combat {
    */
   canContact(enemy) {
     const p = this.player;
-    if (!enemy.active || p.dead || p.invulnerableMs > 0) return false;
+    if (!enemy.active || p.dead || p.invulnerableMs > 0 || this.godMode) return false;
     if (this.shielded()) {
       this.scene.events.emit(SHIELD_BLOCKED, { typeId: enemy.typeId });
       return false;
@@ -180,6 +185,7 @@ export default class Combat {
       level: this.player.level,
       killsByType: { ...this.killsByType },
       damageTaken: { ...this.damageTaken },
+      ...this.runExtras(),
     };
     this.stats = stats;
     this.enemies.freeze();

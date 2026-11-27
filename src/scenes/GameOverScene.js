@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DISPLAY, FLOW } from '../config/index.js';
+import { DEBUG, DISPLAY, FLOW } from '../config/index.js';
 import { formatTime } from '../util/format.js';
 import { useTouchWording } from '../input/mode.js';
 import Button from '../ui/Button.js';
@@ -7,6 +7,7 @@ import { getSfx } from '../audio/Sfx.js';
 import { pickLayout } from '../ui/layout.js';
 import { addSceneLabel } from './sceneLabel.js';
 import { bindMuteKey } from '../audio/muteKey.js';
+import { buildRunSummary, createRunLog } from '../util/runLog.js';
 
 /** @typedef {import('../combat/events.js').RunStats} RunStats */
 
@@ -18,6 +19,19 @@ export default class GameOverScene extends Phaser.Scene {
     super('GameOver');
   }
 
+  /**
+   * Dev builds only (GH-13): log this run's summary to the console and keep it in the run log.
+   * `summary` stays on the scene for the autoplay bot.
+   */
+  logRun() {
+    /** @type {import('../util/runLog.js').RunSummary | null} */
+    this.summary = null;
+    if (!DEBUG.enabled || !this.stats) return;
+    this.summary = buildRunSummary(this.stats, __APP_VERSION__);
+    console.info('[run]', JSON.stringify(this.summary));
+    createRunLog(DEBUG.runLog.storageKey, DEBUG.runLog.max).append(this.summary);
+  }
+
   /** @param {Partial<RunStats>} [data] run stats from the Game scene; empty when opened otherwise */
   init(data) {
     /** @type {RunStats | null} */
@@ -27,6 +41,7 @@ export default class GameOverScene extends Phaser.Scene {
   create() {
     // M toggles sound effects (GH-29).
     bindMuteKey(this);
+    this.logRun();
     const { width } = DISPLAY;
     const { keys } = FLOW;
     const touch = useTouchWording(this);

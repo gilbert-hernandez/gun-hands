@@ -218,3 +218,91 @@ test.describe('hit-stop', () => {
     expect(stopped).toBe(false);
   });
 });
+
+test.describe('particles and damage numbers', () => {
+  test.beforeEach(async ({ page }) => {
+    await startRun(page);
+    await page.evaluate(() => {
+      const { juice } = window.__GAME__.scene.getScene('Game');
+      window.__bursts = [];
+      const burst = juice.burst;
+      juice.burst = function (b, color, x, y) {
+        window.__bursts.push({ count: b.count, color });
+        return burst.call(this, b, color, x, y);
+      };
+    });
+  });
+
+  test('a bullet hit bursts sparks and shows the rounded damage; a kill bursts in the type color', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const { combat, enemies, player, juice } = window.__GAME__.scene.getScene('Game');
+      const g = enemies.spawnAt('grunt', player.x + 200, player.y);
+      combat.damageEnemy(g, 12.6, 1, 0, 'bullet');
+      const hit = juice.numbers.pool.find((t) => t.active);
+      const first = { text: hit.text, tint: hit.tintTopLeft, x: hit.x };
+      combat.damageEnemy(g, 999, 1, 0, 'bullet');
+      const kill = juice.numbers.pool.filter((t) => t.active).find((t) => t !== hit);
+      return {
+        first,
+        kill: { text: kill.text, tint: kill.tintTopLeft },
+        showing: juice.numbers.showing,
+        bursts: window.__bursts,
+        alive: juice.particles.getAliveParticleCount(),
+      };
+    });
+    const P = JUICE.particles;
+    const D = JUICE.damageNumbers;
+    expect(r.first).toMatchObject({ text: '13', tint: D.color });
+    expect(r.kill).toEqual({ text: '999', tint: D.killColor });
+    expect(r.showing).toBe(2);
+    expect(r.bursts).toEqual([
+      { count: P.hit.count, color: P.hitColor },
+      { count: P.hit.count, color: P.hitColor },
+      { count: P.death.count, color: P.death.colors.grunt },
+    ]);
+    expect(r.alive).toBe(2 * P.hit.count + P.death.count);
+  });
+
+  test('numbers fade out and go back to the pool', async ({ page }) => {
+    await page.evaluate(() => {
+      const { combat, enemies, player } = window.__GAME__.scene.getScene('Game');
+      combat.damageEnemy(enemies.spawnAt('brute', player.x + 200, player.y), 5, 1, 0, 'bullet');
+    });
+    await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').juice.numbers.showing === 0);
+  });
+
+  test('Bomb hits show numbers without sparks', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const { enemies, player, powerups, juice } = window.__GAME__.scene.getScene('Game');
+      enemies.spawnAt('brute', player.x + 150, player.y);
+      enemies.spawnAt('brute', player.x - 150, player.y);
+      powerups.collect('bomb');
+      return { showing: juice.numbers.showing, bursts: window.__bursts };
+    });
+    expect(r).toEqual({ showing: 2, bursts: [] });
+  });
+
+  test('a Bomb in a crowd of 100 stays under the particle and number caps', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const { enemies, player, powerups, juice, combat } = window.__GAME__.scene.getScene('Game');
+      for (let i = 0; i < 100; i++) {
+        const a = (i / 100) * Math.PI * 2;
+        enemies.spawnAt(
+          'grunt',
+          player.x + Math.cos(a) * (60 + (i % 4) * 25),
+          player.y + Math.sin(a) * (60 + (i % 4) * 25),
+        );
+      }
+      powerups.collect('bomb');
+      return {
+        kills: combat.kills,
+        alive: juice.particles.getAliveParticleCount(),
+        showing: juice.numbers.showing,
+      };
+    });
+    expect(r.kills).toBe(100);
+    expect(r.alive).toBeLessThanOrEqual(JUICE.particles.max);
+    expect(r.alive).toBeGreaterThan(0);
+    expect(r.showing).toBe(JUICE.damageNumbers.poolSize);
+  });
+});

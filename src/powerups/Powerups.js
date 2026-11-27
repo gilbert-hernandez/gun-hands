@@ -49,6 +49,8 @@ export default class Powerups {
     /** Drop chances in use; tests may replace them (e.g. `{ grunt: 1 }`). */
     this.dropChance = { ...POWERUPS.dropChance };
     this.debugIndex = 0;
+    /** Powerups collected this session, by id (run summary, GH-13). @type {Partial<Record<PowerupId, number>>} */
+    this.collected = {};
 
     player.boosts = () => effectiveWeapon(player.weapon, this.active, POWERUPS.types);
 
@@ -101,6 +103,7 @@ export default class Powerups {
    */
   collect(id) {
     const type = POWERUPS.types[id];
+    this.collected[id] = (this.collected[id] ?? 0) + 1;
     if (isTimed(id, POWERUPS.types)) {
       this.active[id] = type.durationMs;
       this.scene.events.emit(POWERUP_COLLECTED, { id, durationMs: type.durationMs });

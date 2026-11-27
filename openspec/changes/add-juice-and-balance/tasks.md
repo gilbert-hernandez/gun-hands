@@ -13,19 +13,19 @@
 
 ## 3. Particles and damage numbers
 
-- [ ] 3.1 Generate `fx_dot` in `BootScene`, then add the particle emitter to `Juice`: a hit burst on `enemy-damaged` with source `bullet`, and a tinted death burst on `enemy-killed`, with `maxParticles`. Extend e2e: the bursts are called with the right counts and tint, and a Bomb in a crowd of 100 stays at or under max with no page errors.
-- [ ] 3.2 Add `src/fx/digitFont.js` (canvas digits → `RetroFont` bitmap font `gh_digits`, generated in `BootScene`; use the manual `cache.bitmapFont` fallback if Parse fails) and `src/fx/DamageNumbers.js` (pool, tween, kill color, rounding). Wire it from `Juice` on `enemy-damaged`. Extend e2e: a hit shows the rounded number, a kill uses the kill color, numbers return to the pool, and a full pool shows nothing new without error.
+- [x] 3.1 Generate `fx_dot` in `BootScene`, then add the particle emitter to `Juice`: a hit burst on `enemy-damaged` with source `bullet`, and a tinted death burst on `enemy-killed`, with `maxParticles`. Extend e2e: the bursts are called with the right counts and tint, and a Bomb in a crowd of 100 stays at or under max with no page errors.
+- [x] 3.2 Add `src/fx/digitFont.js` (canvas digits → `RetroFont` bitmap font `gh_digits`, generated in `BootScene`; use the manual `cache.bitmapFont` fallback if Parse fails) and `src/fx/DamageNumbers.js` (pool, tween, kill color, rounding). Wire it from `Juice` on `enemy-damaged`. Extend e2e: a hit shows the rounded number, a kill uses the kill color, numbers return to the pool, and a full pool shows nothing new without error.
 
 ## 4. Playtest tools
 
-- [ ] 4.1 Add `src/util/runLog.js` (summary builder plus a try/catch `localStorage` ring of 20) with `tests/runLog.test.js` (shape, ring cap, storage that throws). Extend `RunStats` and log from `GameOverScene` in dev builds. E2E: a debug-G death puts one entry in `gunhands.runs`.
-- [ ] 4.2 Add the dev `K` stress key (capOverride toggle and ring fill) and the FPS, particle and number counts in the debug readout. E2E: `K` reaches 200+ alive with no page errors, and a second `K` restores the wave cap.
-- [ ] 4.3 Add `scripts/bot.js` and `scripts/balance.js` (design §7), the `npm run balance` script, and `balance/` in `.gitignore`. Add `scripts/` entries to eslint if needed. Smoke test: `npm run balance -- 1` against a fresh server on 5175 finishes and writes a summary.
+- [x] 4.1 Add `src/util/runLog.js` (summary builder plus a try/catch `localStorage` ring of 20) with `tests/runLog.test.js` (shape, ring cap, storage that throws). Extend `RunStats` and log from `GameOverScene` in dev builds. E2E: a debug-G death puts one entry in `gunhands.runs`.
+- [x] 4.2 Add the dev `K` stress key (capOverride toggle and ring fill) and the FPS, particle and number counts in the debug readout. E2E: `K` reaches 200+ alive with no page errors, and a second `K` restores the wave cap.
+- [x] 4.3 Add `scripts/bot.js` and `scripts/balance.js` (design §7), the `npm run balance` script, and `balance/` in `.gitignore`. Add `scripts/` entries to eslint if needed. Smoke test: `npm run balance -- 1` against a fresh server on 5175 finishes and writes a summary.
 
 ## 5. Balance and mix
 
-- [ ] 5.1 Baseline: `npm run balance -- 5` on today's numbers. Start the Balance log table at the end of design.md with the median and range.
-- [ ] 5.2 Gilbert plays 3 runs and pastes the summaries from `localStorage` / the console. Record them in the log, along with the bot calibration offset.
+- [x] 5.1 Baseline: `npm run balance -- 5` on today's numbers (done with 1 run: it hit the 12 min cap, so more runs would only have hit it too). Start the Balance log table at the end of design.md with the median and range.
+- [x] 5.2 Gilbert plays 3 runs and pastes the summaries from `localStorage` / the console. Record them in the log, along with the bot calibration offset.
 - [ ] 5.3 Tuning rounds (each round about 1 h: one knob group, `npm run balance -- 5`, log it), following the knob order in design §7, until the bot median sits in the calibrated band. Re-run `npm run check` and the e2e suite after the last round, and fix any test that hard-codes an old number so it reads config.
 - [ ] 5.4 Gilbert confirms with 3 playtests that runs last 5–8 min and reach level ≥ 10. Record them in the log.
 - [ ] 5.5 Add `scripts/loudness.js`, set the initial SFX volumes and throttles (design §9), then Gilbert's by-ear pass. Update `tests/audioConfig.test.js` only if ranges change. Record the final values in the log.

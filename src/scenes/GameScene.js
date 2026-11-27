@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD, XP } from '../config/index.js';
+import { DEBUG, DISPLAY, FLOW, JUICE, WEAPON, WORLD, XP } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
 import { isPortraitPhone } from '../input/orientation.js';
 import PlayerInput from '../input/PlayerInput.js';
@@ -16,12 +16,14 @@ import Upgrades from '../upgrades/Upgrades.js';
 import Powerups from '../powerups/Powerups.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
-import { bindMuteKey } from '../audio/muteKey.js';
+import { bindMuteKey, oncePerKeyEvent } from '../audio/muteKey.js';
 import { PLAYER_LEVELED } from '../xp/events.js';
 import { ensureAnim } from '../fx/anims.js';
 import Juice from '../fx/Juice.js';
 
 const MUZZLE_ANIM = 'fx_muzzle_flash';
+/** Stress-test mix (dev K key): mostly Grunts, like a late wave. */
+const STRESS_TYPES = /** @type {const} */ (['grunt', 'grunt', 'runner', 'grunt', 'brute', 'runner']);
 const LEVELUP_ANIM = 'fx_levelup_burst';
 
 // The play session: the Tiled arena, the player, enemies, and a camera that follows the player.
@@ -44,6 +46,8 @@ export default class GameScene extends Phaser.Scene {
       .setPosition(DISPLAY.width - 4, DISPLAY.height - 4);
     /** Survival time in ms: counted in update(), so it stops while the scene is paused. */
     this.survivalMs = 0;
+    /** Dev stress test on (K key, GH-13). */
+    this.stress = false;
 
     this.arena = new Arena(this);
     const { width, height, spawn } = this.arena;
@@ -78,6 +82,7 @@ export default class GameScene extends Phaser.Scene {
       enemies: this.enemies,
       survivalMs: () => this.survivalMs,
       shielded: () => this.powerups?.isShielded() ?? false,
+      runExtras: () => ({ upgrades: { ...this.upgrades.ranks }, powerups: { ...this.powerups.collected } }),
     });
     this.xp = new Xp(this, this.player);
     // Upgrade ranks for this session; the LevelUp screen draws and applies cards through it (GH-8).
@@ -126,6 +131,13 @@ export default class GameScene extends Phaser.Scene {
       this.input.keyboard.on('keydown-J', () => this.player.heal());
       // P: drop the next powerup (cycling through all six) in front of the player.
       this.input.keyboard.on('keydown-P', () => this.powerups.debugDrop());
+      // K: stress test (GH-13): fill the arena to JUICE.debug.stressCount enemies and keep it full,
+      // with contact damage off so the run lasts. K again goes back to the wave cap.
+      // Same double-handling guard as the M key (GH-9 note): one toggle per DOM event.
+      this.input.keyboard.on(
+        'keydown-K',
+        oncePerKeyEvent(() => this.toggleStress()),
+      );
     }
   }
 
@@ -138,6 +150,19 @@ export default class GameScene extends Phaser.Scene {
     this.pauseOpen = true;
     this.scene.pause();
     this.scene.launch('Pause');
+  }
+
+  /** Dev K key (GH-13): turn the stress test on or off. */
+  toggleStress() {
+    this.stress = !this.stress;
+    this.enemies.director.capOverride = this.stress ? JUICE.debug.stressCount : null;
+    this.combat.godMode = this.stress;
+  }
+
+  /** Stress test: top the arena up toward the cap, a batch per frame, so the spawn spike stays short. */
+  fillStress() {
+    const missing = this.enemies.cap - this.enemies.liveCount;
+    for (let i = 0; i < Math.min(missing, 40); i++) this.enemies.spawnRing(STRESS_TYPES[i % STRESS_TYPES.length]);
   }
 
   update(time, delta) {
@@ -155,11 +180,14 @@ export default class GameScene extends Phaser.Scene {
     this.enemies.update(delta, this.survivalMs);
     this.xp.update(delta);
     this.powerups.update(delta);
+    if (this.stress) this.fillStress();
     const p = this.player;
     const xp = this.xp.progression;
     const w = p.weapon;
     this.debugText?.setText(
-      `t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}` +
+      `fps ${this.game.loop.actualFps.toFixed(0)}  fx ${this.juice.particles.getAliveParticleCount()}` +
+        `  nums ${this.juice.numbers.showing}${this.stress ? '  STRESS' : ''}\n` +
+        `t ${formatTime(this.survivalMs)}  enemies ${this.enemies.liveCount}/${this.enemies.cap}` +
         `  hp ${p.hp}/${p.maxHp}  kills ${this.combat.kills}  lv ${xp.level}  xp ${xp.xpInto}/${xp.xpNeeded}` +
         `\nspd ${p.speed}  dmg ${w.bullet.damage}  rate ${w.fireRate}  n ${w.bullet.count}` +
         `  pierce ${w.bullet.pierce}  pickup ${p.pickupRadius}` +

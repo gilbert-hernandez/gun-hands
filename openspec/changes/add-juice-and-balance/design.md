@@ -129,3 +129,24 @@ One `ParticleEmitter` per session (Phaser 4 `scene.add.particles(0, 0, 'fx_dot',
 
 - Does the late-game wave cap go above 140, so real runs show 200+ enemies? The balance pass decides, and the stress key covers the FPS check either way.
 - Should the run log ship in production (anonymous, local only)? Proposed: dev builds only.
+
+## Balance log
+
+Each row is one tuning round: what changed, the bot's result (`npm run balance -- 5`: median time and level, with min–max), and Gilbert's playtests on the same numbers. The calibration offset is Gilbert's median minus the bot's.
+
+| # | Date | Change | Bot median (min–max) | Gilbert's runs | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 0 | 11-27 | Baseline: shipped v0.2.3 numbers | 11:17+, level 32, 1 run, hit the 12 min cap (20 damage taken) | 11:52 / L33, 7:49 / L26, 11:06 / L32 (median 11:06 / L32) | Calibration offset: the bot levels like Gilbert and lives at least as long. Offset taken as 0 for now; revisit once the bot dies on its own. |
+
+**Baseline findings (round 0):**
+- **Runs are too long:** median 11 min against a 5–8 min target.
+- **Levelling is far too fast:** level 10 comes at about 3.5 min, and every upgrade is maxed (rank total 30) by about level 31.
+- **XP rate:** Gilbert's runs fit XP(t) ≈ 0.28 · t^1.5 (t in seconds). That works out to 2,892 XP by 7:49 and 5,134 by 11:52.
+- **Loot is too common:** 59–84 powerups per long run, 11–14 of them Health Packs (330–420 HP healed). Most come from Brutes (25% drop chance, and 260–290 Brutes per run).
+- **Damage taken is low:** 290–400 HP per run, mostly Grunt contact.
+
+**Plan for round 1 (XP curve, knob 1):** `curve` goes from {5, 4, 1.3} to {10, 12, 1.5}. At Gilbert's XP rate, level 10 then needs 1,098 XP (vs 283), which gives level 8 at 3 min, 11 at 5 min, 12 at 6.5 min and 14 at 8 min. Fewer upgrades should also shorten runs. Next is round 2 (wave ramp and drops), which tackles survival time head-on.
+
+### SFX mix
+
+Starting volumes come from `node scripts/loudness.js` (2026-11-27): RMS targets of −24 dB for frequent sounds, −18 dB for events and −14 dB for big moments, clamped to [0.2, 1]. `shoot` (−29.5 dB) and `bullet-wall` were already under their target, so they stay at 1. `shoot.maxVoices` went from 4 to 3. The by-ear pass is still to come.

@@ -30,8 +30,9 @@ export const PLAYER_HIT = 'player-hit';
 
 /**
  * The player died (emitted once). GameOver receives the same stats. `killsByType` and
- * `damageTaken` (HP lost per enemy type) feed the run summary (GH-13); GameOver shows only the first three.
- * @typedef {{ timeMs: number, kills: number, level: number, killsByType: Record<string, number>, damageTaken: Record<string, number> }} RunStats
+ * `damageTaken` (HP lost per enemy type), `upgrades` (rank per upgrade id) and `powerups` (collected per
+ * id) feed the run summary (GH-13); GameOver shows only the first three.
+ * @typedef {{ timeMs: number, kills: number, level: number, killsByType: Record<string, number>, damageTaken: Record<string, number>, upgrades?: Record<string, number>, powerups?: Record<string, number> }} RunStats
  */
 export const PLAYER_DIED = 'player-died';
 
