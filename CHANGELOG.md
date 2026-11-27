@@ -6,6 +6,20 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+## [0.2.3] - 2026-11-27
+
+Heal art. The Health pickup now shows what it does. M3 Art & Polish is still in progress.
+
+### Changed
+
+- **Health pickup art** (GH-20, GH-21): a heart with a medical cross instead of "+1", since Health restores 30 HP rather than giving an extra life.
+
+### Known limitations
+
+- No juice or balance pass yet (GH-13).
+- No music.
+- Not deployed yet (GH-14).
+
 ## [0.2.2] - 2026-11-26
 
 The real art. Every placeholder shape is replaced by david's pixel art, with no gameplay changes. M3 Art & Polish is still in progress (juice and balance, deployment).
@@ -75,6 +89,8 @@ The first tagged version. Milestones M1 Core and M2 Progression are complete, so
 - No sound or music.
 - Not deployed yet. GH-14 deploys the demo to gunhands.hernandez.solutions.
 
-[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gilbert-hernandez/gun-hands/releases/tag/v0.2.0
