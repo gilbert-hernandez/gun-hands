@@ -6,6 +6,10 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+### Removed
+
+- **Unused HUD icons** (GH-31): the Health, Bomb and Magnet HUD icons are no longer loaded, since the HUD only shows timed powerups. The files are kept in `art/unused/`.
+
 ## [0.2.3] - 2026-11-27
 
 Heal art. The Health pickup now shows what it does. M3 Art & Polish is still in progress.

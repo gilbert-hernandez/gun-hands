@@ -109,9 +109,6 @@ UI images are single images (1 frame) unless noted. The game runs at 960×540.
 | GH-21  | `gh_ui_icon_rapidfire.png` | 16×16   | 1      | HUD powerup icon                                        |
 | GH-21  | `gh_ui_icon_spread.png`    | 16×16   | 1      | HUD powerup icon                                        |
 | GH-21  | `gh_ui_icon_shield.png`    | 16×16   | 1      | HUD powerup icon                                        |
-| GH-21  | `gh_ui_icon_health.png`    | 16×16   | 1      | HUD powerup icon                                        |
-| GH-21  | `gh_ui_icon_bomb.png`      | 16×16   | 1      | HUD powerup icon                                        |
-| GH-21  | `gh_ui_icon_magnet.png`    | 16×16   | 1      | HUD powerup icon                                        |
 | GH-21  | `gh_ui_card.png`           | 160×220 | 1      | Upgrade card frame; game draws the icon and text on top |
 | GH-21  | `gh_ui_up_damage.png`      | 32×32   | 1      | Upgrade icon                                            |
 | GH-21  | `gh_ui_up_firerate.png`    | 32×32   | 1      | Upgrade icon                                            |
@@ -123,6 +120,8 @@ UI images are single images (1 frame) unless noted. The game runs at 960×540.
 | GH-21  | `gh_ui_button.png`         | 160×48  | 3      | Frames: normal, hover, pressed (sheet is 480×48)        |
 
 Font: recommend a free pixel font in a comment on GH-21.
+
+The HUD shows icons only for timed powerups. The instant-powerup icons (`gh_ui_icon_health.png`, `gh_ui_icon_bomb.png`, `gh_ui_icon_magnet.png`) were delivered, but the game never displayed them, so they're kept in `art/unused/` and aren't loaded (GH-31).
 
 ### GH-22: Title & game over
 
