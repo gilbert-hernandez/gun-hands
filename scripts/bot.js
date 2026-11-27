@@ -112,34 +112,51 @@ export async function playRun(page, { maxMinutes = 15, log = () => {} } = {}) {
   await installBrain(page);
   const started = Date.now();
   let lastLevel = 1;
+  let lastBeat = started;
+  /** Set once the run outlives the cap: the bot then kills the player as soon as Game is running. */
+  let cappedAt = /** @type {number | null} */ (null);
   for (;;) {
-    const s = await page.evaluate((priority) => {
-      const game = window.__GAME__;
-      const go = game.scene.getScene('GameOver');
-      if (game.scene.isActive('GameOver') && go.ready) return { done: go.summary };
-      const lu = game.scene.getScene('LevelUp');
-      if (game.scene.isActive('LevelUp') && lu.ready && !lu.chosen) {
-        const pick = priority.map((id) => lu.choices.indexOf(id)).find((i) => i >= 0) ?? 0;
-        lu.pick(pick);
-      }
-      const g = game.scene.getScene('Game');
-      return { level: g.xp.progression.level, t: g.survivalMs };
-    }, CARD_PRIORITY);
-    if (s.done) return s.done;
+    const s = await page.evaluate(
+      ([priority, kill]) => {
+        const game = window.__GAME__;
+        const go = game.scene.getScene('GameOver');
+        if (game.scene.isActive('GameOver') && go.ready) return { done: go.summary };
+        const lu = game.scene.getScene('LevelUp');
+        if (game.scene.isActive('LevelUp') && lu.ready && !lu.chosen) {
+          const pick = priority.map((id) => lu.choices.indexOf(id)).find((i) => i >= 0) ?? 0;
+          lu.pick(pick);
+        }
+        const g = game.scene.getScene('Game');
+        // End a capped run through the real death path (like the dev G key), once Game is running.
+        if (kill && game.scene.isActive('Game') && !g.player.dead) g.combat.damagePlayer(g.player.hp, { force: true });
+        return {
+          level: g.xp.progression.level,
+          t: g.survivalMs,
+          hp: g.player.hp,
+          enemies: g.enemies.liveCount,
+          scenes: game.scene.getScenes(true).map((x) => x.sys.settings.key),
+        };
+      },
+      [CARD_PRIORITY, cappedAt !== null],
+    );
+    if (s.done) return cappedAt === null ? s.done : { ...s.done, capped: true };
     if (s.level !== lastLevel) {
       lastLevel = s.level;
       log(`  level ${s.level} at ${(s.t / 1000).toFixed(0)} s`);
     }
-    if (Date.now() - started > maxMinutes * 60000) {
-      // The bot outlived the cap: end the run through the real death path (dev G key).
-      log(`  capped at ${maxMinutes} min`);
-      await page.evaluate(() => {
-        const { combat, player } = window.__GAME__.scene.getScene('Game');
-        combat.damagePlayer(player.hp, { force: true });
-      });
-      await page.waitForFunction(() => window.__GAME__.scene.getScene('GameOver')?.ready, null, { timeout: 30000 });
-      const summary = await page.evaluate(() => window.__GAME__.scene.getScene('GameOver').summary);
-      return { ...summary, capped: true };
+    const now = Date.now();
+    if (now - lastBeat >= 60000) {
+      lastBeat = now;
+      log(
+        `  [${Math.round((now - started) / 1000)} s wall] t ${(s.t / 1000).toFixed(0)} s  hp ${s.hp}  enemies ${s.enemies}  scenes ${s.scenes.join(',')}`,
+      );
+    }
+    if (cappedAt === null && now - started > maxMinutes * 60000) {
+      cappedAt = now;
+      log(`  capped at ${maxMinutes} min (scenes ${s.scenes.join(',')})`);
+    }
+    if (cappedAt !== null && now - cappedAt > 60000) {
+      throw new Error(`capped run never reached GameOver: ${JSON.stringify(s)}`);
     }
     await page.waitForTimeout(250);
   }

@@ -32,6 +32,7 @@ export const XP = {
   collectDistance: 12,
   // Max gems on the floor at once; extra drops merge into the nearest gem.
   poolSize: 300,
-  // XP from level L to L+1 = round(base + growth * (L - 1) ^ exponent): 5, 9, 15, 21, 29, ...
-  curve: { base: 5, growth: 4, exponent: 1.3 },
+  // XP from level L to L+1 = round(base + growth * (L - 1) ^ exponent): 10, 22, 44, 72, 106, ...
+  // Level 10 takes 1098 XP in total (GH-13 balance round 1; see the change's balance log).
+  curve: { base: 10, growth: 12, exponent: 1.5 },
 };

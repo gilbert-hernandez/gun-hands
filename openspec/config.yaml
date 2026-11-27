@@ -14,7 +14,7 @@ context: |
   - Enemies drop XP gems (3 tiers); collecting XP levels the player up, pausing for a pick-1-of-3 upgrade
     (damage, fire rate, multishot, pierce, move speed, max HP, pickup radius).
   - Enemies occasionally drop loot powerups: timed Rapid Fire, Spread Shot, Shield; instant Health Pack, Bomb (clear screen), Magnet (pull all XP).
-  - Demo target: a run lasts ~5–8 minutes; title -> play -> level-ups -> death -> game over stats -> restart.
+  - Demo target: a run lasts ~10 minutes (overtime after 10:00 makes 12+ rare and 15 near impossible); title -> play -> level-ups -> death -> game over stats -> restart.
 
   Tech stack: Phaser 4 (pinned exact version) + Vite, plain modern JavaScript (ES modules), Arcade Physics, Tiled JSON maps.
   Static build only (no backend); will be deployed to gunhands.hernandez.solutions.
