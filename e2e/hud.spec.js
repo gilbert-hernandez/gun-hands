@@ -257,14 +257,25 @@ test('kills count every kill, including Bomb kills', async ({ page }) => {
   expect((await hud(page)).kills).toBe('KILLS 3');
 });
 
-test('active powerups show in a fixed order, with tinted placeholder icons and ceil seconds', async ({ page }) => {
+test('placeholder powerup icons are tinted with their pickup color', async ({ page }) => {
+  // All GH-21 art is delivered now, so mark the icons as placeholders the way Preload would.
+  await page.evaluate(() => {
+    window.__GAME__.scene.getScene('UI').placeholders = new Set(['ui_icon_rapidfire', 'ui_icon_shield']);
+  });
+  await inGame(page, "g.powerups.collect('shield'); g.powerups.collect('rapidfire');");
+  const h = await hud(page);
+  expect(h.slots[0].tint).toBe(POWERUPS.types.rapidfire.placeholderTint);
+  expect(h.slots[1].tint).toBe(POWERUPS.types.shield.placeholderTint);
+});
+
+test('active powerups show in a fixed order, with real icons and ceil seconds', async ({ page }) => {
   await inGame(page, "g.powerups.collect('shield'); g.powerups.collect('rapidfire');");
   let h = await hud(page);
   expect(h.slots.map((s) => s.id)).toEqual(['rapidfire', 'shield']);
   expect(h.slots[0].text).toBe(`${POWERUPS.types.rapidfire.durationMs / 1000}s`);
   expect(h.slots[1].text).toBe(`${POWERUPS.types.shield.durationMs / 1000}s`);
-  expect(h.slots[0].tint).toBe(POWERUPS.types.rapidfire.placeholderTint);
-  expect(h.slots[1].tint).toBe(POWERUPS.types.shield.placeholderTint);
+  // Real GH-21 icons are drawn untinted.
+  expect([h.slots[0].tint, h.slots[1].tint]).toEqual([0xffffff, 0xffffff]);
   expectWholePixels(h);
 
   // Instant powerups add no icon.

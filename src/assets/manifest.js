@@ -65,14 +65,14 @@ export const MANIFEST = [
   sheet('gh_fx_bomb_blast.png', 64, 6, 'fx', 'GH-18'),
   sheet('gh_fx_levelup.png', 48, 6, 'fx', 'GH-18'),
 
-  // GH-19 Arena tileset: 8x8 grid of 32x32 tiles, no spacing/margin
+  // GH-19 Arena tileset: 8x6 grid of 32x32 tiles, no spacing/margin (layout as delivered, see ASSETS.md)
   {
     key: keyFor('gh_tiles_arena.png'),
     file: 'gh_tiles_arena.png',
     type: 'tileset',
     frameWidth: 32,
     frameHeight: 32,
-    frames: 64,
+    frames: 48,
     columns: 8,
     category: 'tiles',
     ticket: 'GH-19',
@@ -92,8 +92,8 @@ export const MANIFEST = [
 
   // GH-21 UI kit
   image('gh_ui_bar_frame.png', 200, 16, 'ui', 'GH-21'),
-  image('gh_ui_bar_fill_hp.png', 196, 12, 'ui', 'GH-21'),
-  image('gh_ui_bar_fill_xp.png', 196, 12, 'ui', 'GH-21'),
+  image('gh_ui_bar_fill_hp.png', 174, 8, 'ui', 'GH-21'),
+  image('gh_ui_bar_fill_xp.png', 174, 8, 'ui', 'GH-21'),
   image('gh_ui_icon_rapidfire.png', 16, 16, 'ui', 'GH-21'),
   image('gh_ui_icon_spread.png', 16, 16, 'ui', 'GH-21'),
   image('gh_ui_icon_shield.png', 16, 16, 'ui', 'GH-21'),
@@ -160,5 +160,39 @@ export function validate(entries = MANIFEST) {
     }
   });
 
+  return errors;
+}
+
+/**
+ * Pixel size the PNG for `entry` must have: a strip for sprite sheets, the grid for tilesets.
+ * @param {Record<string, any>} entry
+ * @returns {{ width: number, height: number }}
+ */
+export function expectedImageSize(entry) {
+  if (entry.type === 'tileset') {
+    return { width: entry.columns * entry.frameWidth, height: (entry.frames / entry.columns) * entry.frameHeight };
+  }
+  return { width: entry.frameWidth * entry.frames, height: entry.frameHeight };
+}
+
+/**
+ * Compare delivered PNG sizes with the manifest. Returns human-readable errors (empty when all match).
+ * @param {Record<string, { width: number, height: number }>} sizes file name -> pixel size
+ * @param {Array<Record<string, any>>} [entries]
+ * @returns {string[]}
+ */
+export function checkDeliveredArt(sizes, entries = MANIFEST) {
+  const errors = [];
+  for (const [file, { width, height }] of Object.entries(sizes)) {
+    const entry = entries.find((e) => e.file === file);
+    if (!entry) {
+      errors.push(`${file} has no manifest entry`);
+      continue;
+    }
+    const want = expectedImageSize(entry);
+    if (want.width !== width || want.height !== height) {
+      errors.push(`${file} is ${width}x${height}, expected ${want.width}x${want.height}`);
+    }
+  }
   return errors;
 }

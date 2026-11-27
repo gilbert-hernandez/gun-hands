@@ -25,9 +25,14 @@ describe('HUD config', () => {
     const frame = asset(HUD.barFrame);
     for (const key of [HUD.hpFill, HUD.xpFill]) {
       const fill = asset(key);
-      expect(fill.frameWidth + 2 * HUD.barInset).toBe(frame.frameWidth);
-      expect(fill.frameHeight + 2 * HUD.barInset).toBe(frame.frameHeight);
+      expect(HUD.barInset.x + fill.frameWidth).toBeLessThanOrEqual(frame.frameWidth);
+      expect(HUD.barInset.y + fill.frameHeight).toBeLessThanOrEqual(frame.frameHeight);
     }
+  });
+
+  it("puts the fill in the frame's fill slot (GH-21: x=18, y=4, 174×8)", () => {
+    expect(HUD.barInset).toEqual({ x: 18, y: 4 });
+    expect([asset(HUD.hpFill).frameWidth, asset(HUD.hpFill).frameHeight]).toEqual([174, 8]);
   });
 
   it('fits all powerup slots on screen', () => {
@@ -38,7 +43,8 @@ describe('HUD config', () => {
     const ints = [
       HUD.margin,
       HUD.rowGap,
-      HUD.barInset,
+      HUD.barInset.x,
+      HUD.barInset.y,
       HUD.labelGap,
       HUD.iconGap,
       HUD.shadowOffset,

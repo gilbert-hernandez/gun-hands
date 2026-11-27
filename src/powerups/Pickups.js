@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { POWERUPS } from '../config/index.js';
-import { ensureAnim } from '../player/Player.js';
+import { ensureAnim } from '../fx/anims.js';
 import { pickupVisible } from './rules.js';
 
 /** @typedef {import('../config/powerups.js').PowerupId} PowerupId */
@@ -32,7 +32,7 @@ export default class Pickups {
     this.scene = scene;
     /** @type {Set<string>} */
     this.placeholders = new Set(scene.registry.get('placeholders') ?? []);
-    for (const t of Object.values(POWERUPS.types)) ensureAnim(scene, t.sheet, POWERUPS.animFps);
+    for (const t of Object.values(POWERUPS.types)) ensureAnim(scene, t.sheet, POWERUPS.frameMs.pickup);
     this.group = scene.add.group({ classType: Pickup, defaultKey: POWERUPS.types.health.sheet, maxSize: poolSize });
   }
 

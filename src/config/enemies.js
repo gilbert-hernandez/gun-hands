@@ -8,8 +8,11 @@
  * @property {number} knockback push speed in px/s when hit by a bullet (for COMBAT.knockbackMs)
  * @property {number} size sprite frame size in px (square)
  * @property {{width: number, height: number}} hurtbox physics body, centered horizontally and bottom-aligned in the sprite
+ * @property {number} footGap px between the hurtbox bottom and the frame bottom: where the drawn feet end (GH-12)
  * @property {string} walk walk animation sprite sheet key (asset manifest)
- * @property {number} walkFps walk animation frame rate
+ * @property {number} walkMs walk animation time per frame (ms)
+ * @property {string} death death animation sprite sheet key (asset manifest), played once
+ * @property {number} deathMs death animation time per frame (ms)
  * @property {number} placeholderTint tint used only while the walk art is a placeholder
  */
 
@@ -22,8 +25,11 @@ const types = {
     knockback: 220,
     size: 32,
     hurtbox: { width: 18, height: 20 },
+    footGap: 2,
     walk: 'enemy_grunt_walk',
-    walkFps: 8,
+    walkMs: 110,
+    death: 'enemy_grunt_death',
+    deathMs: 110,
     placeholderTint: 0xef4444, // red
   },
   runner: {
@@ -33,8 +39,11 @@ const types = {
     knockback: 320,
     size: 32,
     hurtbox: { width: 14, height: 16 },
+    footGap: 2,
     walk: 'enemy_runner_walk',
-    walkFps: 12,
+    walkMs: 70,
+    death: 'enemy_runner_death',
+    deathMs: 80,
     placeholderTint: 0xfacc15, // yellow
   },
   brute: {
@@ -44,8 +53,11 @@ const types = {
     knockback: 60,
     size: 64,
     hurtbox: { width: 40, height: 44 },
+    footGap: 2,
     walk: 'enemy_brute_walk',
-    walkFps: 6,
+    walkMs: 150,
+    death: 'enemy_brute_death',
+    deathMs: 130,
     placeholderTint: 0xa855f7, // purple
   },
 };

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { XP } from '../config/index.js';
-import { ensureAnim } from '../player/Player.js';
+import { ensureAnim } from '../fx/anims.js';
 import { homeStep, tierForValue } from './rules.js';
 
 /** @typedef {keyof typeof XP.tiers} GemTierId */
@@ -38,7 +38,7 @@ export default class Gems {
     this.scene = scene;
     /** @type {Set<string>} */
     this.placeholders = new Set(scene.registry.get('placeholders') ?? []);
-    for (const tier of Object.values(XP.tiers)) ensureAnim(scene, tier.sheet, XP.animFps);
+    for (const tier of Object.values(XP.tiers)) ensureAnim(scene, tier.sheet, XP.frameMs);
     this.group = scene.add.group({ classType: Gem, defaultKey: XP.tiers.small.sheet, maxSize: poolSize });
   }
 

@@ -187,6 +187,65 @@ test('hurtbox is smaller than 32 px and matches the config', async ({ page }) =>
   expect([body.width, body.height, body.offsetX, body.offsetY]).toEqual([hb.width, hb.height, hb.offsetX, hb.offsetY]);
 });
 
+test('the hurtbox mirrors with the facing and keeps its size (GH-12)', async ({ page }) => {
+  const hb = PLAYER.hurtbox;
+  await hold(page, ['KeyA'], 200);
+  await release(page, ['KeyA']);
+  const left = (await state(page)).body;
+  expect([left.width, left.height, left.offsetX, left.offsetY]).toEqual([
+    hb.width,
+    hb.height,
+    32 - hb.offsetX - hb.width,
+    hb.offsetY,
+  ]);
+  await hold(page, ['KeyD'], 200);
+  await release(page, ['KeyD']);
+  const right = (await state(page)).body;
+  expect([right.width, right.height, right.offsetX, right.offsetY]).toEqual([
+    hb.width,
+    hb.height,
+    hb.offsetX,
+    hb.offsetY,
+  ]);
+});
+
+test('turning while flush against the west wall never leaves the hurtbox in the wall (GH-12)', async ({ page }) => {
+  // Walk left into the west border wall (facing left, mirrored offset).
+  await teleport(page, WALL + 60, WORLD_H / 2);
+  await holdUntil(page, ['KeyA'], (t) => near(t.body.left, WALL));
+  // From now on, record after every physics step whether the hurtbox overlaps a wall tile.
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    window.__overlaps = [];
+    scene.events.on('postupdate', () => {
+      const b = scene.player.body;
+      const n = scene.arena.walls.getTilesWithinWorldXY(b.left + 0.5, b.top + 0.5, b.width - 1, b.height - 1, {
+        isNotEmpty: true,
+      }).length;
+      window.__overlaps.push(n);
+    });
+  });
+  // Standing still, aim to the right: the body turns without moving.
+  const box = await page.locator('#game canvas').boundingBox();
+  const scale = box.width / DISPLAY.width;
+  const s = await state(page);
+  const screenX = (s.x - s.cam.scrollX) * scale + box.x;
+  const screenY = (s.y - s.cam.scrollY) * scale + box.y;
+  await page.mouse.move(screenX + 200, screenY);
+  await page.waitForTimeout(300);
+  expect((await state(page)).flipX).toBe(false);
+  // Aim back to the left (into the wall; the player is ~45 px from the canvas edge) and push again.
+  await page.mouse.move(screenX - 30 * scale, screenY);
+  await hold(page, ['KeyA'], 300);
+  await release(page, ['KeyA']);
+  const after = await state(page);
+  expect(after.flipX).toBe(true);
+  expect(after.body.left).toBeGreaterThanOrEqual(WALL - 0.01);
+  const overlaps = await page.evaluate(() => window.__overlaps);
+  expect(overlaps.length).toBeGreaterThan(5);
+  expect(overlaps.filter((n) => n > 0)).toEqual([]);
+});
+
 test('facing flips with movement, then follows the pointer once it is used', async ({ page }) => {
   await hold(page, ['KeyA'], 200);
   expect((await state(page)).flipX).toBe(true);

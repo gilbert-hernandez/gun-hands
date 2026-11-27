@@ -7,8 +7,9 @@ export const WEAPON = {
   muzzleOffset: 14,
   // Max bullets alive at once (object pool size). Fits maxed upgrades plus Rapid Fire and Spread Shot (GH-9).
   poolSize: 160,
-  // How long the muzzle flash stays visible per shot (ms).
-  muzzleFlashMs: 60,
+  // Animation time per frame (ms), from david's GH-18 notes. The bullet loops; the muzzle flash
+  // plays once per shot and hides when it ends.
+  frameMs: { bullet: 60, muzzle: 40 },
   bullet: {
     // px/s. Keep under ~1900 (32 px tile x 60 Hz physics) or bullets can tunnel through 1-tile walls.
     // Above ~800 px/s a bullet can step past the 14 px Runner hurtbox at low frame rates (GH-6).

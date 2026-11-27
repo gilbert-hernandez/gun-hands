@@ -52,22 +52,19 @@ describe('placeholders', () => {
     expect(c.width / 64).toBe(e.frames);
   });
 
-  it('tints the arena tileset by row role and leaves the spare row transparent', () => {
+  it('draws the arena tileset as an 8x6 checker of tiles', () => {
     const e = asset('tiles_arena');
     const c = draw(e);
-    expect([c.width, c.height]).toEqual([256, 256]);
+    expect([c.width, c.height]).toEqual([256, 192]);
     // The fill of a tile is the call covering its inner area (after the outline rect).
     const fillAt = (/** @type {number} */ id) => {
       const x = (id % 8) * 32;
       const y = Math.floor(id / 8) * 32;
       return c.calls.find((/** @type {any} */ r) => r.x === x + 1 && r.y === y + 1 && r.w === 30)?.color;
     };
-    const floor = fillAt(0);
-    const wall = fillAt(16);
-    const obstacle = fillAt(32);
-    const decor = fillAt(48);
-    expect(new Set([floor, wall, obstacle, decor]).size).toBe(4);
-    expect(c.calls.some((/** @type {any} */ r) => r.y >= 7 * 32)).toBe(false);
+    expect(fillAt(0)).toBe(CATEGORY_COLORS.tiles);
+    expect(fillAt(1)).not.toBe(fillAt(0));
+    expect(fillAt(47)).toBe(fillAt(0));
   });
 
   it('draws enemies in a light, neutral gray so per-type tints show their own hue', () => {

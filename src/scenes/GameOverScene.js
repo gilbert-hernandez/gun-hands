@@ -45,7 +45,7 @@ export default class GameOverScene extends Phaser.Scene {
     this.add
       .text(width / 2, gameOver.titleY, 'GAME OVER', {
         fontFamily: FLOW.fontFamily,
-        fontSize: '44px',
+        fontSize: `${gameOver.titleSize}px`,
         color: '#ef4444',
         fontStyle: 'bold',
       })

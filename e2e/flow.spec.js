@@ -190,7 +190,23 @@ test('a click away from Start does not start a session', async ({ page }) => {
   expect(s).toEqual({ title: true, game: false });
 });
 
+test('the title shows the delivered logo art', async ({ page }) => {
+  const t = await page.evaluate(() => {
+    const title = window.__GAME__.scene.getScene('Title');
+    return { type: title.logo.type, key: title.logo.texture.key };
+  });
+  expect(t).toEqual({ type: 'Image', key: 'ui_logo' });
+});
+
 test('while the logo is a placeholder the title shows GUN HANDS as text', async ({ page }) => {
+  // All GH-22 art is delivered now, so mark the logo as a placeholder the way Preload would and
+  // rebuild the title screen.
+  await page.evaluate(() => {
+    const placeholders = window.__GAME__.registry.get('placeholders');
+    window.__GAME__.registry.set('placeholders', [...placeholders, 'ui_logo']);
+    window.__GAME__.scene.getScene('Title').scene.restart();
+  });
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('Title').logo?.type === 'Text');
   const t = await page.evaluate(() => {
     const title = window.__GAME__.scene.getScene('Title');
     const placeholders = window.__GAME__.registry.get('placeholders');

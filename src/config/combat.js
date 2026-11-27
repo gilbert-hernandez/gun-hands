@@ -5,8 +5,12 @@ export const COMBAT = {
   hitFlashMs: 80,
   // How long a hit enemy is pushed instead of chasing (ms). Speed is per type (`knockback`).
   knockbackMs: 120,
-  // Death puff sprites alive at once; extra deaths skip the puff.
-  puffPoolSize: 32,
+  // Enemy death animations playing at once (GH-12); extra deaths skip the animation.
+  deathPoolSize: 32,
+  // Impact sparks playing at once (GH-12); extra hits skip the spark.
+  impactPoolSize: 24,
+  // Impact spark time per frame (ms), from david's GH-18 notes.
+  impactFrameMs: 50,
   // Pause after the player's death animation before GameOver starts (ms).
   gameOverDelayMs: 600,
 };

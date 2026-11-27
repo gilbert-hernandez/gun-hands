@@ -15,8 +15,9 @@ export const FLOW = {
   // override their section on touch devices (GH-26, see ui/layout.js).
   button: { scale: 1, fontSize: 18, touch: { scale: 1.5, fontSize: 22 } },
   title: {
-    logoY: 170,
-    startY: 330,
+    // From david's GH-22 notes: the logo over the sun (top at 60), Start on the fence line (top at 262).
+    logoY: 140,
+    startY: 286,
     hintY: 400,
     hintSize: 14,
     hint: 'WASD move · Mouse aim · Esc pause',
@@ -39,10 +40,12 @@ export const FLOW = {
   gameOver: {
     // All input is ignored this long after the screen appears (keys/clicks held at death).
     inputDelayMs: 600,
+    // Bands in david's GH-22 panel (400×300, top at 120): title 16-56, stats 56-214, buttons below 214.
     panelY: 270,
-    titleY: 165,
-    statsY: 245,
-    buttonsY: 375,
+    titleY: 156,
+    titleSize: 32,
+    statsY: 255,
+    buttonsY: 377,
     // Horizontal gap between Restart and Title.
     buttonGap: 24,
     // Two touch buttons don't fit inside the panel, so they go below it.

@@ -226,7 +226,24 @@ test('a pickup inside the XP pickup radius but outside the collect radius stays 
   expect(await events(page, 'powerup-collected')).toEqual([]);
 });
 
+test('real pickup art is drawn untinted', async ({ page }) => {
+  let dx = -250;
+  for (const id of Object.keys(T)) {
+    await dropAt(page, dx, -150, id);
+    dx += 100;
+  }
+  const ps = await pickups(page);
+  expect(ps.map((p) => p.tint)).toEqual(Object.keys(T).map(() => 0xffffff));
+});
+
 test('each pickup has its own placeholder tint', async ({ page }) => {
+  // All GH-20 art is delivered now, so mark the pickup sheets as placeholders the way Preload would.
+  await page.evaluate(
+    (sheets) => {
+      window.__GAME__.scene.getScene('Game').powerups.pickups.placeholders = new Set(sheets);
+    },
+    Object.values(T).map((t) => t.sheet),
+  );
   let dx = -250;
   for (const id of Object.keys(T)) {
     await dropAt(page, dx, -150, id);

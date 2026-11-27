@@ -48,6 +48,9 @@ describe('enemy types', () => {
       expect(e.frameHeight).toBe(t.size);
       expect(t.hurtbox.width).toBeLessThanOrEqual(t.size);
       expect(t.hurtbox.height).toBeLessThanOrEqual(t.size);
+      // GH-12: the hurtbox ends at the drawn feet, inside the frame.
+      expect(Number.isInteger(t.footGap) && t.footGap >= 0).toBe(true);
+      expect(t.hurtbox.height + t.footGap).toBeLessThanOrEqual(t.size);
     }
   });
 });

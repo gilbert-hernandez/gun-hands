@@ -9,11 +9,12 @@ export const HUD = {
   margin: 12,
   // Vertical gap between the HP bar, the XP bar and the powerup row.
   rowGap: 6,
-  // Bar art keys (asset manifest). The fill sits `barInset` px inside the frame.
+  // Bar art keys (asset manifest). The fill's top-left sits at `barInset` inside the frame: david's
+  // cartridge frame (GH-21) has its fill slot at x=18, y=4 (174×8).
   barFrame: 'ui_bar_frame',
   hpFill: 'ui_bar_fill_hp',
   xpFill: 'ui_bar_fill_xp',
-  barInset: 2,
+  barInset: { x: 18, y: 4 },
   // Gap between a bar and its text, and between a powerup icon and its countdown.
   labelGap: 8,
   iconGap: 4,

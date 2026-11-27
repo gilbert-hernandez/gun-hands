@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { POWERUPS } from '../config/index.js';
 import { ENEMY_KILLED } from '../combat/events.js';
-import { ensureAnim } from '../player/Player.js';
+import { ensureAnim } from '../fx/anims.js';
 import Pickups from './Pickups.js';
 import { POWERUP_COLLECTED, POWERUP_EXPIRED } from './events.js';
 import { effectiveWeapon, isTimed, pickWeighted, pickupVisible, rollDrop, tickTimers } from './rules.js';
@@ -19,7 +19,6 @@ const DEBUG_DROP_DISTANCE = 60;
 const SHIELD_KEY = 'fx_shield';
 const BLAST_KEY = 'fx_bomb_blast';
 const BLAST_ANIM = 'fx_bomb_blast_play';
-const BLAST_FPS = 12;
 
 /**
  * Loot powerups for one Game session (GH-9): drops on `enemy-killed`, pickups on the floor,
@@ -53,19 +52,12 @@ export default class Powerups {
 
     player.boosts = () => effectiveWeapon(player.weapon, this.active, POWERUPS.types);
 
-    ensureAnim(scene, SHIELD_KEY, POWERUPS.animFps);
+    ensureAnim(scene, SHIELD_KEY, POWERUPS.frameMs.shield);
     // Under the guns (1), over the body.
     this.aura = scene.add.sprite(player.x, player.y, SHIELD_KEY).setDepth(0.9).setVisible(false);
     this.aura.play(SHIELD_KEY);
 
-    if (!scene.anims.exists(BLAST_ANIM)) {
-      scene.anims.create({
-        key: BLAST_ANIM,
-        frames: scene.anims.generateFrameNumbers(BLAST_KEY),
-        frameRate: BLAST_FPS,
-        repeat: 0,
-      });
-    }
+    ensureAnim(scene, BLAST_ANIM, POWERUPS.frameMs.bombBlast, { loop: false, sheet: BLAST_KEY });
     this.blast = scene.add.sprite(0, 0, BLAST_KEY).setDepth(1.6).setScale(POWERUPS.bombBlastScale).setVisible(false);
     this.blast.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.blast.setVisible(false));
 

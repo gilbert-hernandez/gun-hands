@@ -38,8 +38,9 @@ export const POWERUPS = {
    * @type {Record<PowerupId, number>}
    */
   weights: { rapidfire: 3, spread: 3, shield: 2, health: 3, bomb: 1, magnet: 2 },
-  // Pickup shimmer animation frame rate (fps).
-  animFps: 8,
+  // Time per frame (ms), from david's GH-18/GH-20 notes: pickup tokens and the shield bubble loop,
+  // the bomb blast plays once.
+  frameMs: { pickup: 140, shield: 100, bombBlast: 80 },
   // A pickup this close to the player's center (px) is collected. Pickups never home.
   collectRadius: 20,
   // How long an uncollected pickup stays on the floor (ms).

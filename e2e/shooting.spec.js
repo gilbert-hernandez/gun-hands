@@ -434,6 +434,57 @@ test('bullet.hit() honors pierce', async ({ page }) => {
   expect(pierce0).toEqual({ hit: false, active: false });
 });
 
+test('one shot plays the gun recoil once, then the guns show the idle frame (GH-12)', async ({ page }) => {
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const { player } = scene;
+    window.__recoil = { starts: 0, completes: 0 };
+    player.guns.on('animationstart', (a) => a.key === 'player_guns_recoil' && window.__recoil.starts++);
+    player.guns.on('animationcomplete', (a) => a.key === 'player_guns_recoil' && window.__recoil.completes++);
+    // Stop firing right after the next shot.
+    scene.events.once('player-fired', () => {
+      player.weapon.fireRate = 0;
+    });
+  });
+  await page.waitForFunction(() => window.__recoil.completes > 0, null, { timeout: 10000 });
+  await page.waitForTimeout(300);
+  const r = await page.evaluate(() => ({
+    ...window.__recoil,
+    texture: window.__GAME__.scene.getScene('Game').player.guns.texture.key,
+    playing: window.__GAME__.scene.getScene('Game').player.guns.anims.isPlaying,
+  }));
+  expect(r).toEqual({ starts: 1, completes: 1, texture: 'player_guns_idle', playing: false });
+});
+
+test('at a high fire rate every shot restarts the recoil and the fire rate is unchanged (GH-12)', async ({ page }) => {
+  // 20 shots/s = one every 50 ms, shorter than the 150 ms recoil.
+  await setWeapon(page, { weapon: { fireRate: 20 } });
+  await page.evaluate(() => {
+    const { guns } = window.__GAME__.scene.getScene('Game').player;
+    window.__recoilPlays = 0;
+    const play = guns.play.bind(guns);
+    guns.play = (key, ...rest) => {
+      if (key === 'player_guns_recoil') window.__recoilPlays++;
+      return play(key, ...rest);
+    };
+  });
+  // Reset both counters in one evaluate, so they start on the same frame (GH-27 pattern).
+  await page.evaluate(() => {
+    window.__recoilPlays = 0;
+    window.__rec.shots = [];
+    window.__rec.gameMs = 0;
+  });
+  await waitGameMs(page, 1000);
+  const r = await page.evaluate(() => ({
+    plays: window.__recoilPlays,
+    shots: window.__rec.shots.filter((s) => !s.blocked).length,
+    gameMs: window.__rec.gameMs,
+  }));
+  expect(r.plays).toBe(r.shots);
+  // Shots due = rate x time (the accumulator carries remainders), within a frame either way.
+  expect(Math.abs(r.shots - (20 * r.gameMs) / 1000)).toBeLessThanOrEqual(2);
+});
+
 test('each shot shows the muzzle flash at the gun tip; no duplicate events after a new session', async ({ page }) => {
   await pointAt(page, 140, 90);
   await page.waitForTimeout(200);
@@ -455,7 +506,7 @@ test('each shot shows the muzzle flash at the gun tip; no duplicate events after
   const flashes = await page.evaluate(() => window.__flash);
   expect(flashes.length).toBeGreaterThanOrEqual(3);
   for (const f of flashes) expect(f).toEqual({ visible: true, dx: 0, dy: 0, dr: 0 });
-  // It hides between shots (60 ms flash, 250 ms interval).
+  // It hides between shots: the flash animation (3 frames × WEAPON.frameMs.muzzle) ends before the next shot (250 ms).
   await page.waitForFunction(() => !window.__GAME__.scene.getScene('Game').muzzle.visible, null, { timeout: 2000 });
 
   // Game -> GameOver -> Restart -> Game, then count events against the game's own shot count.

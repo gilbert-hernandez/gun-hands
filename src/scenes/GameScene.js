@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD } from '../config/index.js';
+import { DEBUG, DISPLAY, FLOW, WEAPON, WORLD, XP } from '../config/index.js';
 import Player, { PLAYER_FIRED } from '../player/Player.js';
 import { isPortraitPhone } from '../input/orientation.js';
 import PlayerInput from '../input/PlayerInput.js';
@@ -17,6 +17,11 @@ import Powerups from '../powerups/Powerups.js';
 import { formatTime } from '../util/format.js';
 import { addSceneLabel } from './sceneLabel.js';
 import { bindMuteKey } from '../audio/muteKey.js';
+import { PLAYER_LEVELED } from '../xp/events.js';
+import { ensureAnim } from '../fx/anims.js';
+
+const MUZZLE_ANIM = 'fx_muzzle_flash';
+const LEVELUP_ANIM = 'fx_levelup_burst';
 
 // The play session: the Tiled arena, the player, enemies, and a camera that follows the player.
 // The player auto-fires from a bullet pool; walls stop the player, bullets, and enemies.
@@ -50,10 +55,13 @@ export default class GameScene extends Phaser.Scene {
     // Walls always stop bullets, whatever pierce they have left.
     this.bulletWalls = this.arena.collide(this.bullets.group, (bullet) => {
       const b = /** @type {any} */ (bullet);
+      // body.center is where the bullet met the wall this step (the sprite lags one step).
+      this.combat.spark(b.body.center.x, b.body.center.y);
       this.events.emit(BULLET_WALL, { x: b.x, y: b.y });
       b.despawn();
     });
     this.createMuzzleFlash();
+    this.createLevelUpBurst();
 
     const cam = this.cameras.main;
     cam.setBounds(0, 0, width, height);
@@ -137,9 +145,6 @@ export default class GameScene extends Phaser.Scene {
     }
     // Survival time stops at death, so run stats report the time the player died.
     if (!this.player.dead) this.survivalMs += delta;
-    // Count the flash down before firing, so a shot this frame shows for the full duration.
-    this.muzzleMsLeft -= delta;
-    if (this.muzzle.visible && this.muzzleMsLeft <= 0) this.muzzle.setVisible(false);
     this.player.update(time, delta);
     this.enemies.update(delta, this.survivalMs);
     this.xp.update(delta);
@@ -157,18 +162,43 @@ export default class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Placeholder muzzle flash: one reused sprite shown at the gun tip for `muzzleFlashMs`
-   * on every `player-fired` event. Art/sound tickets hook the same event.
+   * Muzzle flash: one reused sprite that plays `fx_muzzle` once at the gun tip on every
+   * `player-fired` event and hides when the animation ends (GH-12). A new shot restarts it.
    */
   createMuzzleFlash() {
+    ensureAnim(this, MUZZLE_ANIM, WEAPON.frameMs.muzzle, { loop: false, sheet: 'fx_muzzle' });
     // fx_muzzle's pivot is its left-center, so the flash extends forward from the tip.
     this.muzzle = this.add.sprite(0, 0, 'fx_muzzle').setOrigin(0, 0.5).setDepth(1.5).setVisible(false);
-    this.muzzleMsLeft = 0;
+    this.muzzle.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.muzzle.setVisible(false));
     const onFired = ({ x, y, angle }) => {
       this.muzzle.setPosition(x, y).setRotation(angle).setFlipY(gunsFlipY(angle)).setVisible(true);
-      this.muzzleMsLeft = WEAPON.muzzleFlashMs;
+      this.muzzle.play(MUZZLE_ANIM);
     };
     this.events.on(PLAYER_FIRED, onFired);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.events.off(PLAYER_FIRED, onFired));
+  }
+
+  /**
+   * Level-up burst (GH-12): one reused sprite that plays `fx_levelup` once, centered on the player
+   * and following them, on every `player-leveled`. It runs on game time, so it holds while Game is
+   * paused for the LevelUp screen and plays out on resume. A new level-up restarts it.
+   */
+  createLevelUpBurst() {
+    ensureAnim(this, LEVELUP_ANIM, XP.levelUpFrameMs, { loop: false, sheet: 'fx_levelup' });
+    // Above the body and guns, below the bomb blast (1.6); the HUD is its own scene on top.
+    this.levelUpBurst = this.add.sprite(0, 0, 'fx_levelup').setDepth(1.2).setVisible(false);
+    this.levelUpBurst.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.levelUpBurst.setVisible(false));
+    const onLeveled = () => {
+      this.levelUpBurst.setPosition(this.player.x, this.player.y).setVisible(true).play(LEVELUP_ANIM);
+    };
+    const follow = () => {
+      if (this.levelUpBurst.visible) this.levelUpBurst.setPosition(this.player.x, this.player.y);
+    };
+    this.events.on(PLAYER_LEVELED, onLeveled);
+    this.events.on(Phaser.Scenes.Events.POST_UPDATE, follow);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.events.off(PLAYER_LEVELED, onLeveled);
+      this.events.off(Phaser.Scenes.Events.POST_UPDATE, follow);
+    });
   }
 }

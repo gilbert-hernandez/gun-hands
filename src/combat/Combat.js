@@ -1,5 +1,8 @@
 import { COMBAT, ENEMIES } from '../config/index.js';
-import Puffs from '../fx/Puffs.js';
+import FxPool from '../fx/FxPool.js';
+import { ensureAnim } from '../fx/anims.js';
+
+const IMPACT_ANIM = 'fx_impact_spark';
 import { ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT, SHIELD_BLOCKED } from './events.js';
 
 /** @typedef {import('../enemy/Enemy.js').default} Enemy */
@@ -8,7 +11,8 @@ import { ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT, SHIELD_BLOCKED } from
 
 /**
  * Combat wiring for one Game session (GH-6): bullet hits on enemies, enemy contact with the
- * player, the kill count, death puffs, the player's death sequence, and the combat events.
+ * player, the kill count, death animations and impact sparks, the player's death sequence, and the
+ * combat events.
  * The rules themselves live in `rules.js`, `Enemy`, and `Player`.
  */
 export default class Combat {
@@ -28,7 +32,11 @@ export default class Combat {
     this.enemies = enemies;
     this.survivalMs = survivalMs;
     this.kills = 0;
-    this.puffs = new Puffs(scene);
+    // Depths: above enemies and bullets, below the player's guns.
+    this.deaths = new FxPool(scene, { size: COMBAT.deathPoolSize, depth: 0.75 });
+    ensureAnim(scene, IMPACT_ANIM, COMBAT.impactFrameMs, { loop: false, sheet: 'fx_impact' });
+    this.impacts = new FxPool(scene, { size: COMBAT.impactPoolSize, depth: 0.8 });
+    this.placeholders = new Set(scene.registry.get('placeholders') ?? []);
     /** @type {RunStats | null} set when the player dies */
     this.stats = null;
 
@@ -64,11 +72,21 @@ export default class Combat {
     bullet.markHit(enemy);
     const { damage } = bullet;
     const { x: vx, y: vy } = bullet.body.velocity;
+    this.spark(bullet.body.center.x, bullet.body.center.y);
     const { x, y, typeId } = enemy;
     const killed = enemy.takeHit(damage, vx, vy);
     this.scene.events.emit(ENEMY_HIT, { enemy, typeId, damage, hpLeft: enemy.hp, x, y });
     bullet.hit();
     if (killed) this.killEnemy(enemy);
+  }
+
+  /**
+   * Play an impact spark at a bullet hit (an enemy or a wall). Skipped when the pool is exhausted.
+   * @param {number} x
+   * @param {number} y
+   */
+  spark(x, y) {
+    this.impacts.play(IMPACT_ANIM, x, y);
   }
 
   /**
@@ -88,13 +106,16 @@ export default class Combat {
   }
 
   /**
-   * Remove a dead enemy from play, play its puff, count it, and emit `enemy-killed`.
+   * Remove a dead enemy from play, play its type's death animation (facing the way it walked), count
+   * it, and emit `enemy-killed`. The animation is only a look: it can't hit or hurt anything.
    * @param {Enemy} enemy
    */
   killEnemy(enemy) {
-    const { x, y, typeId } = enemy;
+    const { x, y, typeId, flipX } = enemy;
     enemy.despawn();
-    this.puffs.play(x, y, ENEMIES.types[typeId].size);
+    const type = ENEMIES.types[typeId];
+    const tint = this.placeholders.has(type.death) ? type.placeholderTint : null;
+    this.deaths.play(type.death, x, y, { flipX, tint });
     this.kills += 1;
     this.scene.events.emit(ENEMY_KILLED, { typeId, x, y, kills: this.kills });
   }

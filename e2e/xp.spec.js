@@ -155,9 +155,27 @@ test('killed Grunts, Runners and Brutes drop small, medium and large gems where 
   expect(byTier.small).toMatchObject({ value: small.value, x: at.grunt.x, y: at.grunt.y, homing: false });
   expect(byTier.medium).toMatchObject({ value: medium.value, x: at.runner.x, y: at.runner.y });
   expect(byTier.large).toMatchObject({ value: large.value, x: at.brute.x, y: at.brute.y });
-  // Placeholder gems are tinted per tier.
-  expect(new Set(g.map((x) => x.tint)).size).toBe(3);
-  expect(byTier.small.tint).toBe(small.placeholderTint);
+  // Real GH-20 gem art is drawn untinted.
+  expect(g.map((x) => x.tint)).toEqual([0xffffff, 0xffffff, 0xffffff]);
+});
+
+test('placeholder gems are tinted per tier', async ({ page }) => {
+  const tints = await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    // All GH-20 art is delivered now, so mark the gem sheets as placeholders the way Preload would.
+    scene.xp.gems.placeholders = new Set(['pickup_xp_small', 'pickup_xp_medium', 'pickup_xp_large']);
+    const out = {};
+    for (const [type, dx] of [
+      ['grunt', 300],
+      ['runner', -300],
+      ['brute', 0],
+    ]) {
+      scene.combat.killEnemy(scene.enemies.spawnAt(type, scene.player.x + dx, scene.player.y + 250));
+    }
+    for (const gem of scene.xp.gems.group.getChildren()) if (gem.active) out[gem.tier] = gem.tintTopLeft;
+    return out;
+  });
+  expect(tints).toEqual({ small: small.placeholderTint, medium: medium.placeholderTint, large: large.placeholderTint });
 });
 
 test('a recycled enemy drops no gem', async ({ page }) => {

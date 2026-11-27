@@ -198,7 +198,7 @@ test('a pierce-0 bullet into two stacked enemies damages exactly one', async ({ 
   expect(hp).toBe(2 * ENEMIES.types.grunt.hp - 10);
 });
 
-test('a hit Runner flashes solid white, then gets its placeholder tint back', async ({ page }) => {
+test('a hit Runner flashes solid white, then goes back to its normal look', async ({ page }) => {
   const [i] = await spawnAt(page, 'runner', [[SPAWN.x + 150, SPAWN.y]]);
   // Capture the look in the same frame as the hit.
   await page.evaluate(() => {
@@ -222,7 +222,8 @@ test('a hit Runner flashes solid white, then gets its placeholder tint back', as
   );
   const s = await enemy(page, i);
   expect(s.tintMode).toBe(0); // MULTIPLY
-  expect(s.tint).toBe(ENEMIES.types.runner.placeholderTint);
+  // Real GH-17 art is drawn untinted (placeholder tints are covered in enemies.spec.js).
+  expect(s.tint).toBe(0xffffff);
 });
 
 test('a Grunt hit by a bullet travelling right is pushed right, then chases again', async ({ page }) => {
@@ -279,7 +280,7 @@ test('a Runner knocked back into a wall never overlaps a wall tile', async ({ pa
   expect((await enemy(page, i)).active).toBe(true);
 });
 
-test('a killing hit removes the enemy that frame, plays a puff, and emits enemy-hit then enemy-killed', async ({
+test('a killing hit removes the enemy that frame, plays its death animation, and emits enemy-hit then enemy-killed', async ({
   page,
 }) => {
   const [i] = await spawnAt(page, 'grunt', [[SPAWN.x + 150, SPAWN.y]]);
@@ -292,13 +293,22 @@ test('a killing hit removes the enemy that frame, plays a puff, and emits enemy-
       window.__kill = {
         active: e.active,
         liveDrop: live0 - scene.enemies.liveCount,
-        puffs: scene.combat.puffs.playing,
+        deaths: scene.combat.deaths.playing,
+        death: (() => {
+          const d = scene.combat.deaths.group.getChildren().find((c) => c.active);
+          return { anim: d.anims.currentAnim.key, x: d.x - e.x, y: d.y - e.y, sameFacing: d.flipX === e.flipX };
+        })(),
       };
     });
   }, i);
   await fire(page, SPAWN.x + 40, SPAWN.y, 0, { damage: 10 });
   await waitEvents(page, 'enemy-killed');
-  expect(await page.evaluate(() => window.__kill)).toEqual({ active: false, liveDrop: 1, puffs: 1 });
+  expect(await page.evaluate(() => window.__kill)).toEqual({
+    active: false,
+    liveDrop: 1,
+    deaths: 1,
+    death: { anim: 'enemy_grunt_death', x: 0, y: 0, sameFacing: true },
+  });
   const ev = await events(page);
   expect(ev.map((e) => e.name)).toEqual(['enemy-hit', 'enemy-killed']);
   expect(ev[0].hpLeft).toBeLessThanOrEqual(0);
@@ -306,10 +316,42 @@ test('a killing hit removes the enemy that frame, plays a puff, and emits enemy-
   // Killed where it stood when the bullet arrived.
   expect(ev[1].x).toBeCloseTo(ev[0].x, 5);
   expect(ev[1].y).toBeCloseTo(ev[0].y, 5);
-  // The puff hides itself when it finishes.
-  await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').combat.puffs.playing === 0, null, {
+  // The death animation hides itself when it finishes.
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').combat.deaths.playing === 0, null, {
     timeout: 5000,
   });
+});
+
+test('an enemy walking left dies mirrored to face left (GH-12)', async ({ page }) => {
+  const r = await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const e = scene.enemies.spawnAt('grunt', scene.player.x + 200, scene.player.y);
+    e.setFlipX(true); // as steering does for an enemy moving left
+    scene.combat.killEnemy(e);
+    const d = scene.combat.deaths.group.getChildren().find((c) => c.active);
+    return { anim: d.anims.currentAnim.key, flipX: d.flipX };
+  });
+  expect(r).toEqual({ anim: 'enemy_grunt_death', flipX: true });
+});
+
+test("a Runner's explosion death is only a look: no HP changes (GH-12)", async ({ page }) => {
+  const r = await page.evaluate(async () => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const { player } = scene;
+    const runner = scene.enemies.spawnAt('runner', player.x + 40, player.y);
+    const near = scene.enemies.spawnAt('grunt', player.x + 70, player.y);
+    // Keep the player out of reach of contact damage while the explosion plays.
+    player.invulnerableMs = 100000;
+    const hp0 = { player: player.hp, grunt: near.hp };
+    scene.combat.killEnemy(runner);
+    const d = scene.combat.deaths.group.getChildren().find((c) => c.active);
+    const anim = d.anims.currentAnim.key;
+    await new Promise((res) => d.once('animationcomplete', res));
+    return { anim, before: hp0, after: { player: player.hp, grunt: near.hp } };
+  });
+  expect(r.anim).toBe('enemy_runner_death');
+  expect(r.after).toEqual(r.before);
+  expect(await events(page, 'enemy-hit')).toEqual([]);
 });
 
 test('a recycled enemy is not a kill', async ({ page }) => {
@@ -334,17 +376,74 @@ test('a recycled enemy is not a kill', async ({ page }) => {
   expect(await page.evaluate(() => window.__GAME__.scene.getScene('Game').combat.kills)).toBe(1);
 });
 
-test('more deaths at once than pooled puffs are all counted, without errors', async ({ page }) => {
-  const n = COMBAT.puffPoolSize + 8;
+test('more deaths at once than pooled death animations are all counted, without errors', async ({ page }) => {
+  const n = COMBAT.deathPoolSize + 8;
   const r = await page.evaluate((count) => {
     const scene = window.__GAME__.scene.getScene('Game');
     const list = [];
     for (let k = 0; k < count; k++) list.push(scene.enemies.spawnAt('grunt', scene.player.x + 200, scene.player.y));
     for (const e of list) scene.combat.killEnemy(e);
-    return { kills: scene.combat.kills, live: scene.enemies.liveCount, puffs: scene.combat.puffs.playing };
+    return { kills: scene.combat.kills, live: scene.enemies.liveCount, deaths: scene.combat.deaths.playing };
   }, n);
-  expect(r).toEqual({ kills: n, live: 0, puffs: COMBAT.puffPoolSize });
+  expect(r).toEqual({ kills: n, live: 0, deaths: COMBAT.deathPoolSize });
   expect(await events(page, 'enemy-killed')).toHaveLength(n);
+});
+
+test('a bullet hitting a wall starts one impact spark where it reached the wall (GH-12)', async ({ page }) => {
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    window.__wallHit = null;
+    scene.events.once('bullet-wall', () => {
+      const b = window.__bullet;
+      const fx = scene.combat.impacts.group.getChildren().filter((c) => c.active);
+      window.__wallHit = {
+        sparks: fx.length,
+        anim: fx[0]?.anims.currentAnim.key,
+        dx: fx[0]?.x - b.body.center.x,
+        dy: fx[0]?.y - b.body.center.y,
+      };
+    });
+  });
+  await fire(page, WALL_RUN_RIGHT + 150, WALL_RUN_Y, Math.PI);
+  await page.waitForFunction(() => window.__wallHit !== null, null, { timeout: 5000 });
+  expect(await page.evaluate(() => window.__wallHit)).toEqual({ sparks: 1, anim: 'fx_impact_spark', dx: 0, dy: 0 });
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').combat.impacts.playing === 0, null, {
+    timeout: 5000,
+  });
+});
+
+test('a bullet hitting an enemy starts one impact spark at the bullet (GH-12)', async ({ page }) => {
+  await spawnAt(page, 'brute', [[SPAWN.x + 150, SPAWN.y]]);
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    scene.events.once('enemy-hit', () => {
+      const b = window.__bullet;
+      const fx = scene.combat.impacts.group.getChildren().filter((c) => c.active);
+      window.__enemyHit = { sparks: fx.length, dx: fx[0]?.x - b.body.center.x, dy: fx[0]?.y - b.body.center.y };
+    });
+  });
+  await fire(page, SPAWN.x + 40, SPAWN.y, 0, { damage: 1 });
+  await waitEvents(page, 'enemy-hit');
+  expect(await page.evaluate(() => window.__enemyHit)).toEqual({ sparks: 1, dx: 0, dy: 0 });
+});
+
+test('with every spark playing, hits still count and nothing errors (GH-12)', async ({ page }) => {
+  await spawnAt(page, 'grunt', [[SPAWN.x + 150, SPAWN.y]]);
+  const playing = await page.evaluate((n) => {
+    const { combat, player } = window.__GAME__.scene.getScene('Game');
+    for (let k = 0; k < n + 5; k++) combat.spark(player.x, player.y - 100);
+    return combat.impacts.playing;
+  }, COMBAT.impactPoolSize);
+  expect(playing).toBe(COMBAT.impactPoolSize);
+  await page.evaluate(() => {
+    window.__GAME__.scene
+      .getScene('Game')
+      .enemies.group.getChildren()
+      .find((e) => e.active).hp = 10;
+  });
+  await fire(page, SPAWN.x + 40, SPAWN.y, 0, { damage: 10 });
+  await waitEvents(page, 'enemy-killed');
+  expect((await events(page)).map((e) => e.name)).toEqual(['enemy-hit', 'enemy-killed']);
 });
 
 // ---------------------------------------------------------------- enemies vs player
@@ -372,6 +471,46 @@ test('a Grunt touching the player deals its contact damage, emits player-hit, an
   expect(p.inv).toBeGreaterThan(0);
   await waitGameMs(page, 400);
   expect(await page.evaluate(() => [...window.__vis].sort())).toEqual([false, true]);
+});
+
+test('a non-lethal hit plays the hurt animation once, then idle, without changing invulnerability (GH-12)', async ({
+  page,
+}) => {
+  await page.evaluate(() => {
+    const p = window.__GAME__.scene.getScene('Game').player;
+    window.__anims = [];
+    p.on('animationstart', (anim) => window.__anims.push(anim.key));
+    window.__GAME__.scene.getScene('Game').combat.damagePlayer(10);
+    window.__afterHit = { inv: p.invulnerableMs, hurtMs: p.hurtMs, anim: p.anims.currentAnim.key };
+  });
+  const after = await page.evaluate(() => window.__afterHit);
+  expect(after).toEqual({
+    inv: PLAYER.invulnerableMs,
+    hurtMs: 2 * PLAYER.frameMs.hurt,
+    anim: 'player_body_hurt',
+  });
+  // Wait on the timer itself, not loop time (scene timers lag under parallel workers).
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('Game').player.hurtMs === 0);
+  await page.waitForFunction(
+    () => window.__GAME__.scene.getScene('Game').player.anims.currentAnim.key === 'player_body_idle',
+  );
+  const keys = await page.evaluate(() => window.__anims);
+  expect(keys.filter((k) => k === 'player_body_hurt')).toHaveLength(1);
+  expect(keys.at(-1)).toBe('player_body_idle');
+});
+
+test('a killing hit plays the death animation, not the hurt animation (GH-12)', async ({ page }) => {
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    const p = scene.player;
+    p.hp = 10;
+    window.__anims = [];
+    p.on('animationstart', (anim) => window.__anims.push(anim.key));
+    scene.combat.damagePlayer(10);
+  });
+  const keys = await page.evaluate(() => window.__anims);
+  expect(keys).toEqual(['player_body_death']);
+  expect(await page.evaluate(() => window.__GAME__.scene.getScene('Game').player.hurtMs)).toBe(0);
 });
 
 test('continued contact does not hurt again until invulnerability ends', async ({ page }) => {

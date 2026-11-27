@@ -1,10 +1,10 @@
 import Phaser from 'phaser';
 import { WEAPON } from '../config/index.js';
 import { applyHit } from './aim.js';
+import { ensureAnim } from '../fx/anims.js';
 
 const KEY = 'fx_bullet';
 const ANIM = 'fx_bullet_fly';
-const ANIM_FPS = 12;
 // Between the body (0) and the guns (1), so bullets look like they leave from under the guns.
 const DEPTH = 0.5;
 /** Bullet physics body radius in px. */
@@ -98,9 +98,7 @@ export default class Bullets {
    */
   constructor(scene, poolSize = WEAPON.poolSize) {
     this.scene = scene;
-    if (!scene.anims.exists(ANIM)) {
-      scene.anims.create({ key: ANIM, frames: scene.anims.generateFrameNumbers(KEY), frameRate: ANIM_FPS, repeat: -1 });
-    }
+    ensureAnim(scene, ANIM, WEAPON.frameMs.bullet, { sheet: KEY });
     this.group = scene.physics.add.group({
       classType: Bullet,
       defaultKey: KEY,

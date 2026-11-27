@@ -1,7 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { MANIFEST, validate, keyFor, asset } from '../src/assets/manifest.js';
+import { MANIFEST, validate, keyFor, asset, expectedImageSize, checkDeliveredArt } from '../src/assets/manifest.js';
 
 const assetsMd = readFileSync(fileURLToPath(new URL('../ASSETS.md', import.meta.url)), 'utf8');
 
@@ -80,5 +80,44 @@ describe('ASSETS.md', () => {
 
   it('matches the manifest exactly (files, sizes, frame counts, tickets)', () => {
     expect(rows.map(signature).sort()).toEqual(MANIFEST.map(signature).sort());
+  });
+});
+
+const imgDir = fileURLToPath(new URL('../src/assets/img/', import.meta.url));
+
+/** Width and height from a PNG's IHDR chunk. */
+function pngSize(file) {
+  const b = readFileSync(imgDir + file);
+  return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+}
+
+describe('delivered art (src/assets/img)', () => {
+  const files = readdirSync(imgDir).filter((f) => f.endsWith('.png'));
+  const sizes = Object.fromEntries(files.map((f) => [f, pngSize(f)]));
+
+  it('every PNG has a manifest entry and the declared pixel size', () => {
+    expect(checkDeliveredArt(sizes)).toEqual([]);
+  });
+
+  it('every manifest entry is delivered', () => {
+    const missing = MANIFEST.filter((e) => !files.includes(e.file)).map((e) => e.file);
+    expect(missing).toEqual([]);
+  });
+
+  it('computes image sizes from the entry type', () => {
+    expect(expectedImageSize(asset('enemy_brute_walk'))).toEqual({ width: 384, height: 64 });
+    expect(expectedImageSize(asset('ui_card'))).toEqual({ width: 160, height: 220 });
+    expect(expectedImageSize(asset('tiles_arena'))).toEqual({ width: 256, height: 192 });
+  });
+
+  it('names a wrong-size file with both sizes, and an unknown file', () => {
+    const errors = checkDeliveredArt({
+      'gh_enemy_brute_walk.png': { width: 320, height: 64 },
+      'gh_enemy_ghost_walk.png': { width: 32, height: 32 },
+    });
+    expect(errors).toEqual([
+      'gh_enemy_brute_walk.png is 320x64, expected 384x64',
+      'gh_enemy_ghost_walk.png has no manifest entry',
+    ]);
   });
 });

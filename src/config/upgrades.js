@@ -101,22 +101,26 @@ export const UPGRADES = {
     cardGap: 24,
     cardY: 300,
     hoverScale: 1.05,
-    number: { x: 10, y: 8, size: 20 },
-    icon: { y: -48, scale: 2 },
-    name: { y: 8, size: 16 },
-    text: { y: 36, size: 12 },
-    rank: { bottom: 14, size: 14 },
+    // Positions fit david's card art (GH-21): the 32 px icon window centers 46 px from the top, the
+    // name sits just above the divider (100 px), the text below it, and the rank just above the
+    // decorative pips at the bottom (195 px). The number clears the steel corner bolt.
+    number: { x: 14, y: 14, size: 20 },
+    icon: { y: -64, scale: 1 },
+    name: { y: -32, size: 16 },
+    text: { y: 4, size: 12 },
+    rank: { bottom: 28, size: 14 },
     touch: {
       titleY: 60,
       promptY: 110,
       promptSize: 20,
       cardScale: 1.5,
       cardY: 340,
-      number: { size: 24 },
-      icon: { y: -72, scale: 3 },
-      name: { size: 24 },
-      text: { y: 44, size: 20 },
-      rank: { size: 20 },
+      // The desktop offsets times cardScale (1.5).
+      number: { x: 21, y: 21, size: 24 },
+      icon: { y: -96, scale: 1.5 },
+      name: { y: -48, size: 24 },
+      text: { y: 6, size: 20 },
+      rank: { bottom: 42, size: 20 },
     },
   },
   // Multishot also widens the fan (WEAPON.bullet.spreadDeg) by this many degrees per rank.

@@ -378,3 +378,43 @@ test('a new session starts with every upgrade at rank 0 and config stats', async
     weapon: WEAPON,
   });
 });
+
+test('the level-up burst plays around the player once play resumes, follows them, then hides (GH-12)', async ({
+  page,
+}) => {
+  await levelUp(page);
+  await waitReady(page);
+  // While LevelUp is open the burst holds (Game is paused).
+  const held = await page.evaluate(() => {
+    const b = window.__GAME__.scene.getScene('Game').levelUpBurst;
+    return { visible: b.visible, anim: b.anims.currentAnim?.key, frame: b.anims.currentFrame?.index };
+  });
+  expect(held).toEqual({ visible: true, anim: 'fx_levelup_burst', frame: 1 });
+  // Record the burst against the player after every Game step from now on.
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    window.__burst = [];
+    scene.events.on('postupdate', () => {
+      const b = scene.levelUpBurst;
+      window.__burst.push({
+        visible: b.visible,
+        dx: b.x - scene.player.x,
+        dy: b.y - scene.player.y,
+        x: scene.player.x,
+      });
+    });
+  });
+  await pickKey(page, 'Digit1');
+  // Walk right while the burst plays (keys held across the paused LevelUp screen aren't seen).
+  await page.keyboard.down('KeyD');
+  await page.waitForFunction(() => window.__burst.length > 0 && !window.__burst.at(-1).visible, null, {
+    timeout: 5000,
+  });
+  await page.keyboard.up('KeyD');
+  const samples = await page.evaluate(() => window.__burst);
+  const shown = samples.filter((s) => s.visible);
+  expect(shown.length).toBeGreaterThan(2);
+  for (const s of shown) expect([s.dx, s.dy]).toEqual([0, 0]);
+  // The player moved while it played, so following was really tested.
+  expect(shown.at(-1).x).toBeGreaterThan(shown[0].x);
+});

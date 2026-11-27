@@ -45,6 +45,19 @@ describe('FLOW config', () => {
     expect(buttonsY + button.frameHeight / 2).toBeLessThanOrEqual(panelY + panel.frameHeight / 2);
   });
 
+  it("keeps the GameOver title and buttons in the panel art's bands (GH-22)", () => {
+    const panel = asset(FLOW.keys.gameOverPanel);
+    const button = asset(FLOW.keys.button);
+    const { panelY, titleY, titleSize, statsY, buttonsY } = FLOW.gameOver;
+    const top = panelY - panel.frameHeight / 2;
+    // Title band 16-56, stats band 56-214, buttons below the divider at 214.
+    expect(titleY - titleSize / 2).toBeGreaterThanOrEqual(top + 16);
+    expect(titleY + titleSize / 2).toBeLessThanOrEqual(top + 56);
+    expect(statsY).toBeGreaterThan(top + 56);
+    expect(statsY).toBeLessThan(top + 214);
+    expect(buttonsY - button.frameHeight / 2).toBeGreaterThanOrEqual(top + 214);
+  });
+
   it('keeps the Pause buttons from overlapping', () => {
     const button = asset(FLOW.keys.button);
     expect(FLOW.pause.quitY - FLOW.pause.resumeY).toBeGreaterThanOrEqual(button.frameHeight);

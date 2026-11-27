@@ -204,4 +204,76 @@ describe('the arena map (gh_arena.json)', () => {
       for (let c = spawn.col - 4; c <= spawn.col + 4; c++) expect(isWallCell(map, c, r)).toBe(false);
     }
   });
+
+  describe('tile dressing (GH-12)', () => {
+    const ts = map.tilesets[0];
+    /** gid -> tile name, from the tileset's `name` properties. */
+    const nameOf = Object.fromEntries(
+      (ts.tiles ?? []).map((/** @type {any} */ t) => [
+        t.id + ts.firstgid,
+        t.properties.find((p) => p.name === 'name').value,
+      ]),
+    );
+    const W = map.width;
+    const H = map.height;
+    const wallName = (/** @type {number} */ c, /** @type {number} */ r) => nameOf[cellAt(walls, c, r)];
+
+    it('names every tile the map uses', () => {
+      for (const l of map.layers) for (const g of l.data ?? []) if (g > 0) expect(nameOf[g]).toBeDefined();
+    });
+
+    it('puts corner tiles in the corners and edge tiles along each side', () => {
+      expect([wallName(0, 0), wallName(W - 1, 0), wallName(0, H - 1), wallName(W - 1, H - 1)]).toEqual([
+        'wall_nw',
+        'wall_ne',
+        'wall_sw',
+        'wall_se',
+      ]);
+      for (let c = 1; c < W - 1; c++) {
+        expect(['wall_n', 'wall_n_sign', 'wall_n_dish']).toContain(wallName(c, 0));
+        expect(wallName(c, H - 1)).toBe('wall_s');
+      }
+      for (let r = 1; r < H - 1; r++) {
+        expect(wallName(0, r)).toBe('wall_w');
+        expect(wallName(W - 1, r)).toBe('wall_e');
+      }
+    });
+
+    it('draws every 2x2 obstacle whole, from one obstacle', () => {
+      let blocks = 0;
+      for (let r = 1; r < H - 1; r++) {
+        for (let c = 1; c < W - 1; c++) {
+          const m = /^(obstacle_(?:boulder|mech_wreck))_(\d)$/.exec(wallName(c, r) ?? '');
+          if (!m) continue;
+          if (m[2] !== '1') continue;
+          blocks++;
+          expect([wallName(c + 1, r), wallName(c, r + 1), wallName(c + 1, r + 1)]).toEqual([
+            `${m[1]}_2`,
+            `${m[1]}_3`,
+            `${m[1]}_4`,
+          ]);
+        }
+      }
+      const blockCells = walls.data.filter((g) => /^obstacle_(boulder|mech_wreck)_/.test(nameOf[g] ?? '')).length;
+      expect(blocks).toBeGreaterThan(0);
+      expect(blockCells).toBe(blocks * 4);
+    });
+
+    it('uses only floor tiles on floor, props on decor, and walls or obstacles on walls', () => {
+      const kinds = { floor: /^floor_/, decor: /^prop_/, walls: /^(wall|obstacle)_/ };
+      for (const [layerName, pattern] of Object.entries(kinds)) {
+        for (const g of getLayer(map, layerName).data) if (g > 0) expect(nameOf[g]).toMatch(pattern);
+      }
+    });
+
+    it('uses 1x1 obstacles for single interior wall cells', () => {
+      for (let r = 1; r < H - 1; r++) {
+        for (let c = 1; c < W - 1; c++) {
+          const n = wallName(c, r);
+          if (n && !/^obstacle_(boulder|mech_wreck)_/.test(n))
+            expect(['obstacle_crate', 'obstacle_barrel']).toContain(n);
+        }
+      }
+    });
+  });
 });

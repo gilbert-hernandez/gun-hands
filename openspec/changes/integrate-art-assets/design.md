@@ -75,9 +75,9 @@ The death sprite's position: enemy sprites are centered on `(x, y)` and the deat
 These are all config-only changes:
 
 - **HUD:** `barInset` becomes `{ x: 18, y: 4 }`, and the fills' full width is 174. Text placement keys off the frame width (200), so it's unchanged.
-- **LevelUp card:** icon at top-left (64, 30), so its center offset is `y: −64` at scale 1. david sized the window for a 32 px icon, so **icon scale drops from 2 to 1**. Name at `y: −10` (the divider at 100 from the top), text at `y: 10` (the 110–190 band). The touch block scales the same offsets by its `cardScale` of 1.5: icon `y: −96` at scale 1.5, name `y: −15`, text `y: 15`.
+- **LevelUp card:** icon at top-left (64, 30), so its center offset is `y: −64` at scale 1. david sized the window for a 32 px icon, so **icon scale drops from 2 to 1**. Name at `y: −32` (its 16 px text ends just above the divider at 100 from the top), text at `y: 4` (below the divider), and rank `bottom: 28` (just above the pips). The number moves to (14, 14) to clear the corner bolt, and the text wraps at `w − 32 × cardScale` to stay inside the wooden border. The touch block scales the same offsets by its `cardScale` of 1.5: icon `y: −96` at scale 1.5, name `y: −48`, text `y: 6`. *(Revised during apply: the first offsets, checked on the real art, put the name under the divider line.)*
 - **Title:** `logoY` 140 (center of a 480×160 logo at top 60), `startY` 286 (button top 262), `hintY` stays 400 over the ground. These are checked on the real background in the browser.
-- **GameOver:** panel center 270 (top 120). `titleY` 156 (band 16–56), stats centered in the 56–214 band (`statsY` 255), and buttons centered in the band below 214 (`buttonsY` 377). Touch keeps buttons below the panel.
+- **GameOver:** panel center 270 (top 120). `titleY` 156 with the title at 32 px (it was 44 px, too tall for the band 16–56), stats centered in the 56–214 band (`statsY` 255), and buttons centered in the band below 214 (`buttonsY` 377). Touch keeps buttons below the panel.
 - `TitleScene` and `GameOverScene` keep their placeholder branches (text logo, tinted panel), so the scenarios for missing art still hold.
 
 ### 8. Placeholders for the new tileset shape
@@ -88,7 +88,7 @@ The current `gh_pickup_health.png` and `gh_ui_icon_health.png` are committed now
 
 ## Risks / Trade-offs
 
-- **[Mirroring the hurtbox offset can push the body 6 px into a wall when turning while flush against it]** → Arcade separation resolves overlap on the next step. Add an e2e check: flush against the west wall, turn around, and the hurtbox never overlaps a solid tile for more than one step. If that's unreliable, fall back to a centered offset (8) and accept 3–4 px of misalignment.
+- **[Mirroring the hurtbox offset can push the body 6 px into a wall when turning while flush against it]** → Arcade only separates a body from a tile along its movement, so a player standing still and turning by aim would stay inside the wall. When the mirrored box would land on a solid tile, `Player.setFacing` moves the sprite by the offset difference instead, so the hurtbox stays exactly where it was (the sprite shifts 6 px, the body doesn't). An e2e test turns against the west wall and checks every step.
 - **[Inlined data-URL PNGs]** → Vite inlines files under 4 KB. Phaser's loader handles data URLs, and the existing GH-29 sounds already go through the same path. Verify with `npm run build && npm run preview`.
 - **[e2e timing changes]** → Tests that wait on the death animation or muzzle hide (`muzzleFlashMs`) need updating. Death goes from 600 to 720 ms, so GameOver tests wait on `GameOver.ready`, as they already do.
 - **[Fill crop with a narrower fill]** → Rounding at 174 px differs from 196. `hud.spec` asserts relative widths via `fullFill`, so it adapts.

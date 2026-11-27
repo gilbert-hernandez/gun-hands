@@ -50,10 +50,10 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
 
     this.setTexture(type.walk, 0);
     this.enableBody(true, x, y, true, true);
-    // Hurtbox centered horizontally and bottom-aligned (feet), like the player's.
+    // Hurtbox centered horizontally and ending at the drawn feet, `footGap` px above the frame bottom.
     const { width, height } = type.hurtbox;
     const body = /** @type {Phaser.Physics.Arcade.Body} */ (this.body);
-    body.setSize(width, height, false).setOffset((type.size - width) / 2, type.size - height);
+    body.setSize(width, height, false).setOffset((type.size - width) / 2, type.size - type.footGap - height);
     // enableBody's reset places the body at the sprite's top-left, ignoring the offset, until the
     // next physics step. Sync now so overlap checks right after a spawn see the real hurtbox.
     body.updateFromGameObject();

@@ -55,9 +55,9 @@ export default class UIScene extends Phaser.Scene {
     this.powerupY = xpY + frameH + rowGap;
 
     this.hpFrame = this.addBarFrame(margin, hpY);
-    this.hpFill = this.addBarFill(HUD.hpFill, margin + barInset, hpY + barInset, HUD.placeholderTints.hp);
+    this.hpFill = this.addBarFill(HUD.hpFill, margin + barInset.x, hpY + barInset.y, HUD.placeholderTints.hp);
     this.xpFrame = this.addBarFrame(margin, xpY);
-    this.xpFill = this.addBarFill(HUD.xpFill, margin + barInset, xpY + barInset, HUD.placeholderTints.xp);
+    this.xpFill = this.addBarFill(HUD.xpFill, margin + barInset.x, xpY + barInset.y, HUD.placeholderTints.xp);
     this.fullFill = this.hpFill.frame.width;
 
     const textX = margin + this.hpFrame.width + labelGap;

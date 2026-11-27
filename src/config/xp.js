@@ -16,8 +16,10 @@ const tiers = {
 
 export const XP = {
   tiers,
-  // Gem shimmer animation frame rate (fps).
-  animFps: 8,
+  // Gem shimmer time per frame (ms), from david's GH-20 notes.
+  frameMs: 120,
+  // Level-up burst around the player (GH-12): time per frame (ms), from david's GH-18 notes.
+  levelUpFrameMs: 90,
   /**
    * Gem tier each enemy type drops on death.
    * @type {Record<keyof typeof import('./enemies.js').ENEMIES.types, keyof typeof tiers>}

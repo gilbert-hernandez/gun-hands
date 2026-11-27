@@ -370,7 +370,7 @@ test.describe('desktop', () => {
       const t = window.__GAME__.scene.getScene('Title');
       return [t.startButton.y, t.startButton.image.displayWidth, t.startButton.label.style.fontSize, t.hintText.y];
     });
-    expect(title).toEqual([330, 160, '18px', 400]);
+    expect(title).toEqual([FLOW.title.startY, 160, '18px', 400]);
     await start(page);
     const hud = await page.evaluate(() => {
       const u = window.__GAME__.scene.getScene('UI');

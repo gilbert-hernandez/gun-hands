@@ -335,8 +335,24 @@ test('pausing the Game scene stops survival time and spawning', async ({ page })
   await page.waitForFunction((t) => window.__GAME__.scene.getScene('Game').survivalMs > t + 200, before.t);
 });
 
+test('real enemy art is drawn untinted', async ({ page }) => {
+  await directorOff(page);
+  const ids = await Promise.all([
+    spawnAt(page, 'grunt', [[SPAWN.x - 200, SPAWN.y]]),
+    spawnAt(page, 'runner', [[SPAWN.x + 200, SPAWN.y]]),
+    spawnAt(page, 'brute', [[SPAWN.x, SPAWN.y - 200]]),
+  ]).then((xs) => xs.flat());
+  const tints = await Promise.all(ids.map(async (i) => (await enemyState(page, i)).tint));
+  expect(tints).toEqual([0xffffff, 0xffffff, 0xffffff]);
+});
+
 test('placeholder Grunts and Runners are tinted differently', async ({ page }) => {
   await directorOff(page);
+  // All GH-17 art is delivered now, so mark the walk sheets as placeholders the way Preload would.
+  await page.evaluate(() => {
+    const { enemies } = window.__GAME__.scene.getScene('Game');
+    enemies.placeholders = new Set(['enemy_grunt_walk', 'enemy_runner_walk', 'enemy_brute_walk']);
+  });
   const [g, r, b] = await Promise.all([
     spawnAt(page, 'grunt', [[SPAWN.x - 200, SPAWN.y]]),
     spawnAt(page, 'runner', [[SPAWN.x + 200, SPAWN.y]]),

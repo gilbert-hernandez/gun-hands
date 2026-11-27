@@ -59,29 +59,28 @@ Sizes are **per frame** (W×H). "Frames" is the number of frames in the strip.
 | GH-18  | `gh_fx_bullet.png`     | 8×8   | 2      | Player bullet, points right; pivot = center                           |
 | GH-18  | `gh_fx_muzzle.png`     | 16×16 | 3      | Muzzle flash, points right; pivot = left-center (attaches to gun tip) |
 | GH-18  | `gh_fx_impact.png`     | 16×16 | 4      | Spark on wall/enemy hit                                               |
-| GH-18  | `gh_fx_enemy_puff.png` | 32×32 | 6      | Enemy death poof                                                      |
+| GH-18  | `gh_fx_enemy_puff.png` | 32×32 | 6      | Generic death poof; reserved (enemies play their own GH-17 deaths)    |
 | GH-18  | `gh_fx_bomb_blast.png` | 64×64 | 6      | Bomb powerup burst; gets scaled up, keep shapes chunky                |
 | GH-18  | `gh_fx_levelup.png`    | 48×48 | 6      | Burst centered on the player                                          |
 
 ### GH-19: Arena tileset
 
-One image on a 32×32 grid, **8 columns × 8 rows = 256×256 px**, with no spacing or margin (Tiled-ready). Leave unused cells transparent.
+One image on a 32×32 grid, **8 columns × 6 rows = 256×192 px**, with no spacing or margin (Tiled-ready). This is the layout david delivered (GH-19, 2026-11-26). The arena map refers to tiles by these ids, so **keep each tile where it is** when you edit the image. New tiles go in the empty cells (40–45) or in a new row at the bottom; tell Gilbert, so the map and this table get updated.
 
-**Keep to this layout.** The arena map (`src/assets/maps/gh_arena.json`) already places tiles by these positions, so a tileset in this layout drops in without editing the map:
+| Ids   | Tiles (by `name`)                                                                                                             |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 0–7   | `floor_1`–`floor_5`, `floor_crack`, `floor_oil`, `floor_tracks`                                                               |
+| 8–15  | `wall_nw`, `wall_n`, `wall_ne`, `wall_inner_nw`, `wall_inner_ne`, `floor_plate`, `floor_scorch`, `floor_drift`                |
+| 16–23 | `wall_w`, `wall_fill`, `wall_e`, `wall_inner_sw`, `wall_inner_se`, `wall_n_sign`, `obstacle_boulder_1`, `_2`                  |
+| 24–31 | `wall_sw`, `wall_s`, `wall_se`, `obstacle_crate`, `obstacle_barrel`, `wall_n_dish`, `obstacle_boulder_3`, `_4`                |
+| 32–39 | `prop_tumbleweed`, `prop_skull`, `prop_grass`, `prop_bolts`, `prop_shells`, `prop_neon_shards`, `obstacle_mech_wreck_1`, `_2` |
+| 40–47 | empty (40–45), `obstacle_mech_wreck_3`, `_4`                                                                                  |
 
-| Row | Tile ids | Use                                                                                 |
-| --- | -------- | ----------------------------------------------------------------------------------- |
-| 1–2 | 0–15     | Floors and floor details (low contrast). Tile 0 is the main floor; 1–3 are variants |
-| 3–4 | 16–31    | Walls and wall corners. Tile 16 is the generic wall                                 |
-| 5–6 | 32–47    | Obstacles. A 2×2 obstacle spans both rows: tiles 32, 33 (top) and 40, 41 (bottom)   |
-| 7   | 48–55    | Walk-over decor and props (cracks, debris). Tiles 48–51 are used                    |
-| 8   | 56–63    | Spare: leave transparent                                                            |
-
-Tile ids count left to right, top to bottom, starting at 0. Whether a tile blocks movement is set by the map layer it sits on, not by the tile, so decor can never become a wall by accident.
+2×2 obstacles: the boulder is 22, 23 (top) and 30, 31 (bottom); the mech wreck is 38, 39 (top) and 46, 47 (bottom). Tile names are kept in the map's tileset (and in david's `gh_tiles_arena.tsx` on GH-19). Whether a tile blocks movement is set by the map layer it sits on, not by the tile, so decor can never become a wall by accident. `scripts/reskin-arena.js` re-dresses the map from these names.
 
 | Ticket | File                 | Size  | Frames | Notes                                                  |
 | ------ | -------------------- | ----- | ------ | ------------------------------------------------------ |
-| GH-19  | `gh_tiles_arena.png` | 32×32 | 64     | 8×8 grid of tiles (256×256 image); floors low-contrast |
+| GH-19  | `gh_tiles_arena.png` | 32×32 | 48     | 8×6 grid of tiles (256×192 image); floors low-contrast |
 
 ### GH-20: Pickups
 
@@ -105,8 +104,8 @@ UI images are single images (1 frame) unless noted. The game runs at 960×540.
 | Ticket | File                       | Size    | Frames | Notes                                                   |
 | ------ | -------------------------- | ------- | ------ | ------------------------------------------------------- |
 | GH-21  | `gh_ui_bar_frame.png`      | 200×16  | 1      | Frame for the HP and XP bars                            |
-| GH-21  | `gh_ui_bar_fill_hp.png`    | 196×12  | 1      | Sits 2 px inside the frame; stretched horizontally      |
-| GH-21  | `gh_ui_bar_fill_xp.png`    | 196×12  | 1      | Sits 2 px inside the frame; stretched horizontally      |
+| GH-21  | `gh_ui_bar_fill_hp.png`    | 174×8   | 1      | Fill slot at x=18, y=4 in the frame; cropped by width   |
+| GH-21  | `gh_ui_bar_fill_xp.png`    | 174×8   | 1      | Fill slot at x=18, y=4 in the frame; cropped by width   |
 | GH-21  | `gh_ui_icon_rapidfire.png` | 16×16   | 1      | HUD powerup icon                                        |
 | GH-21  | `gh_ui_icon_spread.png`    | 16×16   | 1      | HUD powerup icon                                        |
 | GH-21  | `gh_ui_icon_shield.png`    | 16×16   | 1      | HUD powerup icon                                        |

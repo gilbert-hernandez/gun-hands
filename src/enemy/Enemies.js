@@ -1,5 +1,5 @@
 import { ENEMIES } from '../config/index.js';
-import { ensureAnim } from '../player/Player.js';
+import { ensureAnim } from '../fx/anims.js';
 import Enemy from './Enemy.js';
 import { findSpawnPoint, ringRadius } from './spawn.js';
 import { chaseVelocity, separationPushes } from './steering.js';
@@ -30,7 +30,10 @@ export default class Enemies {
     /** @type {Set<string>} */
     this.placeholders = new Set(scene.registry.get('placeholders') ?? []);
 
-    for (const type of Object.values(ENEMIES.types)) ensureAnim(scene, type.walk, type.walkFps);
+    for (const type of Object.values(ENEMIES.types)) {
+      ensureAnim(scene, type.walk, type.walkMs);
+      ensureAnim(scene, type.death, type.deathMs, { loop: false });
+    }
 
     this.group = scene.physics.add.group({
       classType: Enemy,
@@ -103,8 +106,12 @@ export default class Enemies {
     const pt = findSpawnPoint({
       center: { x: view.centerX, y: view.centerY },
       radius: this.ringRadius,
-      // Hurtbox center sits below the sprite center (bottom-aligned).
-      box: { width: type.hurtbox.width, height: type.hurtbox.height, offsetY: (type.size - type.hurtbox.height) / 2 },
+      // Hurtbox center sits below the sprite center (it ends at the feet, footGap above the bottom).
+      box: {
+        width: type.hurtbox.width,
+        height: type.hurtbox.height,
+        offsetY: (type.size - type.hurtbox.height) / 2 - type.footGap,
+      },
       isSolid: this.isSolidAt,
       worldW: this.world.width,
       worldH: this.world.height,

@@ -48,7 +48,7 @@ _None._
 
 ## Impact
 
-- **Assets:** `src/assets/img/*.png` (51 files, about 170 KB), `src/assets/manifest.js`, `src/assets/placeholders.js` (tileset rows), `ASSETS.md`, `src/assets/maps/gh_arena.json`, new `scripts/reskin-arena.js`.
+- **Assets:** `src/assets/img/*.png` (50 files, about 170 KB), `src/assets/manifest.js`, `src/assets/placeholders.js` (tileset rows), `ASSETS.md`, `src/assets/maps/gh_arena.json`, new `scripts/reskin-arena.js`.
 - **Code:** `src/player/Player.js`, `src/enemy/Enemy.js`, `src/fx/Puffs.js` (becomes the death-animation pool), new pooled impact FX, `src/combat/Combat.js`, `src/scenes/GameScene.js`, `src/scenes/UIScene.js`, `src/scenes/LevelUpScene.js`, `src/scenes/TitleScene.js`, `src/scenes/GameOverScene.js`.
 - **Config:** `player.js`, `enemies.js`, `hud.js`, `flow.js`, `upgrades.js` (layout), `combat.js`, `xp.js`, `powerups.js` (frame times).
 - **Tests:** `tests/manifest.test.js`, `tests/arenaMap.test.js`, `tests/placeholders.test.js`, and e2e specs that read puffs, fill widths or layout (`combat`, `hud`, `levelup`, `flow`).

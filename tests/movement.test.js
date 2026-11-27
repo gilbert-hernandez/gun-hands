@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { velocityFrom, facingFrom } from '../src/player/movement.js';
+import { velocityFrom, facingFrom, hurtboxOffsetX } from '../src/player/movement.js';
 
 const speed = 200;
 
@@ -63,5 +63,22 @@ describe('facingFrom', () => {
   it('falls back to movement when the pointer is exactly above/below the player', () => {
     expect(facingFrom({ vx: -200, aimX: 100, playerX: 100, pointerUsed: true, current: 'right' })).toBe('left');
     expect(facingFrom({ vx: 0, aimX: 100, playerX: 100, pointerUsed: true, current: 'right' })).toBe('right');
+  });
+});
+
+describe('hurtboxOffsetX', () => {
+  const hb = { width: 16, offsetX: 5 };
+
+  it('uses the configured offset facing right', () => {
+    expect(hurtboxOffsetX('right', hb, 32)).toBe(5);
+  });
+
+  it('mirrors across the frame center facing left', () => {
+    expect(hurtboxOffsetX('left', hb, 32)).toBe(11);
+  });
+
+  it('is its own inverse: mirroring keeps the box inside the frame', () => {
+    const left = hurtboxOffsetX('left', hb, 32);
+    expect(32 - left - hb.width).toBe(hb.offsetX);
   });
 });

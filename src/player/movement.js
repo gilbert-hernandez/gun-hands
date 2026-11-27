@@ -42,3 +42,15 @@ export function facingFrom({ vx, aimX, playerX, pointerUsed = false, current }) 
   if (vx > 0) return 'right';
   return current;
 }
+
+/**
+ * Horizontal hurtbox offset inside the sprite frame for a facing (GH-12). The configured offset is
+ * for the art facing right; facing left mirrors it across the frame's vertical center line.
+ * @param {'left'|'right'} facing
+ * @param {{ width: number, offsetX: number }} hurtbox
+ * @param {number} frameWidth sprite frame width in px
+ * @returns {number}
+ */
+export function hurtboxOffsetX(facing, { width, offsetX }, frameWidth) {
+  return facing === 'left' ? frameWidth - offsetX - width : offsetX;
+}

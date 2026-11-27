@@ -107,8 +107,13 @@ export default class LevelUpScene extends Phaser.Scene {
       this.add.text(-w / 2 + l.number.x, -h / 2 + l.number.y, String(index + 1), font(l.number.size, '#facc15')),
       icon,
       this.add.text(0, l.name.y, name, font(l.name.size)).setOrigin(0.5, 0),
+      // Wrap inside the card's inner window (its wooden frame is ~12 px wide at scale 1).
       this.add
-        .text(0, l.text.y, text, { ...font(l.text.size, '#d1d5db'), align: 'center', wordWrap: { width: w - 20 } })
+        .text(0, l.text.y, text, {
+          ...font(l.text.size, '#d1d5db'),
+          align: 'center',
+          wordWrap: { width: w - 32 * l.cardScale },
+        })
         .setOrigin(0.5, 0),
       this.add.text(0, h / 2 - l.rank.bottom, rank, font(l.rank.size, '#facc15')).setOrigin(0.5, 1),
     ]);
