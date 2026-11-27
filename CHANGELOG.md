@@ -6,9 +6,26 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-26
+
+The real art. Every placeholder shape is replaced by david's pixel art, with no gameplay changes. M3 Art & Polish is still in progress (juice and balance, deployment).
+
 ### Added
 
+- **Art integration** (GH-12, art from GH-16 to GH-22): the player, Grunt, Runner and Brute, bullets and effects, XP gems and powerup tokens, the HUD, level-up cards, the title screen and the Game Over panel now use the delivered art. The arena is re-skinned with the new tileset (fence walls, crates, barrels, boulders and wrecks), and its walls and obstacles are exactly where they were.
+- **New animations** (GH-12): each enemy type has its own death animation, bullets throw impact sparks on enemies and walls, a burst plays around the player on level-up, the player flinches when hit, and the guns recoil on every shot. Animation speeds follow the artist's timings.
 - **Release workflow** (GH-30): pushing a `vX.Y.Z` tag builds the game and attaches `gun-hands-X.Y.Z.tar.gz` and its SHA-256 checksum to the GitHub release, creating the release from the CHANGELOG if needed, with the exact values for installing on Arcade in the notes. `npm run package` makes the same archive locally. Tooling only; no gameplay change.
+
+### Changed
+
+- **Hurtboxes** (GH-12) now sit on the drawn bodies. Their sizes are unchanged, and the player's mirrors when facing left.
+
+### Known limitations
+
+- The Health pickup and its HUD icon still show a "+1", but Health restores 30 HP rather than giving an extra life. New art is on the way (GH-20, GH-21).
+- No juice or balance pass yet (GH-13).
+- No music.
+- Not deployed yet (GH-14).
 
 ## [0.2.1] - 2026-11-26
 
