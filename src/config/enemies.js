@@ -73,9 +73,14 @@ const waves = [
   // Same mix as t=0, so the first 30 s are Grunts only.
   { at: 30, interval: 1100, cap: 20, weights: { grunt: 1, runner: 0, brute: 0 } },
   { at: 45, interval: 1000, cap: 25, weights: { grunt: 0.8, runner: 0.2, brute: 0 } },
-  { at: 120, interval: 700, cap: 50, weights: { grunt: 0.6, runner: 0.3, brute: 0.1 } },
-  { at: 240, interval: 450, cap: 90, weights: { grunt: 0.5, runner: 0.3, brute: 0.2 } },
-  { at: 360, interval: 300, cap: 140, weights: { grunt: 0.45, runner: 0.3, brute: 0.25 } },
+  { at: 120, interval: 600, cap: 60, weights: { grunt: 0.6, runner: 0.3, brute: 0.1 } },
+  { at: 240, interval: 350, cap: 120, weights: { grunt: 0.5, runner: 0.3, brute: 0.2 } },
+  { at: 360, interval: 220, cap: 180, weights: { grunt: 0.45, runner: 0.3, brute: 0.25 } },
+  { at: 480, interval: 160, cap: 220, weights: { grunt: 0.45, runner: 0.3, brute: 0.25 } },
+  // Overtime (GH-13, see `scaling`): Runners gain share because they catch a kiting player.
+  { at: 600, interval: 120, cap: 260, weights: { grunt: 0.4, runner: 0.35, brute: 0.25 } },
+  { at: 720, interval: 80, cap: 300, weights: { grunt: 0.35, runner: 0.4, brute: 0.25 } },
+  { at: 900, interval: 50, cap: 300, weights: { grunt: 0.3, runner: 0.45, brute: 0.25 } },
 ];
 
 export const ENEMIES = {
@@ -95,9 +100,18 @@ export const ENEMIES = {
     // Push weight relative to the chase direction (1 = equal).
     strength: 1.2,
   },
+  // Enemy scaling at spawn (GH-13, see src/enemy/scaling.js). Enemies level up with the player:
+  // each player level above 1 adds `perLevel` (0.05 = +5%), up to `maxLevelBonus`. From
+  // `overtime.startS` of survival, every minute adds `overtime.perMinute` more, with no cap, so
+  // runs past 12:00 are rare and 15:00 is effectively impossible. Level and overtime factors multiply.
+  scaling: {
+    perLevel: { hp: 0.05, speed: 0.01, damage: 0 },
+    maxLevelBonus: { hp: 1, speed: 0.15, damage: 0 },
+    overtime: { startS: 600, perMinute: { hp: 0.15, speed: 0.12, damage: 0.2 } },
+  },
   // Max enemies alive at once (object pool size). Must be >= the largest wave cap and the dev
   // stress count (JUICE.debug.stressCount, GH-13).
-  poolSize: 256,
+  poolSize: 320,
   // Enemies farther than this from the player (px) go back to the pool.
   recycleDistance: 900,
 };

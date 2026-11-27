@@ -9,7 +9,8 @@ import { BRAIN, CARD_PRIORITY, playRun } from './bot.js';
 
 const runs = Number(process.argv[2] ?? 3);
 const url = process.env.URL ?? 'http://localhost:5175';
-const maxMinutes = Number(process.env.MAX_MINUTES ?? 15);
+// A run that reaches the cap fails the round's "15:00 is effectively impossible" check (GH-13).
+const maxMinutes = Number(process.env.MAX_MINUTES ?? 16);
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 mkdirSync('balance', { recursive: true });
 
@@ -59,4 +60,8 @@ console.log(`time     ${fmt(median(times)).padEnd(8)} ${fmt(Math.min(...times)).
 console.log(
   `level    ${String(median(levels)).padEnd(8)} ${String(Math.min(...levels)).padEnd(6)} ${Math.max(...levels)}`,
 );
-console.log(`Target: 5:00–8:00 and level >= 10 (adjust by the calibration offset in design.md's balance log).`);
+const past12 = results.filter((r) => r.timeMs > 12 * 60000).length;
+const at15 = results.filter((r) => r.capped || r.timeMs >= 15 * 60000).length;
+console.log(`past 12:00  ${past12}/${results.length}`);
+console.log(`at 15:00    ${at15}/${results.length}`);
+console.log(`Target: median 9:00–11:00, at most 10% past 12:00, none at 15:00, median level >= 10.`);

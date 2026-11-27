@@ -21,6 +21,8 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.hp = 0;
     this.maxHp = 0;
     this.speed = 0;
+    /** HP the player loses on contact: the type's, scaled at spawn (GH-13). */
+    this.contactDamage = 0;
     /** Unique per spawn (see `Bullet.hasHit`). */
     this.spawnId = 0;
     /** Whether the current type's walk art is a generated placeholder (drawn tinted). */
@@ -37,13 +39,16 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
    * @param {number} x
    * @param {number} y
    * @param {Set<string>} placeholders texture keys that are generated placeholders
+   * @param {{ hp: number, speed: number, contactDamage: number }} [stats] scaled stats (GH-13);
+   *   the type's own when omitted
    */
-  spawn(typeId, x, y, placeholders) {
+  spawn(typeId, x, y, placeholders, stats = ENEMIES.types[typeId]) {
     const type = ENEMIES.types[typeId];
     this.typeId = typeId;
-    this.hp = type.hp;
-    this.maxHp = type.hp;
-    this.speed = type.speed;
+    this.hp = stats.hp;
+    this.maxHp = stats.hp;
+    this.speed = stats.speed;
+    this.contactDamage = stats.contactDamage;
     this.spawnId = nextSpawnId++;
     this.flashMs = 0;
     this.knockMs = 0;

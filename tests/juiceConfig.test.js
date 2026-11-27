@@ -50,7 +50,7 @@ describe('JUICE config', () => {
   });
 
   it('fits the stress count in the enemy pool (200+ enemies)', () => {
-    expect(JUICE.debug.stressCount).toBeGreaterThanOrEqual(200);
+    expect(JUICE.debug.stressCount).toBeGreaterThanOrEqual(Math.max(...ENEMIES.waves.map((k) => k.cap)));
     expect(ENEMIES.poolSize).toBeGreaterThanOrEqual(JUICE.debug.stressCount);
   });
 });

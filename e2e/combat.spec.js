@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { ENEMIES } from '../src/config/enemies.js';
+import { scaledStats, spawnMultipliers } from '../src/enemy/scaling.js';
 import { PLAYER } from '../src/config/player.js';
 import { COMBAT } from '../src/config/combat.js';
 import { ignoreWindowBlur } from './support.js';
@@ -648,4 +649,20 @@ test('the dev G key kills the player through the death sequence', async ({ page 
   expect((await player(page)).dead).toBe(true);
   await page.waitForFunction(() => window.__GAME__.scene.isActive('GameOver'), null, { timeout: 10000 });
   expect(await events(page, 'player-died')).toHaveLength(1);
+});
+
+test('contact damage comes from the enemy, scaled at spawn (GH-13)', async ({ page }) => {
+  const want = scaledStats(ENEMIES.types.grunt, spawnMultipliers(1, 720, ENEMIES.scaling));
+  await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    scene.survivalMs = 720000;
+    scene.enemies.survivalMs = 720000;
+  });
+  await spawnAt(page, 'grunt', [[SPAWN.x, SPAWN.y]]);
+  await waitEvents(page, 'player-hit');
+  expect(want.contactDamage).toBeGreaterThan(ENEMIES.types.grunt.contactDamage);
+  expect((await events(page, 'player-hit'))[0]).toMatchObject({
+    damage: want.contactDamage,
+    hp: PLAYER.maxHp - want.contactDamage,
+  });
 });

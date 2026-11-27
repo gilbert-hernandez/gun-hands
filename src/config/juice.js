@@ -60,6 +60,7 @@ export const JUICE = {
   },
   debug: {
     // Dev K key: enemies alive at once while the stress test is on (GH-13 perf check).
-    stressCount: 220,
+    // The top wave cap (ENEMIES.waves), so the check covers the real end game.
+    stressCount: 300,
   },
 };

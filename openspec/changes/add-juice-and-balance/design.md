@@ -186,6 +186,7 @@ Each row is one tuning round: what changed, the bot's result (`npm run balance -
 | # | Date | Change | Bot median (min–max) | Gilbert's runs | Notes |
 | --- | --- | --- | --- | --- | --- |
 | 0 | 11-27 | Baseline: shipped v0.2.3 numbers | 11:17+, level 32, 1 run, hit the 12 min cap (20 damage taken) | 11:52 / L33, 7:49 / L26, 11:06 / L32 (median 11:06 / L32) | Calibration offset: the bot levels like Gilbert and lives at least as long. Offset taken as 0 for now; revisit once the bot dies on its own. |
+| 1 | 11-27 | XP curve {10, 12, 1.5}; level scaling, overtime and waves to 15:00 (§10, first values) | 10:08, level 11, 1 smoke run (died; level 10 at 7:23) | 10:24 / L18, 12:38 / L22, 16:06 / L30 (median 12:38 / L22). Gilbert: "this is a good feel"; the 16:06 run is fine. | One run only. HP dropped steadily from 6:00 (80 → 34 by 9:48). Damage taken: Brute 88, Grunt 20, Runner 12. Upgrades: damage 5, fire rate 4, max HP 1. Next: 5-run round on the same numbers. |
 
 **Baseline findings (round 0):**
 - **Runs are too long:** median 11 min against a 5–8 min target.
@@ -201,6 +202,12 @@ Each row is one tuning round: what changed, the bot's result (`npm run balance -
 - That run led to the revised target and to §10. The round 1 curve stays in place and is re-checked against the new target.
 
 **Plan for round 1 (XP curve, knob 1):** `curve` goes from {5, 4, 1.3} to {10, 12, 1.5}. At Gilbert's XP rate, level 10 then needs 1,098 XP (vs 283), which gives level 8 at 3 min, 11 at 5 min, 12 at 6.5 min and 14 at 8 min. Fewer upgrades should also shorten runs. Next is round 2 (wave ramp and drops), which tackles survival time head-on.
+
+**Round 1 findings (Gilbert's runs):**
+- **Gilbert is stronger than the bot:** his median is 12:38 against the bot's 10:08, a calibration offset of about +2.5 min. He knows the game best, so demo players should land nearer the bot.
+- **Overtime does its job:** his long runs took 781 HP of damage in 16 minutes, and Runners did 485 of it, since overtime Runners outpace a kiting player.
+- **Loot scales with kills:** 66–227 powerups per run, with up to 40 Health Packs in the 16-minute run. That is what kept the longest run alive, and it's left as is because the feel is right.
+- **Decision (Gilbert, 2026-11-27):** keep these numbers.
 
 ### SFX mix
 

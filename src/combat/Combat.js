@@ -157,7 +157,7 @@ export default class Combat {
 
   /** @param {Enemy} enemy */
   onContact(enemy) {
-    this.damagePlayer(ENEMIES.types[enemy.typeId].contactDamage, { typeId: enemy.typeId });
+    this.damagePlayer(enemy.contactDamage, { typeId: enemy.typeId });
   }
 
   /**

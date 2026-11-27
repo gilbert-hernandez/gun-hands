@@ -19,7 +19,7 @@ export const HUD = {
   labelGap: 8,
   iconGap: 4,
   fontFamily: 'monospace',
-  fontSize: { bar: 14, timer: 22, kills: 16, powerup: 12 },
+  fontSize: { bar: 14, timer: 22, kills: 16, powerup: 12, banner: 18 },
   colors: { text: '#ffffff', level: '#facc15', shadow: '#000000' },
   // Text drop shadow offset (whole px), so text reads over bright tiles.
   shadowOffset: 1,
@@ -38,10 +38,14 @@ export const HUD = {
   // The level label pops to this scale and back on `player-leveled` (ms for the whole pop).
   levelPopMs: 250,
   levelPopScale: 1.4,
+  // Overtime cue (GH-13): when survival time reaches ENEMIES.scaling.overtime.startS, the timer
+  // turns `color` for the rest of the run and `banner` shows once below it: it fades in over
+  // `fadeMs`, holds `holdMs`, then fades out over `fadeMs`. `gap` is px below the timer.
+  overtime: { color: '#ef4444', banner: 'OVERTIME', gap: 2, fadeMs: 250, holdMs: 2000 },
   // Overrides on touch devices (GH-26, see ui/layout.js).
   touch: {
     rowGap: 12,
-    fontSize: { bar: 20, timer: 26, kills: 20, powerup: 20 },
+    fontSize: { bar: 20, timer: 26, kills: 20, powerup: 20, banner: 24 },
     powerupSlot: 96,
     powerupIconScale: 2,
   },

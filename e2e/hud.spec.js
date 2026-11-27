@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { HUD } from '../src/config/hud.js';
+import { ENEMIES } from '../src/config/enemies.js';
 import { PLAYER } from '../src/config/player.js';
 import { POWERUPS } from '../src/config/powerups.js';
 import { ignoreWindowBlur } from './support.js';
@@ -181,10 +182,12 @@ test('HP follows damage (with a flash), heals, a Max HP upgrade and death, on wh
 
 test('the XP bar fills, and a level-up updates the label with a pop', async ({ page }) => {
   const need = await page.evaluate(() => window.__GAME__.scene.getScene('Game').xp.progression.xpNeeded);
-  expect(need % 2).toBe(1); // 5 XP for level 2: use 2 of 5 and check the rounded fraction
-  await inGame(page, 'g.xp.collect(a);', 2);
+  // A third of the way, so the fill is a rounded fraction (whatever the curve's first step is).
+  const part = Math.max(1, Math.floor(need / 3));
+  expect(part).toBeLessThan(need - 1);
+  await inGame(page, 'g.xp.collect(a);', part);
   let h = await hud(page);
-  expect(h.xp).toBe(Math.round((2 / need) * h.full));
+  expect(h.xp).toBe(Math.round((part / need) * h.full));
   expect(h.level).toBe('LV 1');
 
   // Cross into level 2 with 1 XP carried over.
@@ -199,7 +202,7 @@ test('the XP bar fills, and a level-up updates the label with a pop', async ({ p
       window.__pops.push(this.tweens.getTweensOf(this.levelText).length);
     };
   });
-  await inGame(page, 'g.xp.collect(a);', need - 2 + 1);
+  await inGame(page, 'g.xp.collect(a);', need - part + 1);
   expect(await page.evaluate(() => window.__pops)).toEqual([1]);
   await page.waitForFunction(() => {
     const lu = window.__GAME__.scene.getScene('LevelUp');
@@ -348,4 +351,65 @@ test('after death, title and a new start the HUD is fresh', async ({ page }) => 
   expect(h.timer).toBe('00:00');
   expect(h.kills).toBe('KILLS 0');
   expect(h.slots).toEqual([]);
+});
+
+// Overtime cue (GH-13).
+
+const OT_MS = ENEMIES.scaling.overtime.startS * 1000;
+
+function overtimeCue(page) {
+  return page.evaluate(() => {
+    const u = window.__GAME__.scene.getScene('UI');
+    return {
+      overtime: u.overtime,
+      shows: u.bannerShows,
+      timerColor: u.timerText.style.color,
+      bannerAlpha: u.bannerText.alpha,
+      banner: u.bannerText.text,
+      bannerBelowTimer: u.bannerText.y > u.timerText.y + u.timerText.height - 1,
+    };
+  });
+}
+
+test('before overtime the timer has its normal color and no banner shows', async ({ page }) => {
+  await inGame(page, 'g.survivalMs = a;', OT_MS - 1000);
+  expect(await overtimeCue(page)).toMatchObject({
+    overtime: false,
+    shows: 0,
+    timerColor: HUD.colors.text,
+    bannerAlpha: 0,
+  });
+});
+
+test('at overtime the timer turns red for good and the banner shows once, then fades out', async ({ page }) => {
+  await inGame(page, 'g.survivalMs = a;', OT_MS);
+  const on = await overtimeCue(page);
+  expect(on).toMatchObject({
+    overtime: true,
+    shows: 1,
+    timerColor: HUD.overtime.color,
+    banner: HUD.overtime.banner,
+    bannerBelowTimer: true,
+  });
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('UI').bannerText.alpha > 0.5);
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('UI').bannerText.alpha === 0, null, {
+    timeout: 15000,
+  });
+  await inGame(page, 'g.survivalMs = a;', OT_MS + 60000);
+  expect(await overtimeCue(page)).toMatchObject({ overtime: true, shows: 1, timerColor: HUD.overtime.color });
+});
+
+test('a new session after overtime starts with a normal timer and no banner', async ({ page }) => {
+  await inGame(page, 'g.survivalMs = a;', OT_MS + 5000);
+  await inGame(page, 'g.combat.damagePlayer(g.player.hp, { force: true });');
+  await page.waitForFunction(() => window.__GAME__.scene.getScene('GameOver')?.ready, null, { timeout: 10000 });
+  await page.keyboard.press('Escape');
+  await startSession(page);
+  await inGame(page, 'g.survivalMs = 0;');
+  expect(await overtimeCue(page)).toMatchObject({
+    overtime: false,
+    shows: 0,
+    timerColor: HUD.colors.text,
+    bannerAlpha: 0,
+  });
 });

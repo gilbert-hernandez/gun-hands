@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ENEMIES, PLAYER, DISPLAY } from '../src/config/index.js';
 import { asset } from '../src/assets/manifest.js';
 import { ringRadius } from '../src/enemy/spawn.js';
+import { spawnMultipliers } from '../src/enemy/scaling.js';
 
 const { types, waves } = ENEMIES;
 
@@ -78,8 +79,39 @@ describe('wave keyframes', () => {
     expect(firstBrute).toBeGreaterThan(firstRunner);
   });
 
+  it('keeps building pressure until 15:00 (GH-13)', () => {
+    expect(waves[waves.length - 1].at).toBeGreaterThanOrEqual(900);
+    expect(Math.max(...waves.map((k) => k.cap))).toBeGreaterThanOrEqual(300);
+  });
+
   it('fits in the pool', () => {
     expect(ENEMIES.poolSize).toBeGreaterThanOrEqual(Math.max(...waves.map((k) => k.cap)));
+  });
+});
+
+describe('enemy scaling (GH-13)', () => {
+  const { scaling } = ENEMIES;
+
+  it('has sane per-level amounts, caps and overtime rates', () => {
+    for (const k of ['hp', 'speed', 'damage']) {
+      expect(scaling.perLevel[k]).toBeGreaterThanOrEqual(0);
+      expect(scaling.maxLevelBonus[k]).toBeGreaterThanOrEqual(0);
+      expect(scaling.overtime.perMinute[k]).toBeGreaterThanOrEqual(0);
+    }
+    // "Slightly": the level alone never more than doubles HP or adds over 25% speed.
+    expect(scaling.maxLevelBonus.hp).toBeLessThanOrEqual(1);
+    expect(scaling.maxLevelBonus.speed).toBeLessThanOrEqual(0.25);
+    expect(scaling.overtime.startS).toBe(600);
+  });
+
+  it('lets an overtime Runner outpace the base player by 15:00 at level 10', () => {
+    const m = spawnMultipliers(10, 900, scaling);
+    expect(types.runner.speed * m.speed).toBeGreaterThan(PLAYER.speed);
+  });
+
+  it('keeps every enemy slower than the base player before overtime, even at the level cap', () => {
+    const m = spawnMultipliers(1000, 599, scaling);
+    for (const t of Object.values(types)) expect(t.speed * m.speed).toBeLessThan(PLAYER.speed);
   });
 });
 

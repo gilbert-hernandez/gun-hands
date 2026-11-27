@@ -105,7 +105,7 @@ export function installBrain(page) {
  * @param {{ maxMinutes?: number, log?: (msg: string) => void }} [opts]
  * @returns {Promise<import('../src/util/runLog.js').RunSummary & { capped?: boolean }>}
  */
-export async function playRun(page, { maxMinutes = 15, log = () => {} } = {}) {
+export async function playRun(page, { maxMinutes = 16, log = () => {} } = {}) {
   await page.waitForFunction(() => window.__GAME__?.scene.isActive('Title'), null, { timeout: 30000 });
   await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.__GAME__.scene.getScene('Game')?.juice);
@@ -126,7 +126,10 @@ export async function playRun(page, { maxMinutes = 15, log = () => {} } = {}) {
           const pick = priority.map((id) => lu.choices.indexOf(id)).find((i) => i >= 0) ?? 0;
           lu.pick(pick);
         }
+        const scenes = game.scene.getScenes(true).map((x) => x.sys.settings.key);
         const g = game.scene.getScene('Game');
+        // Between the death and GameOver the Game scene shuts down and its systems go away.
+        if (!g?.enemies?.group?.children) return { level: null, t: null, hp: null, enemies: null, scenes };
         // End a capped run through the real death path (like the dev G key), once Game is running.
         if (kill && game.scene.isActive('Game') && !g.player.dead) g.combat.damagePlayer(g.player.hp, { force: true });
         return {
@@ -134,13 +137,13 @@ export async function playRun(page, { maxMinutes = 15, log = () => {} } = {}) {
           t: g.survivalMs,
           hp: g.player.hp,
           enemies: g.enemies.liveCount,
-          scenes: game.scene.getScenes(true).map((x) => x.sys.settings.key),
+          scenes,
         };
       },
       [CARD_PRIORITY, cappedAt !== null],
     );
     if (s.done) return cappedAt === null ? s.done : { ...s.done, capped: true };
-    if (s.level !== lastLevel) {
+    if (s.level !== null && s.level !== lastLevel) {
       lastLevel = s.level;
       log(`  level ${s.level} at ${(s.t / 1000).toFixed(0)} s`);
     }

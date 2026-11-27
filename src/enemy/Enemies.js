@@ -2,6 +2,7 @@ import { ENEMIES } from '../config/index.js';
 import { ensureAnim } from '../fx/anims.js';
 import Enemy from './Enemy.js';
 import { findSpawnPoint, ringRadius } from './spawn.js';
+import { scaledStats, spawnMultipliers } from './scaling.js';
 import { chaseVelocity, separationPushes } from './steering.js';
 import { pickType, spawnsDue, waveAt } from './waves.js';
 
@@ -18,7 +19,8 @@ const FACING_DEAD_ZONE = 1;
 export default class Enemies {
   /**
    * @param {import('phaser').Scene} scene
-   * @param {{ x: number, y: number }} target what enemies chase (the player)
+   * @param {{ x: number, y: number, level?: number }} target what enemies chase (the player); its
+   *   `level` scales new spawns (GH-13)
    * @param {(x: number, y: number) => boolean} isSolidAt wall test (true outside the map, too)
    * @param {{ width: number, height: number }} world map size in px
    */
@@ -58,6 +60,8 @@ export default class Enemies {
       capOverride: null,
       wave: waveAt(0, ENEMIES.waves),
     };
+    /** Survival time (ms) from the last `update`, for overtime scaling at spawn (GH-13). */
+    this.survivalMs = 0;
     /** Set by `freeze()` when the player dies: every enemy stands still from then on. */
     this.frozen = false;
 
@@ -81,7 +85,17 @@ export default class Enemies {
   }
 
   /**
-   * Spawn one enemy of `typeId` at (x, y) from the pool.
+   * Stats for an enemy of `typeId` spawning now: its type scaled by the player's level and, past
+   * the overtime start, by survival time (GH-13).
+   * @param {EnemyTypeId} typeId
+   */
+  statsFor(typeId) {
+    const mult = spawnMultipliers(this.target.level ?? 1, this.survivalMs / 1000, ENEMIES.scaling);
+    return scaledStats(ENEMIES.types[typeId], mult);
+  }
+
+  /**
+   * Spawn one enemy of `typeId` at (x, y) from the pool, with scaled stats (see `statsFor`).
    * @param {EnemyTypeId} typeId
    * @param {number} x
    * @param {number} y
@@ -91,7 +105,7 @@ export default class Enemies {
     /** @type {Enemy | null} */
     const enemy = this.group.get(x, y);
     if (!enemy) return null;
-    return enemy.spawn(typeId, x, y, this.placeholders);
+    return enemy.spawn(typeId, x, y, this.placeholders, this.statsFor(typeId));
   }
 
   /**
@@ -137,6 +151,7 @@ export default class Enemies {
    * @param {number} survivalMs survival time in ms
    */
   update(delta, survivalMs) {
+    this.survivalMs = survivalMs;
     this.director.wave = waveAt(survivalMs / 1000, ENEMIES.waves);
     if (this.director.enabled && survivalMs >= ENEMIES.spawn.startDelayMs) this.runDirector(delta);
     this.steer(delta);

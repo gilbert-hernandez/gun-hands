@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { DISPLAY, HUD, POWERUPS } from '../config/index.js';
+import { DISPLAY, ENEMIES, HUD, POWERUPS } from '../config/index.js';
 import { PLAYER_HIT } from '../combat/events.js';
 import { PLAYER_LEVELED } from '../xp/events.js';
 import { activePowerups, fillWidth, iconVisible } from '../hud/rules.js';
@@ -67,6 +67,19 @@ export default class UIScene extends Phaser.Scene {
     this.levelText.y = this.centerY(xpY, frameH, this.levelText);
     this.timerText = this.addText(0, margin, fontSize.timer);
     this.killsText = this.addText(0, margin, fontSize.kills);
+
+    // Overtime cue (GH-13): shown once per session, when survival time reaches the overtime start.
+    /** True once overtime has started this session. */
+    this.overtime = false;
+    /** How many times the banner has started (e2e tests read this). */
+    this.bannerShows = 0;
+    // Measure the timer on a sample so the banner sits just below it.
+    const timerH = this.timerText.setText('00:00').height;
+    this.timerText.setText('');
+    this.bannerText = this.addText(0, margin + timerH + HUD.overtime.gap, fontSize.banner, HUD.overtime.color)
+      .setText(HUD.overtime.banner)
+      .setAlpha(0);
+    this.bannerText.x = Math.round((DISPLAY.width - this.bannerText.width) / 2);
 
     /** @type {PowerupSlot[]} fixed pool, one per timed powerup, filled left to right */
     this.slots = HUD.powerupOrder.map((_, i) => {
@@ -144,6 +157,7 @@ export default class UIScene extends Phaser.Scene {
     if (xpW !== this.xpFillWidth || this.shown.lv === undefined) this.setFill(this.xpFill, xpW, 'xpFillWidth');
     this.setTextIfChanged('lv', this.levelText, `LV ${s.level}`);
 
+    if (!this.overtime && s.survivalMs >= ENEMIES.scaling.overtime.startS * 1000) this.startOvertime();
     if (this.setTextIfChanged('timer', this.timerText, formatClock(s.survivalMs)))
       this.timerText.x = Math.round((width - this.timerText.width) / 2);
     if (this.setTextIfChanged('kills', this.killsText, `KILLS ${s.kills}`))
@@ -220,6 +234,22 @@ export default class UIScene extends Phaser.Scene {
       yoyo: true,
       ease: 'Quad.easeOut',
       onComplete: () => this.levelText.setScale(1),
+    });
+  }
+
+  /** Overtime has started: the timer turns red for good and the banner shows once. */
+  startOvertime() {
+    const { color, fadeMs, holdMs } = HUD.overtime;
+    this.overtime = true;
+    this.bannerShows += 1;
+    this.timerText.setColor(color);
+    this.tweens.add({
+      targets: this.bannerText,
+      alpha: 1,
+      duration: fadeMs,
+      hold: holdMs,
+      yoyo: true,
+      onComplete: () => this.bannerText.setAlpha(0),
     });
   }
 

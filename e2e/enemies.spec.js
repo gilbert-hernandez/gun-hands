@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import arenaMap from '../src/assets/maps/gh_arena.json' with { type: 'json' };
 import { ENEMIES } from '../src/config/enemies.js';
+import { scaledStats, spawnMultipliers } from '../src/enemy/scaling.js';
 import { ignoreWindowBlur } from './support.js';
 
 // Enemies (GH-5): types, ring spawning, chase with separation, walls, pool, recycling, waves.
@@ -365,4 +366,73 @@ test('placeholder Grunts and Runners are tinted differently', async ({ page }) =
     ENEMIES.types.brute.placeholderTint,
   ]);
   expect(new Set(tints).size).toBe(3);
+});
+
+// Enemy scaling (GH-13): stats are set at spawn from the player's level and the survival time.
+
+/** Spawn a Grunt with the player at `level` and survival time `survivalMs`; return its stats. */
+function scaledGrunt(page, level, survivalMs) {
+  return page.evaluate(
+    ([lv, ms]) => {
+      const scene = window.__GAME__.scene.getScene('Game');
+      const { enemies, player } = scene;
+      player.level = lv;
+      // Both at once: Enemies copies survival time from the scene on its next update.
+      scene.survivalMs = ms;
+      enemies.survivalMs = ms;
+      const e = enemies.spawnAt('grunt', player.x + 250, player.y);
+      return { hp: e.hp, maxHp: e.maxHp, speed: e.speed, contactDamage: e.contactDamage };
+    },
+    [level, survivalMs],
+  );
+}
+
+test('an enemy spawned at player level 9 has scaled HP and speed', async ({ page }) => {
+  await directorOff(page);
+  const want = scaledStats(ENEMIES.types.grunt, spawnMultipliers(9, 0, ENEMIES.scaling));
+  const s = await scaledGrunt(page, 9, 0);
+  expect(s).toEqual({ hp: want.hp, maxHp: want.hp, speed: want.speed, contactDamage: want.contactDamage });
+  expect(s.hp).toBeGreaterThan(ENEMIES.types.grunt.hp);
+  expect(s.speed).toBeGreaterThan(ENEMIES.types.grunt.speed);
+});
+
+test('an enemy spawned two minutes into overtime has overtime stats', async ({ page }) => {
+  await directorOff(page);
+  const want = scaledStats(ENEMIES.types.grunt, spawnMultipliers(1, 720, ENEMIES.scaling));
+  const s = await scaledGrunt(page, 1, 720000);
+  expect(s).toEqual({ hp: want.hp, maxHp: want.hp, speed: want.speed, contactDamage: want.contactDamage });
+  expect(s.contactDamage).toBeGreaterThan(ENEMIES.types.grunt.contactDamage);
+});
+
+test('an enemy in play keeps its stats when the player levels up', async ({ page }) => {
+  await directorOff(page);
+  const before = await scaledGrunt(page, 1, 0);
+  const after = await page.evaluate(() => {
+    const { enemies, player } = window.__GAME__.scene.getScene('Game');
+    player.level = 20;
+    const e = enemies.group.getChildren().find((c) => c.active);
+    return { hp: e.hp, maxHp: e.maxHp, speed: e.speed, contactDamage: e.contactDamage };
+  });
+  expect(after).toEqual(before);
+  expect(before).toEqual({
+    hp: ENEMIES.types.grunt.hp,
+    maxHp: ENEMIES.types.grunt.hp,
+    speed: ENEMIES.types.grunt.speed,
+    contactDamage: ENEMIES.types.grunt.contactDamage,
+  });
+});
+
+test('a scaled enemy chases at its scaled speed', async ({ page }) => {
+  await directorOff(page);
+  const want = scaledStats(ENEMIES.types.runner, spawnMultipliers(1, 840, ENEMIES.scaling));
+  const i = await page.evaluate(() => {
+    const scene = window.__GAME__.scene.getScene('Game');
+    scene.survivalMs = 840000;
+    scene.enemies.survivalMs = 840000;
+    const e = scene.enemies.spawnAt('runner', scene.player.x + 300, scene.player.y);
+    return scene.enemies.group.getChildren().indexOf(e);
+  });
+  await page.waitForTimeout(300);
+  const s = await enemyState(page, i);
+  expect(Math.hypot(s.vx, s.vy)).toBeCloseTo(want.speed, 3);
 });
