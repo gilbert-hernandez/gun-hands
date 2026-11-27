@@ -21,6 +21,6 @@
 ## 5. Verification
 
 - [x] 5.1 `npm run check` and `npm run build` pass; prettier accepts the workflow YAML.
-- [ ] 5.2 After merging to `master`: start a dry run (`gh workflow run release.yml --ref master`), confirm it passes, download the artifact, `sha256sum -c` it, and confirm no release changed.
-- [ ] 5.3 Manual check in the browser: extract the dry-run archive into a sub-folder of a static server (e.g. `python3 -m http.server` from a parent folder, open `/<sub-folder>/index.html`), confirm the title screen shows the `package.json` version (production label, no `-dev`), and that graphics and sounds load and a run plays.
+- [x] 5.2 After merging to `master`: start a dry run (`gh workflow run release.yml --ref master`), confirm it passes, download the artifact, `sha256sum -c` it, and confirm no release changed.
+- [x] 5.3 Manual check in the browser: extract the dry-run archive into a sub-folder of a static server (e.g. `python3 -m http.server` from a parent folder, open `/<sub-folder>/index.html`), confirm the title screen shows the `package.json` version (production label, no `-dev`), and that graphics and sounds load and a run plays.
 - [ ] 5.4 First real run on the next version tag: the release has the archive, checksum and Install on Arcade block, and its values install on Arcade production. (Can be closed after GH-30 is archived if no release is due; note it on the ticket.)
