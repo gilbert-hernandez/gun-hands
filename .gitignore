@@ -10,3 +10,6 @@ coverage/
 
 # Arcade SFX library (written by the SFX MCP / /sfx); export/ holds generated packs.
 assets-src/sfx/export/
+
+# Local release archives (npm run package, GH-30).
+release/

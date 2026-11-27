@@ -6,6 +6,10 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+### Added
+
+- **Release workflow** (GH-30): pushing a `vX.Y.Z` tag builds the game and attaches `gun-hands-X.Y.Z.tar.gz` and its SHA-256 checksum to the GitHub release, creating the release from the CHANGELOG if needed, with the exact values for installing on Arcade in the notes. `npm run package` makes the same archive locally. Tooling only; no gameplay change.
+
 ## [0.2.1] - 2026-11-26
 
 Phone play and sound. The demo now plays on touch screens and has sound effects throughout. M3 Art & Polish is still in progress, so **the art is still placeholder shapes.**

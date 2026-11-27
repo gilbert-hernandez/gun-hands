@@ -75,7 +75,21 @@ Production builds turn these off.
 
 ### Version
 
-The version lives in `package.json` (`version`) and nowhere else. Vite injects it at build time, and the title screen shows it bottom-left: `v0.2.0` in production builds, `v0.2.0-dev (<commit>)` in `npm run dev`. To release, bump `package.json`, update `CHANGELOG.md`, and tag `v<version>`.
+The version lives in `package.json` (`version`) and nowhere else. Vite injects it at build time, and the title screen shows it bottom-left: `v0.2.0` in production builds, `v0.2.0-dev (<commit>)` in `npm run dev`.
+
+### Releasing
+
+1. Bump `version` in `package.json` and add a `## [x.y.z] - YYYY-MM-DD` section to `CHANGELOG.md` (move the Unreleased entries into it).
+2. Merge to `master` and wait for CI to go green on that commit (the release workflow doesn't rerun the browser tests).
+3. Tag and push: `git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`.
+
+The **Release** workflow (`.github/workflows/release.yml`) does the rest. It fails without changing anything if the tag doesn't match `package.json` or the CHANGELOG has no section for it. Otherwise it runs `npm run check`, builds, packages `gun-hands-X.Y.Z.tar.gz` (the contents of `dist/` at the archive root) with a `.sha256` file, creates the GitHub release if it doesn't exist yet (a pre-release while 0.x, notes from the CHANGELOG section), attaches both files, and ends the notes with an **Install on Arcade** block. Copy its `version`, `download_url` and `sha256` values into Arcade's `config/games.php`. If you made the release by hand first, its title and notes are kept.
+
+The workflow never replaces an attached archive with different contents, so a hash that production already pins keeps verifying. Re-running it for a published release is safe: same archive, nothing changes; different archive, the run fails. To replace a genuinely broken archive, delete the asset on the GitHub release page, re-run the workflow, and update the hash in Arcade.
+
+Dry run: `gh workflow run release.yml --ref <branch>` (or **Run workflow** on the Actions tab) runs the same checks and packaging and keeps the archive as a workflow artifact without touching any release.
+
+Local archive: `npm run package` builds and writes `release/gun-hands-<version>.tar.gz` and its `.sha256` (git-ignored) with the same script the workflow uses. Verify with `cd release && sha256sum -c *.sha256`.
 
 ## Project layout
 
