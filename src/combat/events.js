@@ -8,6 +8,15 @@
 export const ENEMY_HIT = 'enemy-hit';
 
 /**
+ * Any damage to an enemy, by a bullet or a Bomb (GH-13: damage numbers and hit particles). Emitted
+ * after `enemy-hit` for bullets and before `enemy-killed` on a killing hit. `enemy-hit` stays
+ * bullet-only.
+ * @typedef {{ typeId: string, x: number, y: number, damage: number, killed: boolean, source: DamageSource }} EnemyDamagedEvent
+ * @typedef {'bullet' | 'bomb'} DamageSource
+ */
+export const ENEMY_DAMAGED = 'enemy-damaged';
+
+/**
  * An enemy died from damage (not emitted for far-away recycling).
  * @typedef {{ typeId: string, x: number, y: number, kills: number }} EnemyKilledEvent
  */
@@ -20,8 +29,9 @@ export const ENEMY_KILLED = 'enemy-killed';
 export const PLAYER_HIT = 'player-hit';
 
 /**
- * The player died (emitted once). GameOver receives the same stats.
- * @typedef {{ timeMs: number, kills: number, level: number }} RunStats
+ * The player died (emitted once). GameOver receives the same stats. `killsByType` and
+ * `damageTaken` (HP lost per enemy type) feed the run summary (GH-13); GameOver shows only the first three.
+ * @typedef {{ timeMs: number, kills: number, level: number, killsByType: Record<string, number>, damageTaken: Record<string, number> }} RunStats
  */
 export const PLAYER_DIED = 'player-died';
 

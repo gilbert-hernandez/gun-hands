@@ -114,20 +114,18 @@ export default class Powerups {
 
   /**
    * Damage every live enemy inside the camera view, pushing survivors away from the player,
-   * then play the blast and shake the camera.
+   * then play the blast. The camera shake comes from `Juice` on `powerup-collected` (GH-13).
    * @param {number} damage
    */
   bomb(damage) {
-    const cam = this.scene.cameras.main;
-    const view = cam.worldView;
+    const view = this.scene.cameras.main.worldView;
     const p = this.player;
     // Snapshot first: kills despawn enemies while we'd otherwise be iterating the group.
     const targets = /** @type {Enemy[]} */ (this.enemies.group.getChildren()).filter(
       (e) => e.active && view.contains(e.x, e.y),
     );
-    for (const e of targets) this.combat.damageEnemy(e, damage, e.x - p.x, e.y - p.y);
+    for (const e of targets) this.combat.damageEnemy(e, damage, e.x - p.x, e.y - p.y, 'bomb');
     this.blast.setPosition(p.x, p.y).setVisible(true).play(BLAST_ANIM);
-    cam.shake(POWERUPS.bombShakeMs, 0.01);
   }
 
   /** Dev shortcut: drop the next powerup (cycling through all six) in front of the player. */

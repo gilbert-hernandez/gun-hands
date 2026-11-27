@@ -53,7 +53,6 @@ export const POWERUPS = {
   shieldWarnMs: 2000,
   // Max pickups on the floor at once; extra drops are skipped.
   poolSize: 12,
-  // Bomb camera shake (ms) and the scale of the 64 px blast sprite.
-  bombShakeMs: 200,
+  // Scale of the 64 px blast sprite. The Bomb's camera shake is JUICE.shake.bomb (GH-13).
   bombBlastScale: 6,
 };

@@ -19,6 +19,7 @@ import { addSceneLabel } from './sceneLabel.js';
 import { bindMuteKey } from '../audio/muteKey.js';
 import { PLAYER_LEVELED } from '../xp/events.js';
 import { ensureAnim } from '../fx/anims.js';
+import Juice from '../fx/Juice.js';
 
 const MUZZLE_ANIM = 'fx_muzzle_flash';
 const LEVELUP_ANIM = 'fx_levelup_burst';
@@ -90,6 +91,9 @@ export default class GameScene extends Phaser.Scene {
       gems: this.xp.gems,
     });
 
+    // Game feel (GH-13): shake, hit-stop. Listens to the events above, removed on shutdown.
+    this.juice = new Juice(this, { player: this.player, bullets: this.bullets });
+
     // Sound effects for this session (GH-29): listens to the events above, removed on shutdown.
     this.audio = new GameAudio(this, getSfx(this));
 
@@ -143,6 +147,8 @@ export default class GameScene extends Phaser.Scene {
       this.openPause();
       if (this.pauseOpen) return;
     }
+    // A hit-stop (GH-13) freezes everything below, survival time included.
+    if (this.juice.tick(delta)) return;
     // Survival time stops at death, so run stats report the time the player died.
     if (!this.player.dead) this.survivalMs += delta;
     this.player.update(time, delta);

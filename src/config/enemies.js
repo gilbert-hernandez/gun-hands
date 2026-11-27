@@ -95,8 +95,9 @@ export const ENEMIES = {
     // Push weight relative to the chase direction (1 = equal).
     strength: 1.2,
   },
-  // Max enemies alive at once (object pool size). Must be >= the largest wave cap.
-  poolSize: 160,
+  // Max enemies alive at once (object pool size). Must be >= the largest wave cap and the dev
+  // stress count (JUICE.debug.stressCount, GH-13).
+  poolSize: 256,
   // Enemies farther than this from the player (px) go back to the pool.
   recycleDistance: 900,
 };

@@ -621,7 +621,7 @@ test('at 0 HP everything stops, player-died fires once, and GameOver shows the r
     const scene = window.__GAME__.scene.getScene('GameOver');
     return { stats: scene.stats, text: scene.statsText?.text, ui: window.__GAME__.scene.isActive('UI') };
   });
-  expect(go.stats).toEqual({ timeMs: died[0].timeMs, kills: 7, level: 3 });
+  expect(go.stats).toMatchObject({ timeMs: died[0].timeMs, kills: 7, level: 3 });
   const secs = Math.floor(died[0].timeMs / 1000);
   expect(go.text).toContain(`${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`);
   expect(go.text).toContain('Kills  7');

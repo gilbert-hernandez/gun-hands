@@ -2,12 +2,18 @@ import { COMBAT, ENEMIES } from '../config/index.js';
 import FxPool from '../fx/FxPool.js';
 import { ensureAnim } from '../fx/anims.js';
 
+import { ENEMY_DAMAGED, ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT, SHIELD_BLOCKED } from './events.js';
+
 const IMPACT_ANIM = 'fx_impact_spark';
-import { ENEMY_HIT, ENEMY_KILLED, PLAYER_DIED, PLAYER_HIT, SHIELD_BLOCKED } from './events.js';
 
 /** @typedef {import('../enemy/Enemy.js').default} Enemy */
 /** @typedef {import('../weapon/Bullets.js').Bullet} Bullet */
 /** @typedef {import('./events.js').RunStats} RunStats */
+/** @typedef {import('./events.js').DamageSource} DamageSource */
+
+/** A zero count per enemy type. */
+const perType = () =>
+  /** @type {Record<string, number>} */ (Object.fromEntries(Object.keys(ENEMIES.types).map((k) => [k, 0])));
 
 /**
  * Combat wiring for one Game session (GH-6): bullet hits on enemies, enemy contact with the
@@ -32,6 +38,9 @@ export default class Combat {
     this.enemies = enemies;
     this.survivalMs = survivalMs;
     this.kills = 0;
+    // Run-summary tallies (GH-13): kills per enemy type, and HP the player lost to each type.
+    this.killsByType = perType();
+    this.damageTaken = perType();
     // Depths: above enemies and bullets, below the player's guns.
     this.deaths = new FxPool(scene, { size: COMBAT.deathPoolSize, depth: 0.75 });
     ensureAnim(scene, IMPACT_ANIM, COMBAT.impactFrameMs, { loop: false, sheet: 'fx_impact' });
@@ -76,6 +85,7 @@ export default class Combat {
     const { x, y, typeId } = enemy;
     const killed = enemy.takeHit(damage, vx, vy);
     this.scene.events.emit(ENEMY_HIT, { enemy, typeId, damage, hpLeft: enemy.hp, x, y });
+    this.scene.events.emit(ENEMY_DAMAGED, { typeId, x, y, damage, killed, source: 'bullet' });
     bullet.hit();
     if (killed) this.killEnemy(enemy);
   }
@@ -91,16 +101,20 @@ export default class Combat {
 
   /**
    * Damage an enemy without a bullet (the Bomb, GH-9): flash and knockback along (dirX, dirY) if it
-   * survives, the normal kill path if not. Emits no `enemy-hit` (that event is for bullet hits).
+   * survives, the normal kill path if not. Emits no `enemy-hit` (that event is for bullet hits), but
+   * does emit `enemy-damaged` with `source`.
    * @param {Enemy} enemy
    * @param {number} damage
    * @param {number} dirX push direction x (any length; 0,0 = no push)
    * @param {number} dirY push direction y
+   * @param {DamageSource} [source]
    * @returns {boolean} true if it died
    */
-  damageEnemy(enemy, damage, dirX, dirY) {
+  damageEnemy(enemy, damage, dirX, dirY, source = 'bomb') {
     if (!enemy.active) return false;
+    const { x, y, typeId } = enemy;
     const killed = enemy.takeHit(damage, dirX, dirY);
+    this.scene.events.emit(ENEMY_DAMAGED, { typeId, x, y, damage, killed, source });
     if (killed) this.killEnemy(enemy);
     return killed;
   }
@@ -117,6 +131,7 @@ export default class Combat {
     const tint = this.placeholders.has(type.death) ? type.placeholderTint : null;
     this.deaths.play(type.death, x, y, { flipX, tint });
     this.kills += 1;
+    this.killsByType[typeId] = (this.killsByType[typeId] ?? 0) + 1;
     this.scene.events.emit(ENEMY_KILLED, { typeId, x, y, kills: this.kills });
   }
 
@@ -137,18 +152,21 @@ export default class Combat {
 
   /** @param {Enemy} enemy */
   onContact(enemy) {
-    this.damagePlayer(ENEMIES.types[enemy.typeId].contactDamage);
+    this.damagePlayer(ENEMIES.types[enemy.typeId].contactDamage, { typeId: enemy.typeId });
   }
 
   /**
    * Damage the player, emit `player-hit`, and start the death sequence at 0 HP.
    * @param {number} amount
-   * @param {{ force?: boolean }} [opts] force: ignore invulnerability (dev shortcuts)
+   * @param {{ force?: boolean, typeId?: string }} [opts] force: ignore invulnerability (dev shortcuts);
+   *   typeId: the enemy type that dealt it, for the run summary
    */
-  damagePlayer(amount, { force = false } = {}) {
+  damagePlayer(amount, { force = false, typeId } = {}) {
     const p = this.player;
     if (p.dead || (!force && p.invulnerableMs > 0)) return;
+    const before = p.hp;
     const r = p.takeDamage(amount);
+    if (typeId) this.damageTaken[typeId] = (this.damageTaken[typeId] ?? 0) + (before - r.hp);
     this.scene.events.emit(PLAYER_HIT, { damage: amount, hp: r.hp, maxHp: p.maxHp });
     if (r.dead) this.playerDied();
   }
@@ -156,7 +174,13 @@ export default class Combat {
   /** The player reached 0 HP: stop everything, emit `player-died` once, then go to GameOver. */
   playerDied() {
     if (this.stats) return;
-    const stats = { timeMs: this.survivalMs(), kills: this.kills, level: this.player.level };
+    const stats = {
+      timeMs: this.survivalMs(),
+      kills: this.kills,
+      level: this.player.level,
+      killsByType: { ...this.killsByType },
+      damageTaken: { ...this.damageTaken },
+    };
     this.stats = stats;
     this.enemies.freeze();
     this.player.die(() => {
