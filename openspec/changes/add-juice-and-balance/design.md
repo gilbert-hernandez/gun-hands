@@ -86,6 +86,8 @@ One `ParticleEmitter` per session (Phaser 4 `scene.add.particles(0, 0, 'fx_dot',
   - at most 10% of runs past 12:00 (in a 10-run bot round, at most 1)
   - no run reaching 15:00 (the bot cap is 16 minutes, so a capped run fails the round)
   - a typical run reaches level 10 or higher
+
+  These numbers apply to the bot, which stands in for a first-time demo player. Gilbert's playtests judge the feel, not the clock (decided 2026-11-27, after his 16:06 run on numbers he called "a good feel"). The median was 9:00–11:00 until round 4 showed it can't be met without adding pressure before 10:00, the part Gilbert likes. Since runs are meant to end inside overtime, Gilbert moved it to 10:00–12:00 (2026-11-27, option 1 after round 4).
 - **Bot** (`scripts/bot.js`, run by `scripts/balance.js`). It drives the real game in headless Chromium at real time:
   - Each tick (100 ms), it reads enemy positions through `__GAME__`.
   - It moves along the sum of "away from enemies within 220 px, weighted by 1/d", plus a tangential term so it circles instead of backing into corners, plus wall avoidance from `arena.isSolidAt` probes 48 px ahead. The direction maps to WASD.
@@ -187,6 +189,10 @@ Each row is one tuning round: what changed, the bot's result (`npm run balance -
 | --- | --- | --- | --- | --- | --- |
 | 0 | 11-27 | Baseline: shipped v0.2.3 numbers | 11:17+, level 32, 1 run, hit the 12 min cap (20 damage taken) | 11:52 / L33, 7:49 / L26, 11:06 / L32 (median 11:06 / L32) | Calibration offset: the bot levels like Gilbert and lives at least as long. Offset taken as 0 for now; revisit once the bot dies on its own. |
 | 1 | 11-27 | XP curve {10, 12, 1.5}; level scaling, overtime and waves to 15:00 (§10, first values) | 10:08, level 11, 1 smoke run (died; level 10 at 7:23) | 10:24 / L18, 12:38 / L22, 16:06 / L30 (median 12:38 / L22). Gilbert: "this is a good feel"; the 16:06 run is fine. | One run only. HP dropped steadily from 6:00 (80 → 34 by 9:48). Damage taken: Brute 88, Grunt 20, Runner 12. Upgrades: damage 5, fire rate 4, max HP 1. Next: 5-run round on the same numbers. |
+| 2 | 11-27 | Final check (6.7) on the round 1 numbers, unchanged | 12:50, level 13.5 (9:30–15:26), 10 runs: 8 past 12:00, 4 still alive at the 16 min wall-clock cap (15:15–15:26 game time) | — | **Fails** the clock targets. The bot plays about like Gilbert (median 12:50 vs his 12:38), not like a first-time player. The capped runs took only 20–145 damage in 15 min. The two shortest runs (9:30, 12:01) never drew Multishot or Pierce; every capped run had Multishot 4 and Pierce 2–3. Overtime doesn't bite against a crowd-clearing build. |
+| 3 | 11-27 | Overtime per minute {hp 0.15→0.35, speed 0.12→0.2, damage 0.2→0.5}; first 10 min unchanged | 11:37, level 11 (9:24–12:40), 5 runs: 2 past 12:00, none at 15:00 | — | Much closer. The tail is cut (max 12:40, vs 4 of 10 capped in round 2). The median is still 37 s over 11:00, and 2 of 5 runs passed 12:00. No run drew more than 1 Pierce, so a crowd-clearing build is under-sampled here. |
+| 4 | 11-27 | Overtime per minute {hp 0.5, speed 0.25, damage 0.75}; first 10 min unchanged | 11:53, level 14 (10:55–11:58), 5 runs: none past 12:00, none at 15:00 | — | The tail is gone, but overtime now works as a wall at about 12:00: 4 of 5 runs died between 11:37 and 11:58, so a 10-run check would likely see some just past 12:00. The median misses 9:00–11:00 because the first 10 min (kept by design) rarely kill the bot. Strong builds (Multishot 4) died at 11:53, no longer outliving the rest. |
+| 5 | 11-27 | Overtime per minute {hp 0.5, speed 0.25→0.3, damage 0.75→1}, for margin under 12:00; median target moved to 10:00–12:00. This is the final check (6.7), 10 runs. | 10:52, level 11 (8:06–11:54), 10 runs: none past 12:00, none at 15:00 | 11:04 / L20, 12:36 / L24, 12:20 / L23 (median 12:20 / L23; was 12:38 with a 16:06 tail in round 1) | **Passes** all four targets. 7 of 10 runs ended in overtime (10:08–11:54). The 3 that died earlier (8:06, 8:40, 9:04) drew no Multishot and only 1–2 Fire Rate, and Brutes did most of their damage. Strong builds (Multishot 3–4) end 11:01–11:54. Gilbert's runs all ended in overtime, with no long tail. Runners did most of his overtime damage (up to 355 HP). The manual checks (7.3) passed. Gilbert: overtime "felt great. The game builds up at a good pace and then becomes very exciting at 10+ minutes. It doesn't feel too harsh." |
 
 **Baseline findings (round 0):**
 - **Runs are too long:** median 11 min against a 5–8 min target.
@@ -209,6 +215,12 @@ Each row is one tuning round: what changed, the bot's result (`npm run balance -
 - **Loot scales with kills:** 66–227 powerups per run, with up to 40 Health Packs in the 16-minute run. That is what kept the longest run alive, and it's left as is because the feel is right.
 - **Decision (Gilbert, 2026-11-27):** keep these numbers.
 
+### Performance
+
+| Date | Machine | Browser | Build | Result |
+| --- | --- | --- | --- | --- |
+| 11-27 | Desktop: Intel i5-11400 (6 cores / 12 threads), NVIDIA RTX 4060, 32 GB | Firefox | `NODE_ENV=development vite build --mode development`, `vite preview` | `K` stress (300 enemies) with continuous fire: lowest FPS 60 (the display cap, so the real headroom is unknown). Passes on this machine. This is a desktop with a dedicated GPU, not the mid-range laptop the target names. Gilbert deferred the laptop check until there are users (2026-11-27). |
+
 ### SFX mix
 
-Starting volumes come from `node scripts/loudness.js` (2026-11-27): RMS targets of −24 dB for frequent sounds, −18 dB for events and −14 dB for big moments, clamped to [0.2, 1]. `shoot` (−29.5 dB) and `bullet-wall` were already under their target, so they stay at 1. `shoot.maxVoices` went from 4 to 3. The by-ear pass is still to come.
+Starting volumes come from `node scripts/loudness.js` (2026-11-27): RMS targets of −24 dB for frequent sounds, −18 dB for events and −14 dB for big moments, clamped to [0.2, 1]. `shoot` (−29.5 dB) and `bullet-wall` were already under their target, so they stay at 1. `shoot.maxVoices` went from 4 to 3. Gilbert's by-ear pass (2026-11-27) found nothing to change, so these are the shipped values.

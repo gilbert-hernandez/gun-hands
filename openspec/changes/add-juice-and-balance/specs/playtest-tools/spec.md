@@ -36,12 +36,16 @@ In development builds, pressing `K` during a run SHALL raise the enemy cap to a 
 - **THEN** nothing happens
 
 ### Requirement: Demo run-length target
-The shipped configuration SHALL be tuned so that a typical demo run lasts about 10 minutes and reaches level 10 or higher, fewer than 10% of runs last past 12:00, and no run is expected to reach 15:00. This is shown by a round of at least 10 autoplay bot runs (median 9:00–11:00, at most one run past 12:00, none reaching 15:00) and by Gilbert's playtest summaries. On a mid-range laptop, a development-mode production build SHALL hold 60 FPS (58 or above, apart from the spawn moment) with the stress count of enemies (the top wave cap, 300) alive and continuous fire.
+The shipped configuration SHALL be tuned so that a typical demo run, played by a first-time player, survives to about 10 minutes, reaches level 10 or higher and then ends during overtime, with fewer than 10% of runs past 12:00 and 15:00 effectively impossible. The autoplay bot stands in for that player: a round of at least 10 bot runs SHALL have a median of 10:00–12:00, at most one run past 12:00, none reaching 15:00, and a median level of 10 or higher. Gilbert's playtests judge the feel, not the clock: he knows the game best and is expected to outlast the bot (by about 2.5 minutes in round 1). A development-mode production build SHALL hold 60 FPS (58 or above, apart from the spawn moment) with the stress count of enemies (the top wave cap, 300) alive and continuous fire, on Gilbert's desktop for the demo. Checking it on a mid-range laptop is deferred until the game has users.
 
 #### Scenario: Bot round on target
 - **WHEN** `npm run balance -- 10` runs on the final numbers
 - **THEN** the median survival time is between 9:00 and 11:00, at most one run passes 12:00, no run reaches 15:00, and the median level is 10 or higher
 
+#### Scenario: Gilbert approves the feel
+- **WHEN** Gilbert plays 3 runs on the final numbers
+- **THEN** he confirms the pacing feels right, whatever his times are, and his summaries go into the balance log
+
 #### Scenario: Stress at 60 FPS
-- **WHEN** Gilbert presses `K` on a mid-range laptop and fires for 60 s
+- **WHEN** Gilbert presses `K` on his desktop and fires for 60 s
 - **THEN** the readout stays at 58 FPS or above after the spawn moment

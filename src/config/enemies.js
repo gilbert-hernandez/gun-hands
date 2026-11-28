@@ -107,7 +107,9 @@ export const ENEMIES = {
   scaling: {
     perLevel: { hp: 0.05, speed: 0.01, damage: 0 },
     maxLevelBonus: { hp: 1, speed: 0.15, damage: 0 },
-    overtime: { startS: 600, perMinute: { hp: 0.15, speed: 0.12, damage: 0.2 } },
+    // Rounds 3–5 (GH-13 balance log): steeper after round 2's bot runs outlived 15:00 with
+    // crowd-clearing builds.
+    overtime: { startS: 600, perMinute: { hp: 0.5, speed: 0.3, damage: 1 } },
   },
   // Max enemies alive at once (object pool size). Must be >= the largest wave cap and the dev
   // stress count (JUICE.debug.stressCount, GH-13).

@@ -64,4 +64,4 @@ const past12 = results.filter((r) => r.timeMs > 12 * 60000).length;
 const at15 = results.filter((r) => r.capped || r.timeMs >= 15 * 60000).length;
 console.log(`past 12:00  ${past12}/${results.length}`);
 console.log(`at 15:00    ${at15}/${results.length}`);
-console.log(`Target: median 9:00–11:00, at most 10% past 12:00, none at 15:00, median level >= 10.`);
+console.log(`Target: median 10:00–12:00, at most 10% past 12:00, none at 15:00, median level >= 10.`);

@@ -34,15 +34,16 @@
 - [x] 6.1 Baseline: `npm run balance -- 5` on today's numbers (done with 1 run: it hit the 12 min cap, so more runs would only have hit it too). Start the Balance log table at the end of design.md with the median and range.
 - [x] 6.2 Gilbert plays 3 runs and pastes the summaries from `localStorage` / the console. Record them in the log, along with the bot calibration offset.
 - [x] 6.3 Bot fixes: guard the state probe once Game has shut down, default `MAX_MINUTES` to 16, print the counts past 12:00 and at 15:00, and keep the per-minute heartbeat. Smoke test with `npm run balance -- 1`.
-- [ ] 6.4 Tuning rounds (each about an hour: one knob group, `npm run balance -- 5`, logged), in the knob order of design §7 (XP curve, then waves, scaling and overtime, then damage, HP, drops, upgrade steps). Continue until the bot median is 9:00–11:00 with no capped run. Then run the 10-run final check: at most 1 run past 12:00, none at 15:00, median level ≥ 10. Re-run `npm run check` and the e2e suite after the last round, and fix any test that hard-codes an old number so it reads config.
-- [ ] 6.5 Gilbert confirms with 3 playtests that runs last about 10 minutes, reach level 10 or higher, and none passes 12:00. Record them in the log.
-- [ ] 6.6 Add `scripts/loudness.js` and set the initial SFX volumes and throttles (design §9, done 2026-11-27), then Gilbert's by-ear pass. Update `tests/audioConfig.test.js` only if ranges change. Record the final values in the log.
+- [x] 6.4 Tuning rounds (each about an hour: one knob group, `npm run balance -- 5`, logged), in the knob order of design §7 (XP curve, then waves, scaling and overtime, then damage, HP, drops, upgrade steps). Continue until the bot median is 10:00–12:00 (9:00–11:00 before round 5) with no capped run. Then run the 10-run final check: at most 1 run past 12:00, none at 15:00, median level ≥ 10. Re-run `npm run check` and the e2e suite after the last round, and fix any test that hard-codes an old number so it reads config. Done 2026-11-27 after rounds 1–5: Gilbert kept the first 10 minutes from round 1, round 2 failed the clock targets, and rounds 3–5 steepened overtime only (design §10 and the balance log).
+- [x] 6.5 Gilbert confirms the feel with 3 playtests (the bot carries the clock targets). Record them in the log. Done 2026-11-27: 10:24 / 12:38 / 16:06, "a good feel".
+- [x] 6.7 Final check: `npm run balance -- 10` on the shipped numbers (median 10:00–12:00, at most 1 past 12:00, none at 15:00, median level ≥ 10). Record it in the log. If it misses, run another tuning round (6.4) and repeat. Done 2026-11-27 (round 5): median 10:52 / level 11, 0 of 10 past 12:00, none at 15:00.
+- [x] 6.6 Add `scripts/loudness.js` and set the initial SFX volumes and throttles (design §9, done 2026-11-27), then Gilbert's by-ear pass. Update `tests/audioConfig.test.js` only if ranges change. Record the final values in the log. Done 2026-11-27: Gilbert's by-ear pass found nothing to change, so the measured starting volumes ship.
 
 ## 7. Performance and wrap-up
 
-- [ ] 7.1 Gilbert runs the stress check on a mid-range laptop (`NODE_ENV=development npx vite build --mode development && npx vite preview`, `K` for 300 enemies, fire for 60 s). If it reads below 58 FPS, apply design §6 mitigations one at a time and re-measure. Record the result in the log.
+- [x] 7.1 Gilbert runs the stress check on a mid-range laptop (`NODE_ENV=development npx vite build --mode development && npx vite preview`, `K` for 300 enemies, fire for 60 s). If it reads below 58 FPS, apply design §6 mitigations one at a time and re-measure. Record the result in the log. Done 2026-11-27 on Gilbert's desktop (i5-11400, RTX 4060, Firefox): lowest 60 FPS with 300 enemies. The mid-range laptop check is deferred until there are users (Gilbert's call).
 - [ ] 7.2 Run the full suite: `npm run check`, `npx vite build`, `npm run e2e` against a fresh server on 5175 with no SplatAttack run in parallel.
-- [ ] 7.3 Manual check in the browser (`npm run dev`):
+- [x] 7.3 Manual check in the browser (`npm run dev`): Done 2026-11-27: all checks passed (Gilbert).
   - Hits show rising numbers and small sparks.
   - Getting hit shakes a little.
   - A Brute kill freezes briefly, shakes and bursts purple.
