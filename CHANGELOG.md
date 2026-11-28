@@ -6,9 +6,31 @@ Versioning is [SemVer](https://semver.org/) 0.x until a real release. The minor 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-27
+
+Juice and balance. Hits feel punchy, runs are built to last about 10 minutes, and after 10:00 an overtime phase makes the end of a run fast and frantic. This completes M3 Art & Polish.
+
+### Added
+
+- **Game feel** (GH-13): damage numbers rise from every hit, with the killing hit's number in yellow. Hits throw white sparks, and dead enemies burst in their own color. The screen shakes a little when you get hit, more on a Brute kill, and most on a Bomb. A Brute kill also freezes the game for a split second. With the system's reduced-motion setting on, the screen never shakes. All of this is cosmetic and never changes gameplay.
+- **Enemies level up with you** (GH-13): each player level gives new enemies a little more HP and speed, up to a cap.
+- **Overtime** (GH-13): from 10:00, every minute makes new enemies faster, tougher and harder-hitting, with no cap. The timer turns red and OVERTIME flashes once below it when it starts.
+- **Playtest tools** (GH-13, dev builds only): the K key fills the arena with 300 enemies for a performance check, and every finished run is logged to the browser console and kept locally. `npm run balance` runs an autoplay bot against a dev server and summarizes run lengths.
+
+### Changed
+
+- **Balance** (GH-13): runs are tuned to last about 10 minutes and reach level 10 or higher, then end in overtime. Waves keep growing past 6:00, up to 300 enemies on screen by 12:00. Levelling is slower (a steeper XP curve). In a 10-run bot check the median run was 10:52, none passed 12:00, and none reached 15:00.
+- **Sound mix** (GH-13): effect volumes are levelled by measured loudness, and fewer shot sounds overlap.
+- **Contact damage** now scales with enemy level and overtime.
+
 ### Removed
 
 - **Unused HUD icons** (GH-31): the Health, Bomb and Magnet HUD icons are no longer loaded, since the HUD only shows timed powerups. The files are kept in `art/unused/`.
+
+### Known limitations
+
+- No music.
+- 60 FPS with 300 enemies is checked on a desktop (Intel i5-11400, RTX 4060, Firefox) only. A mid-range laptop check is deferred.
 
 ## [0.2.3] - 2026-11-27
 
@@ -93,7 +115,8 @@ The first tagged version. Milestones M1 Core and M2 Progression are complete, so
 - No sound or music.
 - Not deployed yet. GH-14 deploys the demo to gunhands.hernandez.solutions.
 
-[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gilbert-hernandez/gun-hands/compare/v0.2.0...v0.2.1
