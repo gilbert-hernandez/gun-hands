@@ -62,7 +62,7 @@ When an enemy's HP reaches 0 or below, it SHALL be removed from play in the same
 - **THEN** every death is counted and removed from play, and no error occurs
 
 ### Requirement: Contact damage and invulnerability
-When a live enemy's hurtbox overlaps the player's hurtbox while the player is alive, not invulnerable, and not shielded, the player SHALL lose HP equal to that enemy type's contact damage and SHALL become invulnerable for a configured time. Only one enemy SHALL damage the player per hit, even if several overlap at once. While invulnerable, the player SHALL blink (alternate visible and hidden at a configured period, guns included) and SHALL be fully visible again when invulnerability ends. While a Shield powerup is active, enemy contact SHALL deal no damage, SHALL NOT start invulnerability, and SHALL NOT emit `player-hit`. Enemies SHALL NOT be pushed by, or push, the player.
+When a live enemy's hurtbox overlaps the player's hurtbox while the player is alive, not invulnerable, and not shielded, the player SHALL lose HP equal to that enemy's contact damage (its type's contact damage, scaled when it spawned; see the enemies spec) and SHALL become invulnerable for a configured time. Only one enemy SHALL damage the player per hit, even if several overlap at once. While invulnerable, the player SHALL blink (alternate visible and hidden at a configured period, guns included) and SHALL be fully visible again when invulnerability ends. While a Shield powerup is active, enemy contact SHALL deal no damage, SHALL NOT start invulnerability, and SHALL NOT emit `player-hit`. Enemies SHALL NOT be pushed by, or push, the player.
 
 #### Scenario: Contact hit
 - **WHEN** a Grunt reaches a player with 100 HP who is not invulnerable
@@ -83,6 +83,10 @@ When a live enemy's hurtbox overlaps the player's hurtbox while the player is al
 #### Scenario: Contact damage per type
 - **WHEN** the unit tests read the enemy configuration
 - **THEN** every type has a positive contact damage below the player's max HP, and the Brute's is the largest
+
+#### Scenario: Scaled contact damage
+- **WHEN** an enemy spawned during overtime, with a contact damage multiplier of 1.4, touches a player who is not invulnerable
+- **THEN** the player loses its type's contact damage × 1.4, rounded
 
 #### Scenario: Shielded contact
 - **WHEN** a Grunt touches a player with 100 HP while a Shield powerup is active

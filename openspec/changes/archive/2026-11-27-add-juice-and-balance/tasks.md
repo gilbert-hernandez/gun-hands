@@ -42,7 +42,7 @@
 ## 7. Performance and wrap-up
 
 - [x] 7.1 Gilbert runs the stress check on a mid-range laptop (`NODE_ENV=development npx vite build --mode development && npx vite preview`, `K` for 300 enemies, fire for 60 s). If it reads below 58 FPS, apply design §6 mitigations one at a time and re-measure. Record the result in the log. Done 2026-11-27 on Gilbert's desktop (i5-11400, RTX 4060, Firefox): lowest 60 FPS with 300 enemies. The mid-range laptop check is deferred until there are users (Gilbert's call).
-- [ ] 7.2 Run the full suite: `npm run check`, `npx vite build`, `npm run e2e` against a fresh server on 5175 with no SplatAttack run in parallel.
+- [x] 7.2 Run the full suite: `npm run check`, `npx vite build`, `npm run e2e` against a fresh server on 5175 with no SplatAttack run in parallel. Done 2026-11-27: `npm run check` (339 unit tests), `vite build`, and e2e 226/230 in the full run, with the 4 failures (restart and new-session tests, timing out under load) passing on re-run.
 - [x] 7.3 Manual check in the browser (`npm run dev`): Done 2026-11-27: all checks passed (Gilbert).
   - Hits show rising numbers and small sparks.
   - Getting hit shakes a little.
